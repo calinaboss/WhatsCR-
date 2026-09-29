@@ -1,0 +1,31 @@
+ ECCO COME FUNZIONERA' WHATSCR
+
+In breve: l'idea e' fare un sito semplice e pulito per trovare musica senza copyright vera per videogiochi, video e stream, senza le solite due canzoni di NCS sentite mille volte.
+
+---
+
+COME E' MESSO IL SITO ADESSO (FRONTEND):
+- Grafica stile pulita, bianca e azzurra con i loghi nostri.
+- Hero in alto con la barra di ricerca e i 3 sfondi che girano da soli ogni 6 secondi con una transizione morbida.
+- Zero disegni strani o icone disegnate a mano: usiamo le icone pulite di Font Awesome.
+- Tutte le immagini sono gia' convertite in .webp super veloci, e la favicon e' sistemata per vedersi perfetta su pc, cellulare e ovunque.
+- Ha gia' due tracce di test con il player audio che funziona e il tasto per scaricare i file.
+- Il codice e' caricato sulla repo GitHub privata (WhatsCR-), pronto per lavorarci insieme quando invitiamo il socio.
+
+---
+
+COME GESTIAMO IL BACKEND SENZA COMPRARE SERVER O VPS:
+
+DATABASE (NEON DB):
+- Ci serve per salvare le informazioni delle canzoni (titolo, autore, durata, genere, tag).
+- Perche' Neon? Perche' e' Postgres serverless gratis e ha il "branching" tipo Git. Vuol dire che se uno di noi deve fare una prova o aggiungere una funzione, si fa un ramo suo del database senza toccare o spaccare quello principale.
+- Quando nessuno usa il sito va in pausa e non consuma niente.
+
+2. DOVE METTIAMO I FILE AUDIO (CLOUDFLARE R2):
+- Le canzoni (MP3 pesanti) NON le mettiamo dentro GitHub o sul sito, altrimenti si intasa tutto.
+- Le carichiamo su Cloudflare R2: ti da' 10 GB di spazio gratis (ci stanno quasi 2000 canzoni) e la cosa piu' importante e' che il traffico per i download e' GRATIS al 100%. Se la gente scarica 500 canzoni al giorno, non paghiamo una lira. in caso ci pagheremo qualcosa diviso
+
+3. DOVE METTIAMO IL SITO ONLINE:
+- Lo colleghiamo su Cloudflare Pages o render (piu pr0babile cloudflare) direttamente da GitHub.
+
+dominio either godaddy o register o qualcos altro di cheaper
