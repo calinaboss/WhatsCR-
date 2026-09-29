@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsCR? No cr things</title>
+  <link rel="icon" type="image/x-icon" href="Immagini/favicons/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="Immagini/favicons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="Immagini/favicons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="Immagini/favicons/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#0097b2">
+  <meta name="msapplication-TileColor" content="#0097b2">
+  <meta property="og:title" content="WhatsCR? No cr things">
+  <meta property="og:description" content="Search music and many other things without copyright. Free audio resources for any project.">
+  <meta property="og:image" content="Immagini/brand/Logo.webp">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="Immagini/brand/Logo.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="top-header">
+    <div class="header-container">
+      <nav class="header-nav left-nav">
+        <a href="#esplora" class="nav-link active">Explore</a>
+        <a href="#categorie" class="nav-link">Genres</a>
+        <a href="#licenza" class="nav-link">License</a>
+      </nav>
+
+      <div class="header-brand-center">
+        <a href="#" class="brand-link">
+          <img src="Immagini/brand/Logo.webp" alt="Logo WhatsCR" class="brand-icon">
+          <img src="Immagini/brand/scrittawhatscr.webp" alt="WhatsCR?" class="brand-text">
+        </a>
+      </div>
+
+      <div class="header-nav right-nav">
+        <a href="#accedi" class="nav-link">Log in</a>
+        <a href="#unisciti" class="nav-link">register</a>
+        <a href="#carica" class="btn-upload">
+          <i class="fa-solid fa-arrow-up-from-bracket"></i>
+          <span>Upload</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero-section">
+      <div class="hero-card">
+        <div class="hero-bg-slides">
+          <div class="hero-slide active" style="background-image: url('Immagini/sfondi/sfondoricerca.webp');"></div>
+          <div class="hero-slide" style="background-image: url('Immagini/sfondi/sfondoricerca2.webp');"></div>
+          <div class="hero-slide" style="background-image: url('Immagini/sfondi/sfondoricerca3.webp');"></div>
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <h1 class="hero-title">just search things without copyright.</h1>
+
+          <div class="search-box">
+            <div class="search-icon-wrapper">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+            <input type="text" placeholder="Search music and many other things..." class="search-input">
+            <button class="search-submit-btn">Search</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="categories-section" id="categorie">
+      <div class="section-container">
+        <div class="section-header">
+          <h2 class="section-title">Free audio resources for any project</h2>
+        </div>
+
+        <div class="categories-grid">
+          <a href="#" class="cat-card">
+            <span class="cat-name">Gaming & Combat</span>
+            <i class="fa-solid fa-arrow-right cat-arrow"></i>
+          </a>
+
+          <a href="#" class="cat-card">
+            <span class="cat-name">Chiptune & 8-Bit</span>
+            <i class="fa-solid fa-arrow-right cat-arrow"></i>
+          </a>
+
+          <a href="#" class="cat-card">
+            <span class="cat-name">Lo-Fi & Chillhop</span>
+            <i class="fa-solid fa-arrow-right cat-arrow"></i>
+          </a>
+
+          <a href="#" class="cat-card">
+            <span class="cat-name">Cinematic & Epic</span>
+            <i class="fa-solid fa-arrow-right cat-arrow"></i>
+          </a>
+
+          <a href="#" class="cat-card">
+            <span class="cat-name">Synthwave & Sci-Fi</span>
+            <i class="fa-solid fa-arrow-right cat-arrow"></i>
+          </a>
+
+          <a href="#" class="cat-card">
+            <span class="cat-name">Sound Effects (SFX)</span>
+            <i class="fa-solid fa-arrow-right cat-arrow"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="tracks-section" id="esplora">
+      <div class="section-container">
+        <div class="section-header-flex">
+          <div>
+            <h2 class="section-title">Featured Tracks</h2>
+          </div>
+          <div class="sort-tabs">
+            <button class="sort-tab active">Popular</button>
+            <button class="sort-tab">New releases</button>
+            <button class="sort-tab">Game Loops</button>
+          </div>
+        </div>
+
+        <div class="tracks-list">
+          <article class="track-row">
+            <audio id="audio-1" src="audio/test-track-01.mp3" preload="metadata"></audio>
+            <button class="track-play-btn" data-audio-id="audio-1" aria-label="Play Test Track 01">
+              <i class="fa-solid fa-play"></i>
+            </button>
+            <div class="track-meta">
+              <h4 class="track-name">Test  01</h4>
+              <span class="track-artist">Test Artist </span>
+            </div>
+            <div class="track-waveform">
+              <span class="wave-bar" style="height: 35%"></span>
+              <span class="wave-bar" style="height: 65%"></span>
+              <span class="wave-bar" style="height: 90%"></span>
+              <span class="wave-bar" style="height: 45%"></span>
+              <span class="wave-bar" style="height: 80%"></span>
+              <span class="wave-bar" style="height: 100%"></span>
+              <span class="wave-bar" style="height: 70%"></span>
+              <span class="wave-bar" style="height: 50%"></span>
+              <span class="wave-bar" style="height: 85%"></span>
+              <span class="wave-bar" style="height: 60%"></span>
+              <span class="wave-bar" style="height: 40%"></span>
+              <span class="wave-bar" style="height: 75%"></span>
+              <span class="wave-bar" style="height: 95%"></span>
+              <span class="wave-bar" style="height: 55%"></span>
+              <span class="wave-bar" style="height: 30%"></span>
+            </div>
+            <div class="track-badges">
+            </div>
+            <span class="track-time">2:30</span>
+            <div class="track-actions">
+              <a href="audio/test-track-01.mp3" download="test-track-01.mp3" class="btn-download" title="Download track">
+                <i class="fa-solid fa-download"></i>
+                <span>Download</span>
+              </a>
+            </div>
+          </article>
+
+          <article class="track-row">
+            <audio id="audio-2" src="audio/test-track-02.mp3" preload="metadata"></audio>
+            <button class="track-play-btn" data-audio-id="audio-2" aria-label="Play Test Track 02">
+              <i class="fa-solid fa-play"></i>
+            </button>
+            <div class="track-meta">
+              <h4 class="track-name">Test 02 </h4>
+              <span class="track-artist">Test Artist </span>
+            </div>
+            <div class="track-waveform">
+              <span class="wave-bar" style="height: 50%"></span>
+              <span class="wave-bar" style="height: 80%"></span>
+              <span class="wave-bar" style="height: 60%"></span>
+              <span class="wave-bar" style="height: 95%"></span>
+              <span class="wave-bar" style="height: 70%"></span>
+              <span class="wave-bar" style="height: 40%"></span>
+              <span class="wave-bar" style="height: 85%"></span>
+              <span class="wave-bar" style="height: 100%"></span>
+              <span class="wave-bar" style="height: 65%"></span>
+              <span class="wave-bar" style="height: 55%"></span>
+              <span class="wave-bar" style="height: 90%"></span>
+              <span class="wave-bar" style="height: 75%"></span>
+              <span class="wave-bar" style="height: 45%"></span>
+              <span class="wave-bar" style="height: 80%"></span>
+              <span class="wave-bar" style="height: 35%"></span>
+            </div>
+            <div class="track-badges">
+            </div>
+            <span class="track-time">1:45</span>
+            <div class="track-actions">
+              <a href="audio/test-track-02.mp3" download="test-track-02.mp3" class="btn-download" title="Download track">
+                <i class="fa-solid fa-download"></i>
+                <span>Download</span>
+              </a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="footer-logo-row">
+          <img src="Immagini/brand/Logo.webp" alt="Logo" class="footer-logo">
+          <img src="Immagini/brand/scrittawhatscr.webp" alt="WhatsCR" class="footer-text">
+        </div>
+        <p class="footer-desc">The platform dedicated to high quality copyright-free music for game developers and digital creators.</p>
+      </div>
+
+      <div class="footer-cols">
+        <div class="f-col">
+          <h4>Explore</h4>
+          <ul>
+            <li><a href="#">Game Music</a></li>
+            <li><a href="#">8-Bit Loops</a></li>
+            <li><a href="#">Lo-Fi Beats</a></li>
+            <li><a href="#">Sound Effects</a></li>
+          </ul>
+        </div>
+        <div class="f-col">
+          <h4>Community</h4>
+          <ul>
+            <li><a href="#">Guidelines</a></li>
+            <li><a href="#">Discord Server</a></li>
+          </ul>
+        </div>
+        <div class="f-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#">WhatsCR Safe License</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Copyright Info</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.track-play-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const audioId = btn.getAttribute('data-audio-id');
+        const audio = document.getElementById(audioId);
+        const icon = btn.querySelector('i');
+        const row = btn.closest('.track-row');
+
+        document.querySelectorAll('audio').forEach(otherAudio => {
+          if (otherAudio !== audio) {
+            otherAudio.pause();
+            otherAudio.currentTime = 0;
+            const otherBtn = document.querySelector(`[data-audio-id="${otherAudio.id}"]`);
+            if (otherBtn) {
+              const otherIcon = otherBtn.querySelector('i');
+              otherIcon.classList.remove('fa-pause');
+              otherIcon.classList.add('fa-play');
+              otherBtn.closest('.track-row').classList.remove('is-playing');
+            }
+          }
+        });
+
+        if (audio.paused) {
+          audio.play();
+          icon.classList.remove('fa-play');
+          icon.classList.add('fa-pause');
+          row.classList.add('is-playing');
+        } else {
+          audio.pause();
+          icon.classList.remove('fa-pause');
+          icon.classList.add('fa-play');
+          row.classList.remove('is-playing');
+        }
+
+        audio.onended = () => {
+          icon.classList.remove('fa-pause');
+          icon.classList.add('fa-play');
+          row.classList.remove('is-playing');
+        };
+      });
+    });
+
+    const heroSlides = document.querySelectorAll('.hero-slide');
+    if (heroSlides.length > 1) {
+      let currentSlide = 0;
+      setInterval(() => {
+        heroSlides[currentSlide].classList.remove('active');
+        currentSlide = (currentSlide + 1) % heroSlides.length;
+        heroSlides[currentSlide].classList.add('active');
+      }, 6500);
+    }
+  </script>
+
+</body>
+</html>
