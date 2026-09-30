@@ -49,8 +49,7 @@ export async function onRequestGet(context) {
     });
 
     if (!neonRes.ok) {
-      const err = await neonRes.text();
-      return new Response(JSON.stringify({ error: err }), {
+      return new Response(JSON.stringify({ error: 'Database request failed' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -72,7 +71,7 @@ export async function onRequestGet(context) {
       }
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
