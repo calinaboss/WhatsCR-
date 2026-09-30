@@ -127,80 +127,7 @@
           </div>
         </div>
 
-        <div class="tracks-list">
-          <article class="track-row">
-            <audio id="audio-1" src="audio/test-track-01.mp3" preload="metadata"></audio>
-            <button class="track-play-btn" data-audio-id="audio-1" aria-label="Play Test Track 01">
-              <i class="fa-solid fa-play"></i>
-            </button>
-            <div class="track-meta">
-              <h4 class="track-name">Test  01</h4>
-              <span class="track-artist">Test Artist </span>
-            </div>
-            <div class="track-waveform">
-              <span class="wave-bar" style="height: 35%"></span>
-              <span class="wave-bar" style="height: 65%"></span>
-              <span class="wave-bar" style="height: 90%"></span>
-              <span class="wave-bar" style="height: 45%"></span>
-              <span class="wave-bar" style="height: 80%"></span>
-              <span class="wave-bar" style="height: 100%"></span>
-              <span class="wave-bar" style="height: 70%"></span>
-              <span class="wave-bar" style="height: 50%"></span>
-              <span class="wave-bar" style="height: 85%"></span>
-              <span class="wave-bar" style="height: 60%"></span>
-              <span class="wave-bar" style="height: 40%"></span>
-              <span class="wave-bar" style="height: 75%"></span>
-              <span class="wave-bar" style="height: 95%"></span>
-              <span class="wave-bar" style="height: 55%"></span>
-              <span class="wave-bar" style="height: 30%"></span>
-            </div>
-            <div class="track-badges">
-            </div>
-            <span class="track-time">2:30</span>
-            <div class="track-actions">
-              <a href="audio/test-track-01.mp3" download="test-track-01.mp3" class="btn-download" title="Download track">
-                <i class="fa-solid fa-download"></i>
-                <span>Download</span>
-              </a>
-            </div>
-          </article>
-
-          <article class="track-row">
-            <audio id="audio-2" src="audio/test-track-02.mp3" preload="metadata"></audio>
-            <button class="track-play-btn" data-audio-id="audio-2" aria-label="Play Test Track 02">
-              <i class="fa-solid fa-play"></i>
-            </button>
-            <div class="track-meta">
-              <h4 class="track-name">Test 02 </h4>
-              <span class="track-artist">Test Artist </span>
-            </div>
-            <div class="track-waveform">
-              <span class="wave-bar" style="height: 50%"></span>
-              <span class="wave-bar" style="height: 80%"></span>
-              <span class="wave-bar" style="height: 60%"></span>
-              <span class="wave-bar" style="height: 95%"></span>
-              <span class="wave-bar" style="height: 70%"></span>
-              <span class="wave-bar" style="height: 40%"></span>
-              <span class="wave-bar" style="height: 85%"></span>
-              <span class="wave-bar" style="height: 100%"></span>
-              <span class="wave-bar" style="height: 65%"></span>
-              <span class="wave-bar" style="height: 55%"></span>
-              <span class="wave-bar" style="height: 90%"></span>
-              <span class="wave-bar" style="height: 75%"></span>
-              <span class="wave-bar" style="height: 45%"></span>
-              <span class="wave-bar" style="height: 80%"></span>
-              <span class="wave-bar" style="height: 35%"></span>
-            </div>
-            <div class="track-badges">
-            </div>
-            <span class="track-time">1:45</span>
-            <div class="track-actions">
-              <a href="audio/test-track-02.mp3" download="test-track-02.mp3" class="btn-download" title="Download track">
-                <i class="fa-solid fa-download"></i>
-                <span>Download</span>
-              </a>
-            </div>
-          </article>
+        <div class="tracks-list" id="tracks-container">
         </div>
       </div>
     </section>
@@ -247,44 +174,163 @@
   </footer>
 
   <script>
-    document.querySelectorAll('.track-play-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const audioId = btn.getAttribute('data-audio-id');
-        const audio = document.getElementById(audioId);
-        const icon = btn.querySelector('i');
-        const row = btn.closest('.track-row');
+    const tracksContainer = document.getElementById('tracks-container');
+    const searchInput = document.querySelector('.search-input');
+    const searchBtn = document.querySelector('.search-submit-btn');
 
-        document.querySelectorAll('audio').forEach(otherAudio => {
-          if (otherAudio !== audio) {
-            otherAudio.pause();
-            otherAudio.currentTime = 0;
-            const otherBtn = document.querySelector(`[data-audio-id="${otherAudio.id}"]`);
-            if (otherBtn) {
-              const otherIcon = otherBtn.querySelector('i');
-              otherIcon.classList.remove('fa-pause');
-              otherIcon.classList.add('fa-play');
-              otherBtn.closest('.track-row').classList.remove('is-playing');
+    async function fetchTracks(searchTerm = '', genre = '') {
+      if (!tracksContainer) return;
+      tracksContainer.innerHTML = '<div style="text-align:center; padding: 24px; color: #64748b;">Loading tracks...</div>';
+
+      try {
+        let url = '/api/tracks';
+        const params = new URLSearchParams();
+        if (searchTerm) params.append('q', searchTerm);
+        if (genre) params.append('genre', genre);
+        if (params.toString()) url += `?${params.toString()}`;
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('API failed');
+        const tracks = await res.json();
+
+        renderTracks(tracks);
+      } catch (err) {
+        renderFallback();
+      }
+    }
+
+    function renderTracks(tracks) {
+      if (!tracks || tracks.length === 0) {
+        tracksContainer.innerHTML = '<div style="text-align:center; padding: 32px; color: #64748b;">No tracks found.</div>';
+        return;
+      }
+
+      tracksContainer.innerHTML = tracks.map(t => `
+        <article class="track-row">
+          <audio id="audio-${t.id}" src="${t.audio_url}" preload="metadata"></audio>
+          <button class="track-play-btn" data-audio-id="audio-${t.id}" aria-label="Play ${t.title}">
+            <i class="fa-solid fa-play"></i>
+          </button>
+          <div class="track-meta">
+            <h4 class="track-name">${t.title}</h4>
+            <span class="track-artist">${t.artist || 'Unknown'} • ${t.genre || 'Soundtrack'}</span>
+          </div>
+          <div class="track-waveform">
+            <span class="wave-bar" style="height: 35%"></span>
+            <span class="wave-bar" style="height: 65%"></span>
+            <span class="wave-bar" style="height: 90%"></span>
+            <span class="wave-bar" style="height: 45%"></span>
+            <span class="wave-bar" style="height: 80%"></span>
+            <span class="wave-bar" style="height: 100%"></span>
+            <span class="wave-bar" style="height: 70%"></span>
+            <span class="wave-bar" style="height: 50%"></span>
+            <span class="wave-bar" style="height: 85%"></span>
+            <span class="wave-bar" style="height: 60%"></span>
+            <span class="wave-bar" style="height: 40%"></span>
+            <span class="wave-bar" style="height: 75%"></span>
+            <span class="wave-bar" style="height: 95%"></span>
+            <span class="wave-bar" style="height: 55%"></span>
+            <span class="wave-bar" style="height: 30%"></span>
+          </div>
+          <div class="track-badges">
+            ${t.is_loop ? '<span class="badge badge-loop">Seamless Loop</span>' : ''}
+            <span class="badge badge-cc">${t.license_type || 'CC0 Free'}</span>
+          </div>
+          <span class="track-time">${t.duration || '2:00'}</span>
+          <div class="track-actions">
+            <a href="${t.audio_url}" download class="btn-download" title="Download track">
+              <i class="fa-solid fa-download"></i>
+              <span>Download</span>
+            </a>
+          </div>
+        </article>
+      `).join('');
+
+      attachAudioListeners();
+    }
+
+    function renderFallback() {
+      const fallbackTracks = [
+        { id: 1, title: 'Test Track 01 - Cyber Drift', artist: 'Test Artist', genre: 'Synthwave', duration: '2:30', audio_url: 'audio/test-track-01.mp3', is_loop: true, license_type: 'CC0 Free' },
+        { id: 2, title: 'Test Track 02 - 8-Bit Quest', artist: 'Test Artist', genre: 'Chiptune', duration: '1:45', audio_url: 'audio/test-track-02.mp3', is_loop: true, license_type: 'CC0 Free' }
+      ];
+      renderTracks(fallbackTracks);
+    }
+
+    function attachAudioListeners() {
+      document.querySelectorAll('.track-play-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const audioId = btn.getAttribute('data-audio-id');
+          const audio = document.getElementById(audioId);
+          const icon = btn.querySelector('i');
+          const row = btn.closest('.track-row');
+
+          document.querySelectorAll('audio').forEach(otherAudio => {
+            if (otherAudio !== audio) {
+              otherAudio.pause();
+              otherAudio.currentTime = 0;
+              const otherBtn = document.querySelector(`[data-audio-id="${otherAudio.id}"]`);
+              if (otherBtn) {
+                const otherIcon = otherBtn.querySelector('i');
+                otherIcon.classList.remove('fa-pause');
+                otherIcon.classList.add('fa-play');
+                otherBtn.closest('.track-row').classList.remove('is-playing');
+              }
             }
+          });
+
+          if (audio.paused) {
+            audio.play();
+            icon.classList.remove('fa-play');
+            icon.classList.add('fa-pause');
+            row.classList.add('is-playing');
+          } else {
+            audio.pause();
+            icon.classList.remove('fa-pause');
+            icon.classList.add('fa-play');
+            row.classList.remove('is-playing');
           }
+
+          audio.onended = () => {
+            icon.classList.remove('fa-pause');
+            icon.classList.add('fa-play');
+            row.classList.remove('is-playing');
+          };
         });
+      });
+    }
 
-        if (audio.paused) {
-          audio.play();
-          icon.classList.remove('fa-play');
-          icon.classList.add('fa-pause');
-          row.classList.add('is-playing');
-        } else {
-          audio.pause();
-          icon.classList.remove('fa-pause');
-          icon.classList.add('fa-play');
-          row.classList.remove('is-playing');
+    if (searchBtn && searchInput) {
+      searchBtn.addEventListener('click', () => {
+        fetchTracks(searchInput.value.trim());
+      });
+
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          fetchTracks(searchInput.value.trim());
         }
+      });
+    }
 
-        audio.onended = () => {
-          icon.classList.remove('fa-pause');
-          icon.classList.add('fa-play');
-          row.classList.remove('is-playing');
-        };
+    document.querySelectorAll('.sort-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const filter = tab.textContent.trim();
+        if (filter === 'Game Loops') {
+          fetchTracks('', 'Gaming');
+        } else {
+          fetchTracks('');
+        }
+      });
+    });
+
+    document.querySelectorAll('.cat-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        e.preventDefault();
+        const genreName = card.querySelector('.cat-name').textContent.trim();
+        fetchTracks('', genreName);
+        document.getElementById('esplora').scrollIntoView({ behavior: 'smooth' });
       });
     });
 
@@ -297,6 +343,8 @@
         heroSlides[currentSlide].classList.add('active');
       }, 6500);
     }
+
+    fetchTracks();
   </script>
 
 </body>
