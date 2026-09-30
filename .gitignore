@@ -1,3 +1,16 @@
+# Environment and secrets
+.env
+.env.*
+.dev.vars
+*.pem
+*.key
+*.cert
+
+# Cloudflare & tooling
+.wrangler/
+dist/
+.cache/
+
 # Windows
 Thumbs.db
 Thumbs.db:encryptable
