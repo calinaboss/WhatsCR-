@@ -433,33 +433,32 @@ button {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 4px;
-  height: 28px;
+  gap: 3px;
+  height: 32px;
   padding: 0 16px;
+  cursor: pointer;
+  user-select: none;
 }
 
 .wave-bar {
   flex: 1;
-  background-color: #cbd5e1;
+  background-color: #e2e8f0;
   border-radius: 2px;
-  transition: height 0.2s ease, background-color 0.2s ease;
+  transition: background-color 0.1s ease, height 0.15s ease;
+  pointer-events: none;
 }
 
 .track-row:hover .wave-bar {
-  background-color: #93c5fd;
+  background-color: #cbd5e1;
 }
 
-.track-row.is-playing .wave-bar {
-  background-color: var(--primary);
-  animation: wavePulse 1.2s infinite ease-in-out;
+.wave-bar.played {
+  background-color: var(--primary) !important;
 }
 
-.track-row.is-playing .wave-bar:nth-child(2n) {
-  animation-delay: 0.2s;
-}
-
-.track-row.is-playing .wave-bar:nth-child(3n) {
-  animation-delay: 0.4s;
+.track-row.is-playing .wave-bar.played {
+  background-color: var(--primary) !important;
+  box-shadow: 0 0 4px rgba(0, 151, 178, 0.4);
 }
 
 @keyframes wavePulse {

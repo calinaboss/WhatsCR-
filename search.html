@@ -236,21 +236,47 @@
     }
 
     function initAudioControls() {
-      document.querySelectorAll('.track-play-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const audioId = btn.getAttribute('data-audio-id');
-          const audio = document.getElementById(audioId);
-          const icon = btn.querySelector('i');
-          const row = btn.closest('.track-row');
+      document.querySelectorAll('.track-row').forEach(row => {
+        const btn = row.querySelector('.track-play-btn');
+        const audio = row.querySelector('audio');
+        const icon = btn.querySelector('i');
+        const waveform = row.querySelector('.track-waveform');
+        const bars = waveform.querySelectorAll('.wave-bar');
 
+        audio.addEventListener('timeupdate', () => {
+          if (!audio.duration) return;
+          const progress = audio.currentTime / audio.duration;
+          const activeIndex = Math.floor(progress * bars.length);
+          bars.forEach((bar, index) => {
+            bar.classList.toggle('played', index <= activeIndex);
+          });
+        });
+
+        waveform.addEventListener('click', (e) => {
+          const rect = waveform.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const pct = Math.max(0, Math.min(1, clickX / rect.width));
+          if (audio.duration) {
+            audio.currentTime = pct * audio.duration;
+            if (audio.paused) {
+              btn.click();
+            }
+          }
+        });
+
+        btn.addEventListener('click', () => {
           document.querySelectorAll('audio').forEach(otherAudio => {
             if (otherAudio !== audio) {
               otherAudio.pause();
               otherAudio.currentTime = 0;
-              const otherBtn = document.querySelector(`[data-audio-id="${otherAudio.id}"]`);
-              if (otherBtn) {
-                otherBtn.querySelector('i').className = 'fa-solid fa-play';
-                otherBtn.closest('.track-row').classList.remove('is-playing');
+              const otherRow = otherAudio.closest('.track-row');
+              if (otherRow) {
+                const otherBtn = otherRow.querySelector('.track-play-btn i');
+                if (otherBtn) {
+                  otherBtn.className = 'fa-solid fa-play';
+                }
+                otherRow.classList.remove('is-playing');
+                otherRow.querySelectorAll('.wave-bar').forEach(b => b.classList.remove('played'));
               }
             }
           });
@@ -268,6 +294,7 @@
           audio.onended = () => {
             icon.className = 'fa-solid fa-play';
             row.classList.remove('is-playing');
+            bars.forEach(b => b.classList.remove('played'));
           };
         });
       });
