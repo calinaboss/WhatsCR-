@@ -1,8 +1,8 @@
 export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
-  const query = url.searchParams.get('q');
-  const genre = url.searchParams.get('genre');
+  const query = (url.searchParams.get('q') || '').trim();
+  const genre = (url.searchParams.get('genre') || '').trim();
 
   if (!env.DATABASE_URL) {
     return new Response(JSON.stringify({ error: 'DATABASE_URL not configured' }), {
@@ -15,20 +15,26 @@ export async function onRequestGet(context) {
     let sql = 'SELECT * FROM tracks';
     const params = [];
 
+    const conditions = [];
     if (query) {
-      const cleanQuery = query.slice(0, 100);
-      params.push(`%${cleanQuery}%`);
-      sql += ` WHERE (title ILIKE $${params.length} OR artist ILIKE $${params.length} OR genre ILIKE $${params.length})`;
-    } else if (genre && genre !== 'All' && genre !== 'Popular') {
-      params.push(`%${genre}%`);
-      sql += ` WHERE genre ILIKE $${params.length}`;
+      const clean = query.slice(0, 100).toLowerCase();
+      params.push(`%${clean}%`);
+      conditions.push(`(LOWER(title) LIKE $${params.length} OR LOWER(artist) LIKE $${params.length} OR LOWER(genre) LIKE $${params.length})`);
+    }
+
+    if (genre && genre !== 'All' && genre !== 'Popular') {
+      params.push(`%${genre.toLowerCase()}%`);
+      conditions.push(`LOWER(genre) LIKE $${params.length}`);
+    }
+
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
     }
 
     sql += ' ORDER BY id DESC LIMIT 50';
 
     const dbUrl = new URL(env.DATABASE_URL);
-    const host = dbUrl.host;
-    const endpoint = `https://${host}/sql`;
+    const endpoint = `https://${dbUrl.host}/sql`;
 
     const neonRes = await fetch(endpoint, {
       method: 'POST',
@@ -43,15 +49,20 @@ export async function onRequestGet(context) {
     });
 
     if (!neonRes.ok) {
-      const errText = await neonRes.text();
-      return new Response(JSON.stringify({ error: errText }), {
+      const err = await neonRes.text();
+      return new Response(JSON.stringify({ error: err }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
     const data = await neonRes.json();
-    const rows = (data && data.rows) ? data.rows : (Array.isArray(data) && data[0] && data[0].rows ? data[0].rows : []);
+    let rows = [];
+    if (data && Array.isArray(data.rows)) {
+      rows = data.rows;
+    } else if (Array.isArray(data) && data[0] && Array.isArray(data[0].rows)) {
+      rows = data[0].rows;
+    }
 
     return new Response(JSON.stringify(rows), {
       status: 200,

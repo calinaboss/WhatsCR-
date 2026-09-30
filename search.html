@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Search Audio - WhatsCR?</title>
+  <title>Search - WhatsCR?</title>
   <link rel="icon" type="image/x-icon" href="Immagini/favicons/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="Immagini/favicons/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="Immagini/favicons/favicon-16x16.png">
@@ -21,8 +21,8 @@
   <header class="top-header">
     <div class="header-container">
       <nav class="header-nav left-nav">
-        <a href="index.html" class="nav-link">Home</a>
-        <a href="search.html" class="nav-link active">Explore</a>
+        <a href="index.html" class="nav-link">Explore</a>
+        <a href="index.html#categorie" class="nav-link">Genres</a>
         <a href="index.html#licenza" class="nav-link">License</a>
       </nav>
 
@@ -46,7 +46,7 @@
 
   <main class="search-page-main">
     <div class="section-container">
-      <div class="search-page-header">
+      <div class="search-top-container">
         <div class="search-box search-page-bar">
           <div class="search-icon-wrapper">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -67,7 +67,7 @@
       </div>
 
       <div class="search-results-info">
-        <h2 class="search-query-heading" id="search-heading">All Free Audio</h2>
+        <h2 class="search-query-heading" id="search-heading">All Found</h2>
         <span class="search-count" id="results-count">Loading...</span>
       </div>
 
@@ -141,16 +141,16 @@
     }
 
     async function executeSearch(query = '', genre = '') {
-      tracksContainer.innerHTML = '<div style="text-align:center; padding: 48px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1.8rem; color: #0097b2; margin-bottom: 12px; display: block;"></i>Searching audio tracks...</div>';
+      tracksContainer.innerHTML = '<div style="text-align:center; padding: 48px; color: #64748b;">Loading tracks...</div>';
 
       if (query && genre) {
         searchHeading.textContent = `Results for "${query}" in ${genre}`;
       } else if (query) {
         searchHeading.textContent = `Results for "${query}"`;
       } else if (genre) {
-        searchHeading.textContent = `${genre} Audio`;
+        searchHeading.textContent = `${genre}`;
       } else {
-        searchHeading.textContent = 'All Free Audio';
+        searchHeading.textContent = 'All Found';
       }
 
       try {
@@ -172,26 +172,17 @@
 
     function displayResults(tracks, query) {
       if (!tracks || tracks.length === 0) {
-        resultsCount.textContent = '0 tracks found';
+        resultsCount.textContent = '0 tracks';
         tracksContainer.innerHTML = `
-          <div style="text-align: center; padding: 60px 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
-            <i class="fa-solid fa-compact-disc" style="font-size: 3rem; color: #94a3b8; margin-bottom: 16px; display: block;"></i>
-            <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 8px;">No tracks found</h3>
-            <p style="color: #64748b; max-width: 480px; margin: 0 auto 20px; font-size: 0.95rem;">
-              ${query ? `We couldn't find any results for "<strong>${escapeHtml(query)}</strong>".` : 'No tracks are available in this category yet.'}
-            </p>
-            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-              <button onclick="clearAndSearch('Gaming')" class="pill" style="background: #f1f5f9; color: #0f172a;">Try Gaming</button>
-              <button onclick="clearAndSearch('Chiptune')" class="pill" style="background: #f1f5f9; color: #0f172a;">Try Chiptune</button>
-              <button onclick="clearAndSearch('Lo-Fi')" class="pill" style="background: #f1f5f9; color: #0f172a;">Try Lo-Fi</button>
-              <button onclick="clearAndSearch('')" class="pill" style="background: #0097b2; color: #ffffff;">View All</button>
-            </div>
+          <div class="no-results-box">
+            <h3>No tracks found</h3>
+            <p>${query ? `No results matching "${escapeHtml(query)}"` : 'No tracks available in this genre.'}</p>
           </div>
         `;
         return;
       }
 
-      resultsCount.textContent = `${tracks.length} track${tracks.length > 1 ? 's' : ''} available`;
+      resultsCount.textContent = `${tracks.length} track${tracks.length > 1 ? 's' : ''}`;
 
       tracksContainer.innerHTML = tracks.map(t => `
         <article class="track-row">
@@ -243,15 +234,6 @@
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
       }[m]));
     }
-
-    window.clearAndSearch = function(term) {
-      searchInput.value = '';
-      currentGenre = term;
-      genrePills.forEach(p => {
-        p.classList.toggle('active', p.getAttribute('data-genre') === term);
-      });
-      executeSearch('', term);
-    };
 
     function initAudioControls() {
       document.querySelectorAll('.track-play-btn').forEach(btn => {
