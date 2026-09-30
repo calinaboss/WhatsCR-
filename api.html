@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API - WhatsCR?</title>
+  <link rel="icon" type="image/x-icon" href="Immagini/favicons/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="Immagini/favicons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="Immagini/favicons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="Immagini/favicons/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#0097b2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="legal-body">
+
+  <header class="legal-header">
+    <div class="legal-header-inner">
+      <a href="index.html" class="legal-brand" title="Back to Home">
+        <img src="Immagini/brand/Logo.webp" alt="Logo WhatsCR" class="brand-icon">
+        <img src="Immagini/brand/scrittawhatscr.webp" alt="WhatsCR?" class="brand-text">
+      </a>
+      <a href="index.html" class="legal-back-link">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back to Home</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="legal-main">
+    <div class="legal-container">
+      <h1 class="legal-title">WhatsCR Developer API</h1>
+      <p class="legal-subtitle">Programmatic access to our copyright-free audio catalog.</p>
+
+      <section class="legal-section">
+        <h2>Endpoint Overview</h2>
+        <p>You can query audio tracks and search by keyword or genre using our JSON REST API:</p>
+        <pre style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; font-size: 0.9rem; overflow-x: auto; color: #0f172a;">GET /api/tracks?q={search_term}&genre={genre}</pre>
+      </section>
+
+      <section class="legal-section">
+        <h2>Response Format</h2>
+        <p>The endpoint returns a JSON array containing track metadata including title, artist, audio stream link, duration, and license details.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="legal-footer">
+    <p>&copy; 2026 WhatsCR? All rights reserved. <a href="index.html">Return to Home</a></p>
+  </footer>
+
+</body>
+</html>
