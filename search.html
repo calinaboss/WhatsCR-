@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Audio - WhatsCR?</title>
+  <link rel="icon" type="image/x-icon" href="Immagini/favicons/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="Immagini/favicons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="Immagini/favicons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="Immagini/favicons/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#0097b2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="top-header">
+    <div class="header-container">
+      <nav class="header-nav left-nav">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="search.html" class="nav-link active">Explore</a>
+        <a href="index.html#licenza" class="nav-link">License</a>
+      </nav>
+
+      <div class="header-brand-center">
+        <a href="index.html" class="brand-link">
+          <img src="Immagini/brand/Logo.webp" alt="Logo WhatsCR" class="brand-icon">
+          <img src="Immagini/brand/scrittawhatscr.webp" alt="WhatsCR?" class="brand-text">
+        </a>
+      </div>
+
+      <div class="header-nav right-nav">
+        <a href="#accedi" class="nav-link">Log in</a>
+        <a href="#unisciti" class="nav-link">register</a>
+        <a href="#carica" class="btn-upload">
+          <i class="fa-solid fa-arrow-up-from-bracket"></i>
+          <span>Upload</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="search-page-main">
+    <div class="section-container">
+      <div class="search-page-header">
+        <div class="search-box search-page-bar">
+          <div class="search-icon-wrapper">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </div>
+          <input type="text" id="page-search-input" placeholder="Search music without copyright, genre, artist..." class="search-input">
+          <button id="page-search-btn" class="search-submit-btn">Search</button>
+        </div>
+
+        <div class="search-filter-pills" id="genre-pills">
+          <button class="pill active" data-genre="">All</button>
+          <button class="pill" data-genre="Gaming">Gaming</button>
+          <button class="pill" data-genre="Chiptune">Chiptune</button>
+          <button class="pill" data-genre="Lo-Fi">Lo-Fi</button>
+          <button class="pill" data-genre="Cinematic">Cinematic</button>
+          <button class="pill" data-genre="Synthwave">Synthwave</button>
+          <button class="pill" data-genre="Sound Effects">Sound Effects</button>
+        </div>
+      </div>
+
+      <div class="search-results-info">
+        <h2 class="search-query-heading" id="search-heading">All Free Audio</h2>
+        <span class="search-count" id="results-count">Loading...</span>
+      </div>
+
+      <div class="tracks-list" id="search-tracks-container">
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="footer-logo-row">
+          <img src="Immagini/brand/Logo.webp" alt="Logo" class="footer-logo">
+          <img src="Immagini/brand/scrittawhatscr.webp" alt="WhatsCR" class="footer-text">
+        </div>
+        <p class="footer-desc">The platform dedicated to high quality copyright-free music for game developers and digital creators.</p>
+      </div>
+
+      <div class="footer-cols">
+        <div class="f-col">
+          <h4>Explore</h4>
+          <ul>
+            <li><a href="search.html?genre=Gaming">Game Music</a></li>
+            <li><a href="search.html?genre=Chiptune">8-Bit Loops</a></li>
+            <li><a href="search.html?genre=Lo-Fi">Lo-Fi Beats</a></li>
+            <li><a href="search.html?genre=Sound%20Effects">Sound Effects</a></li>
+          </ul>
+        </div>
+        <div class="f-col">
+          <h4>Community</h4>
+          <ul>
+            <li><a href="#">Guidelines</a></li>
+            <li><a href="#">Discord Server</a></li>
+          </ul>
+        </div>
+        <div class="f-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#">WhatsCR Safe License</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Copyright Info</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialQuery = urlParams.get('q') || '';
+    const initialGenre = urlParams.get('genre') || '';
+
+    const searchInput = document.getElementById('page-search-input');
+    const searchBtn = document.getElementById('page-search-btn');
+    const tracksContainer = document.getElementById('search-tracks-container');
+    const searchHeading = document.getElementById('search-heading');
+    const resultsCount = document.getElementById('results-count');
+    const genrePills = document.querySelectorAll('#genre-pills .pill');
+
+    let currentGenre = initialGenre;
+    searchInput.value = initialQuery;
+
+    if (currentGenre) {
+      genrePills.forEach(p => {
+        if (p.getAttribute('data-genre').toLowerCase() === currentGenre.toLowerCase()) {
+          genrePills.forEach(x => x.classList.remove('active'));
+          p.classList.add('active');
+        }
+      });
+    }
+
+    async function executeSearch(query = '', genre = '') {
+      tracksContainer.innerHTML = '<div style="text-align:center; padding: 48px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1.8rem; color: #0097b2; margin-bottom: 12px; display: block;"></i>Searching audio tracks...</div>';
+
+      if (query && genre) {
+        searchHeading.textContent = `Results for "${query}" in ${genre}`;
+      } else if (query) {
+        searchHeading.textContent = `Results for "${query}"`;
+      } else if (genre) {
+        searchHeading.textContent = `${genre} Audio`;
+      } else {
+        searchHeading.textContent = 'All Free Audio';
+      }
+
+      try {
+        let endpoint = '/api/tracks';
+        const params = new URLSearchParams();
+        if (query) params.append('q', query);
+        if (genre) params.append('genre', genre);
+        if (params.toString()) endpoint += `?${params.toString()}`;
+
+        const res = await fetch(endpoint);
+        if (!res.ok) throw new Error('Query error');
+        const tracks = await res.json();
+
+        displayResults(tracks, query);
+      } catch (err) {
+        displayResults([], query);
+      }
+    }
+
+    function displayResults(tracks, query) {
+      if (!tracks || tracks.length === 0) {
+        resultsCount.textContent = '0 tracks found';
+        tracksContainer.innerHTML = `
+          <div style="text-align: center; padding: 60px 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
+            <i class="fa-solid fa-compact-disc" style="font-size: 3rem; color: #94a3b8; margin-bottom: 16px; display: block;"></i>
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 8px;">No tracks found</h3>
+            <p style="color: #64748b; max-width: 480px; margin: 0 auto 20px; font-size: 0.95rem;">
+              ${query ? `We couldn't find any results for "<strong>${escapeHtml(query)}</strong>".` : 'No tracks are available in this category yet.'}
+            </p>
+            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+              <button onclick="clearAndSearch('Gaming')" class="pill" style="background: #f1f5f9; color: #0f172a;">Try Gaming</button>
+              <button onclick="clearAndSearch('Chiptune')" class="pill" style="background: #f1f5f9; color: #0f172a;">Try Chiptune</button>
+              <button onclick="clearAndSearch('Lo-Fi')" class="pill" style="background: #f1f5f9; color: #0f172a;">Try Lo-Fi</button>
+              <button onclick="clearAndSearch('')" class="pill" style="background: #0097b2; color: #ffffff;">View All</button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      resultsCount.textContent = `${tracks.length} track${tracks.length > 1 ? 's' : ''} available`;
+
+      tracksContainer.innerHTML = tracks.map(t => `
+        <article class="track-row">
+          <audio id="audio-${t.id}" src="${t.audio_url}" preload="metadata"></audio>
+          <button class="track-play-btn" data-audio-id="audio-${t.id}" aria-label="Play ${escapeHtml(t.title)}">
+            <i class="fa-solid fa-play"></i>
+          </button>
+          <div class="track-meta">
+            <h4 class="track-name">${escapeHtml(t.title)}</h4>
+            <span class="track-artist">${escapeHtml(t.artist || 'Unknown')} • ${escapeHtml(t.genre || 'Soundtrack')}</span>
+          </div>
+          <div class="track-waveform">
+            <span class="wave-bar" style="height: 35%"></span>
+            <span class="wave-bar" style="height: 65%"></span>
+            <span class="wave-bar" style="height: 90%"></span>
+            <span class="wave-bar" style="height: 45%"></span>
+            <span class="wave-bar" style="height: 80%"></span>
+            <span class="wave-bar" style="height: 100%"></span>
+            <span class="wave-bar" style="height: 70%"></span>
+            <span class="wave-bar" style="height: 50%"></span>
+            <span class="wave-bar" style="height: 85%"></span>
+            <span class="wave-bar" style="height: 60%"></span>
+            <span class="wave-bar" style="height: 40%"></span>
+            <span class="wave-bar" style="height: 75%"></span>
+            <span class="wave-bar" style="height: 95%"></span>
+            <span class="wave-bar" style="height: 55%"></span>
+            <span class="wave-bar" style="height: 30%"></span>
+          </div>
+          <div class="track-badges">
+            ${t.is_loop ? '<span class="badge badge-loop">Seamless Loop</span>' : ''}
+            <span class="badge badge-cc">${escapeHtml(t.license_type || 'CC0 Free')}</span>
+          </div>
+          <span class="track-time">${escapeHtml(t.duration || '2:00')}</span>
+          <div class="track-actions">
+            <a href="${t.audio_url}" download class="btn-download" title="Download track">
+              <i class="fa-solid fa-download"></i>
+              <span>Download</span>
+            </a>
+          </div>
+        </article>
+      `).join('');
+
+      initAudioControls();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    window.clearAndSearch = function(term) {
+      searchInput.value = '';
+      currentGenre = term;
+      genrePills.forEach(p => {
+        p.classList.toggle('active', p.getAttribute('data-genre') === term);
+      });
+      executeSearch('', term);
+    };
+
+    function initAudioControls() {
+      document.querySelectorAll('.track-play-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const audioId = btn.getAttribute('data-audio-id');
+          const audio = document.getElementById(audioId);
+          const icon = btn.querySelector('i');
+          const row = btn.closest('.track-row');
+
+          document.querySelectorAll('audio').forEach(otherAudio => {
+            if (otherAudio !== audio) {
+              otherAudio.pause();
+              otherAudio.currentTime = 0;
+              const otherBtn = document.querySelector(`[data-audio-id="${otherAudio.id}"]`);
+              if (otherBtn) {
+                otherBtn.querySelector('i').className = 'fa-solid fa-play';
+                otherBtn.closest('.track-row').classList.remove('is-playing');
+              }
+            }
+          });
+
+          if (audio.paused) {
+            audio.play();
+            icon.className = 'fa-solid fa-pause';
+            row.classList.add('is-playing');
+          } else {
+            audio.pause();
+            icon.className = 'fa-solid fa-play';
+            row.classList.remove('is-playing');
+          }
+
+          audio.onended = () => {
+            icon.className = 'fa-solid fa-play';
+            row.classList.remove('is-playing');
+          };
+        });
+      });
+    }
+
+    searchBtn.addEventListener('click', () => {
+      const q = searchInput.value.trim();
+      executeSearch(q, currentGenre);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const q = searchInput.value.trim();
+        executeSearch(q, currentGenre);
+      }
+    });
+
+    genrePills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        genrePills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        currentGenre = pill.getAttribute('data-genre');
+        executeSearch(searchInput.value.trim(), currentGenre);
+      });
+    });
+
+    executeSearch(initialQuery, initialGenre);
+  </script>
+</body>
+</html>

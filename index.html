@@ -300,14 +300,22 @@
       });
     }
 
+    function redirectToSearch(query) {
+      if (query) {
+        window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+      } else {
+        window.location.href = 'search.html';
+      }
+    }
+
     if (searchBtn && searchInput) {
       searchBtn.addEventListener('click', () => {
-        fetchTracks(searchInput.value.trim());
+        redirectToSearch(searchInput.value.trim());
       });
 
       searchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-          fetchTracks(searchInput.value.trim());
+          redirectToSearch(searchInput.value.trim());
         }
       });
     }
@@ -329,8 +337,7 @@
       card.addEventListener('click', (e) => {
         e.preventDefault();
         const genreName = card.querySelector('.cat-name').textContent.trim();
-        fetchTracks('', genreName);
-        document.getElementById('esplora').scrollIntoView({ behavior: 'smooth' });
+        window.location.href = `search.html?genre=${encodeURIComponent(genreName)}`;
       });
     });
 
