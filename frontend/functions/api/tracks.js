@@ -1,5 +1,3 @@
-import { Client } from '@neondatabase/serverless';
-
 export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
@@ -13,16 +11,13 @@ export async function onRequestGet(context) {
     });
   }
 
-  const client = new Client(env.DATABASE_URL);
-
   try {
-    await client.connect();
-
     let sql = 'SELECT * FROM tracks';
     const params = [];
 
     if (query) {
-      params.push(`%${query}%`);
+      const cleanQuery = query.slice(0, 100);
+      params.push(`%${cleanQuery}%`);
       sql += ` WHERE (title ILIKE $${params.length} OR artist ILIKE $${params.length} OR genre ILIKE $${params.length})`;
     } else if (genre && genre !== 'All' && genre !== 'Popular') {
       params.push(`%${genre}%`);
@@ -31,9 +26,34 @@ export async function onRequestGet(context) {
 
     sql += ' ORDER BY id DESC LIMIT 50';
 
-    const result = await client.query(sql, params);
+    const dbUrl = new URL(env.DATABASE_URL);
+    const host = dbUrl.host;
+    const endpoint = `https://${host}/sql`;
 
-    return new Response(JSON.stringify(result.rows), {
+    const neonRes = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${dbUrl.password}`
+      },
+      body: JSON.stringify({
+        query: sql,
+        params: params
+      })
+    });
+
+    if (!neonRes.ok) {
+      const errText = await neonRes.text();
+      return new Response(JSON.stringify({ error: errText }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const data = await neonRes.json();
+    const rows = (data && data.rows) ? data.rows : (Array.isArray(data) && data[0] && data[0].rows ? data[0].rows : []);
+
+    return new Response(JSON.stringify(rows), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -45,7 +65,5 @@ export async function onRequestGet(context) {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
-  } finally {
-    context.waitUntil(client.end());
   }
 }
