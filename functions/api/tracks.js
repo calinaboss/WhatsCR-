@@ -14,8 +14,8 @@ export async function onRequestGet(context) {
   try {
     let sql = 'SELECT * FROM tracks';
     const params = [];
-
     const conditions = [];
+
     if (query) {
       const clean = query.slice(0, 100).toLowerCase();
       params.push(`%${clean}%`);
@@ -40,7 +40,7 @@ export async function onRequestGet(context) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${dbUrl.password}`
+        'Neon-Connection-String': env.DATABASE_URL
       },
       body: JSON.stringify({
         query: sql,
