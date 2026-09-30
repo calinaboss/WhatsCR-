@@ -15,6 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/wavesurfer.js@7"></script>
 </head>
 <body>
 
@@ -185,37 +186,20 @@
       resultsCount.textContent = `${tracks.length} track${tracks.length > 1 ? 's' : ''}`;
 
       tracksContainer.innerHTML = tracks.map(t => `
-        <article class="track-row">
-          <audio id="audio-${t.id}" src="${t.audio_url}" preload="metadata"></audio>
-          <button class="track-play-btn" data-audio-id="audio-${t.id}" aria-label="Play ${escapeHtml(t.title)}">
+        <article class="track-row" id="track-row-${t.id}">
+          <button class="track-play-btn" data-track-id="${t.id}" aria-label="Play ${escapeHtml(t.title)}">
             <i class="fa-solid fa-play"></i>
           </button>
           <div class="track-meta">
             <h4 class="track-name">${escapeHtml(t.title)}</h4>
             <span class="track-artist">${escapeHtml(t.artist || 'Unknown')} • ${escapeHtml(t.genre || 'Soundtrack')}</span>
           </div>
-          <div class="track-waveform">
-            <span class="wave-bar" style="height: 35%"></span>
-            <span class="wave-bar" style="height: 65%"></span>
-            <span class="wave-bar" style="height: 90%"></span>
-            <span class="wave-bar" style="height: 45%"></span>
-            <span class="wave-bar" style="height: 80%"></span>
-            <span class="wave-bar" style="height: 100%"></span>
-            <span class="wave-bar" style="height: 70%"></span>
-            <span class="wave-bar" style="height: 50%"></span>
-            <span class="wave-bar" style="height: 85%"></span>
-            <span class="wave-bar" style="height: 60%"></span>
-            <span class="wave-bar" style="height: 40%"></span>
-            <span class="wave-bar" style="height: 75%"></span>
-            <span class="wave-bar" style="height: 95%"></span>
-            <span class="wave-bar" style="height: 55%"></span>
-            <span class="wave-bar" style="height: 30%"></span>
-          </div>
+          <div class="track-waveform" id="waveform-${t.id}"></div>
           <div class="track-badges">
             ${t.is_loop ? '<span class="badge badge-loop">Seamless Loop</span>' : ''}
             <span class="badge badge-cc">${escapeHtml(t.license_type || 'CC0 Free')}</span>
           </div>
-          <span class="track-time">${escapeHtml(t.duration || '2:00')}</span>
+          <span class="track-time" id="time-${t.id}">${escapeHtml(t.duration || '0:00')}</span>
           <div class="track-actions">
             <a href="${t.audio_url}" download class="btn-download" title="Download track">
               <i class="fa-solid fa-download"></i>
@@ -225,7 +209,7 @@
         </article>
       `).join('');
 
-      initAudioControls();
+      initWaveSurfers(tracks);
     }
 
     function escapeHtml(str) {
@@ -235,68 +219,77 @@
       }[m]));
     }
 
-    function initAudioControls() {
-      document.querySelectorAll('.track-row').forEach(row => {
-        const btn = row.querySelector('.track-play-btn');
-        const audio = row.querySelector('audio');
-        const icon = btn.querySelector('i');
-        const waveform = row.querySelector('.track-waveform');
-        const bars = waveform.querySelectorAll('.wave-bar');
+    const waveSurferInstances = new Map();
 
-        audio.addEventListener('timeupdate', () => {
-          if (!audio.duration) return;
-          const progress = audio.currentTime / audio.duration;
-          const activeIndex = Math.floor(progress * bars.length);
-          bars.forEach((bar, index) => {
-            bar.classList.toggle('played', index <= activeIndex);
-          });
+    function initWaveSurfers(tracks) {
+      waveSurferInstances.forEach(ws => ws.destroy());
+      waveSurferInstances.clear();
+
+      tracks.forEach(t => {
+        const container = document.getElementById(`waveform-${t.id}`);
+        if (!container) return;
+
+        const ws = WaveSurfer.create({
+          container: container,
+          waveColor: '#cbd5e1',
+          progressColor: '#0097b2',
+          cursorColor: 'transparent',
+          barWidth: 2,
+          barGap: 3,
+          barRadius: 2,
+          height: 34,
+          url: t.audio_url
         });
 
-        waveform.addEventListener('click', (e) => {
-          const rect = waveform.getBoundingClientRect();
-          const clickX = e.clientX - rect.left;
-          const pct = Math.max(0, Math.min(1, clickX / rect.width));
-          if (audio.duration) {
-            audio.currentTime = pct * audio.duration;
-            if (audio.paused) {
-              btn.click();
-            }
-          }
+        const row = document.getElementById(`track-row-${t.id}`);
+        const btn = row.querySelector('.track-play-btn');
+        const icon = btn.querySelector('i');
+        const timeEl = document.getElementById(`time-${t.id}`);
+
+        ws.on('ready', () => {
+          const totalSec = Math.floor(ws.getDuration());
+          const mins = Math.floor(totalSec / 60);
+          const secs = (totalSec % 60).toString().padStart(2, '0');
+          if (timeEl) timeEl.textContent = `${mins}:${secs}`;
+        });
+
+        ws.on('timeupdate', (currentTime) => {
+          const totalSec = Math.floor(ws.getDuration());
+          const curSec = Math.floor(currentTime);
+          const mins = Math.floor(curSec / 60);
+          const secs = (curSec % 60).toString().padStart(2, '0');
+          if (timeEl) timeEl.textContent = `${mins}:${secs}`;
+        });
+
+        ws.on('finish', () => {
+          icon.className = 'fa-solid fa-play';
+          row.classList.remove('is-playing');
         });
 
         btn.addEventListener('click', () => {
-          document.querySelectorAll('audio').forEach(otherAudio => {
-            if (otherAudio !== audio) {
-              otherAudio.pause();
-              otherAudio.currentTime = 0;
-              const otherRow = otherAudio.closest('.track-row');
+          waveSurferInstances.forEach((otherWs, otherId) => {
+            if (otherId !== t.id && otherWs.isPlaying()) {
+              otherWs.pause();
+              const otherRow = document.getElementById(`track-row-${otherId}`);
               if (otherRow) {
-                const otherBtn = otherRow.querySelector('.track-play-btn i');
-                if (otherBtn) {
-                  otherBtn.className = 'fa-solid fa-play';
-                }
                 otherRow.classList.remove('is-playing');
-                otherRow.querySelectorAll('.wave-bar').forEach(b => b.classList.remove('played'));
+                otherRow.querySelector('.track-play-btn i').className = 'fa-solid fa-play';
               }
             }
           });
 
-          if (audio.paused) {
-            audio.play();
+          if (ws.isPlaying()) {
+            ws.pause();
+            icon.className = 'fa-solid fa-play';
+            row.classList.remove('is-playing');
+          } else {
+            ws.play();
             icon.className = 'fa-solid fa-pause';
             row.classList.add('is-playing');
-          } else {
-            audio.pause();
-            icon.className = 'fa-solid fa-play';
-            row.classList.remove('is-playing');
           }
-
-          audio.onended = () => {
-            icon.className = 'fa-solid fa-play';
-            row.classList.remove('is-playing');
-            bars.forEach(b => b.classList.remove('played'));
-          };
         });
+
+        waveSurferInstances.set(t.id, ws);
       });
     }
 
