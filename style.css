@@ -216,7 +216,6 @@ button {
 }
 
 .search-box:focus-within {
-  box-shadow: 0 12px 38px rgba(0, 151, 178, 0.35);
   transform: translateY(-1px);
 }
 
