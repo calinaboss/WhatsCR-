@@ -1,5 +1,37 @@
+const rateLimitCache = new Map();
+
 export async function onRequestGet(context) {
   const { request, env } = context;
+  const ip = request.headers.get('CF-Connecting-IP') || 'anonymous';
+  const now = Date.now();
+  const windowMs = 60000;
+  const maxRequests = 60;
+
+  const current = rateLimitCache.get(ip) || { count: 0, resetTime: now + windowMs };
+  if (now > current.resetTime) {
+    current.count = 1;
+    current.resetTime = now + windowMs;
+  } else {
+    current.count++;
+  }
+  rateLimitCache.set(ip, current);
+
+  if (rateLimitCache.size > 2000) {
+    for (const [key, val] of rateLimitCache.entries()) {
+      if (now > val.resetTime) rateLimitCache.delete(key);
+    }
+  }
+
+  if (current.count > maxRequests) {
+    return new Response(JSON.stringify({ error: 'Too many requests, please slow down' }), {
+      status: 429,
+      headers: {
+        'Content-Type': 'application/json',
+        'Retry-After': '60'
+      }
+    });
+  }
+
   const url = new URL(request.url);
   const query = (url.searchParams.get('q') || '').trim();
   const genre = (url.searchParams.get('genre') || '').trim();
@@ -23,7 +55,8 @@ export async function onRequestGet(context) {
     }
 
     if (genre && genre !== 'All' && genre !== 'Popular') {
-      params.push(`%${genre.toLowerCase()}%`);
+      const cleanGenre = genre.slice(0, 50).toLowerCase();
+      params.push(`%${cleanGenre}%`);
       conditions.push(`LOWER(genre) LIKE $${params.length}`);
     }
 
@@ -67,7 +100,8 @@ export async function onRequestGet(context) {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        'Cache-Control': 'public, max-age=15, stale-while-revalidate=60',
+        'X-Content-Type-Options': 'nosniff'
       }
     });
   } catch (error) {
