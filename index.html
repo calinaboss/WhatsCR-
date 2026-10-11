@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WhatsCR? No cr things</title>
+  <meta name="description" content="Discover and download 100% copyright-free music, game loops, chiptune, and sound effects for creators and developers on WhatsCR.">
   <link rel="icon" type="image/x-icon" href="Immagini/favicons/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="Immagini/favicons/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="Immagini/favicons/favicon-16x16.png">
@@ -11,11 +12,13 @@
   <link rel="manifest" href="site.webmanifest">
   <meta name="theme-color" content="#0097b2">
   <meta name="msapplication-TileColor" content="#0097b2">
-  <meta property="og:title" content="WhatsCR? No cr things">
+  <meta property="og:title" content="WhatsCR? - Copyright-Free Music & Audio for Creators">
   <meta property="og:description" content="Search music and many other things without copyright. Free audio resources for any project.">
   <meta property="og:image" content="Immagini/brand/Logo.webp">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="WhatsCR? - Copyright-Free Music & Audio for Creators">
+  <meta name="twitter:description" content="Search music and audio without copyright. Free resources for any project.">
   <meta name="twitter:image" content="Immagini/brand/Logo.webp">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +26,20 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/wavesurfer.js@7"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "WhatsCR?",
+    "url": "https://whatscr.pages.dev",
+    "description": "High quality copyright-free music and audio library for games, videos, and digital creators.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://whatscr.pages.dev/search.html?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
 </head>
 <body>
 
@@ -225,6 +242,12 @@
             <span class="badge badge-cc">${t.license_type || 'CC0 Free'}</span>
           </div>
           <span class="track-time" id="time-${t.id}">${t.duration || '0:00'}</span>
+          <div class="track-volume-wrap">
+            <button class="track-vol-btn" data-track-id="${t.id}" aria-label="Toggle mute">
+              <i class="fa-solid fa-volume-high"></i>
+            </button>
+            <input type="range" class="track-vol-slider" min="0" max="1" step="0.05" value="0.8" data-track-id="${t.id}" aria-label="Volume slider">
+          </div>
           <div class="track-actions">
             <a href="${t.audio_url}" download class="btn-download" title="Download track">
               <i class="fa-solid fa-download"></i>
@@ -267,10 +290,41 @@
           url: t.audio_url
         });
 
+        ws.setVolume(0.8);
+
         const row = document.getElementById(`track-row-${t.id}`);
         const btn = row.querySelector('.track-play-btn');
         const icon = btn.querySelector('i');
         const timeEl = document.getElementById(`time-${t.id}`);
+        const volBtn = row.querySelector('.track-vol-btn');
+        const volSlider = row.querySelector('.track-vol-slider');
+        const volIcon = volBtn.querySelector('i');
+
+        volSlider.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          ws.setVolume(val);
+          if (val === 0) {
+            volIcon.className = 'fa-solid fa-volume-xmark';
+          } else if (val < 0.5) {
+            volIcon.className = 'fa-solid fa-volume-low';
+          } else {
+            volIcon.className = 'fa-solid fa-volume-high';
+          }
+        });
+
+        let prevVolume = 0.8;
+        volBtn.addEventListener('click', () => {
+          if (ws.getVolume() > 0) {
+            prevVolume = ws.getVolume();
+            ws.setVolume(0);
+            volSlider.value = 0;
+            volIcon.className = 'fa-solid fa-volume-xmark';
+          } else {
+            ws.setVolume(prevVolume || 0.8);
+            volSlider.value = prevVolume || 0.8;
+            volIcon.className = prevVolume < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
+          }
+        });
 
         ws.on('ready', () => {
           const totalSec = Math.floor(ws.getDuration());
