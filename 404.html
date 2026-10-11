@@ -9,45 +9,226 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/Immagini/favicons/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/Immagini/favicons/favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/Immagini/favicons/apple-touch-icon.png">
-  <link rel="manifest" href="/site.webmanifest">
   <meta name="theme-color" content="#0097b2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="/style.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #ffffff;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+    .header-404 {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 16px 24px;
+      background: #ffffff;
+    }
+    .header-404-inner {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand-link-404 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .brand-icon-404 {
+      height: 34px;
+      width: auto;
+    }
+    .brand-text-404 {
+      height: 26px;
+      width: auto;
+    }
+    .back-btn-404 {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #64748b;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    .back-btn-404:hover {
+      color: #0097b2;
+      background: #f1f5f9;
+    }
+    .main-404 {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px 60px;
+    }
+    .container-404 {
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .img-wrap-404 {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+    .mascot-img-404 {
+      max-width: 260px;
+      width: 100%;
+      height: auto;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e2e8f0;
+      display: block;
+    }
+    .code-text-404 {
+      font-size: 3.2rem;
+      font-weight: 800;
+      color: #0097b2;
+      line-height: 1;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    .title-text-404 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+      margin-bottom: 10px;
+    }
+    .desc-text-404 {
+      font-size: 0.96rem;
+      color: #64748b;
+      line-height: 1.6;
+      margin-bottom: 28px;
+      max-width: 420px;
+    }
+    .btns-wrap-404 {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-home-404 {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #0097b2;
+      color: #ffffff;
+      padding: 12px 24px;
+      border-radius: 9999px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0, 151, 178, 0.25);
+    }
+    .btn-home-404:hover {
+      background: #008299;
+      transform: translateY(-1px);
+    }
+    .btn-search-404 {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 12px 24px;
+      border-radius: 9999px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn-search-404:hover {
+      background: #e2e8f0;
+      color: #0097b2;
+    }
+    .footer-404 {
+      border-top: 1px solid #e2e8f0;
+      padding: 20px 24px;
+      text-align: center;
+      color: #64748b;
+      font-size: 0.88rem;
+    }
+    .footer-404 a {
+      color: #0097b2;
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+    @media (max-width: 640px) {
+      .mascot-img-404 {
+        max-width: 220px;
+      }
+      .code-text-404 {
+        font-size: 2.6rem;
+      }
+      .title-text-404 {
+        font-size: 1.35rem;
+      }
+      .btns-wrap-404 {
+        flex-direction: column;
+        width: 100%;
+      }
+      .btn-home-404, .btn-search-404 {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
 </head>
-<body class="legal-body">
+<body>
 
-  <header class="legal-header">
-    <div class="legal-header-inner">
-      <a href="/" class="legal-brand" title="Back to Home">
-        <img src="/Immagini/brand/Logo.webp" alt="WhatsCR Logo" class="brand-icon">
-        <img src="/Immagini/brand/scrittawhatscr.webp" alt="WhatsCR" class="brand-text">
+  <header class="header-404">
+    <div class="header-404-inner">
+      <a href="/" class="brand-link-404" title="Back to Home">
+        <img src="/Immagini/brand/Logo.webp" alt="WhatsCR Logo" class="brand-icon-404">
+        <img src="/Immagini/brand/scrittawhatscr.webp" alt="WhatsCR" class="brand-text-404">
       </a>
-      <a href="/" class="legal-back-link">
+      <a href="/" class="back-btn-404">
         <i class="fa-solid fa-arrow-left"></i>
         <span>Back to Home</span>
       </a>
     </div>
   </header>
 
-  <main class="page-404-main">
-    <div class="card-404">
-      <div class="mascot-404-wrapper">
-        <img src="/Immagini/brand/404.webp" alt="WhatsCR Mascot 404" class="mascot-404-img">
+  <main class="main-404">
+    <div class="container-404">
+      <div class="img-wrap-404">
+        <img src="/Immagini/brand/404.webp" alt="WhatsCR Mascot 404" class="mascot-img-404">
       </div>
-      <div class="code-404">404</div>
-      <h1 class="title-404">Lost in the Audio Desert?</h1>
-      <p class="desc-404">
+      <div class="code-text-404">404</div>
+      <h1 class="title-text-404">Lost in the Audio Desert?</h1>
+      <p class="desc-text-404">
         The track or page you are searching for does not exist or has been moved.
       </p>
-      <div class="actions-404">
-        <a href="/" class="btn-404-primary">
+      <div class="btns-wrap-404">
+        <a href="/" class="btn-home-404">
           <i class="fa-solid fa-house"></i>
           <span>Go to Home</span>
         </a>
-        <a href="/search.html" class="btn-404-secondary">
+        <a href="/search.html" class="btn-search-404">
           <i class="fa-solid fa-magnifying-glass"></i>
           <span>Search Music</span>
         </a>
@@ -55,7 +236,7 @@
     </div>
   </main>
 
-  <footer class="legal-footer">
+  <footer class="footer-404">
     <p>&copy; 2026 WhatsCR? All rights reserved. <a href="/">Return to Home</a></p>
   </footer>
 
