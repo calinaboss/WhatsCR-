@@ -477,6 +477,8 @@ button {
   width: 45px;
   text-align: right;
   flex-shrink: 0;
+}
+
 .track-actions {
   flex-shrink: 0;
 }
