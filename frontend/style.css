@@ -477,10 +477,72 @@ button {
   width: 45px;
   text-align: right;
   flex-shrink: 0;
-}
-
 .track-actions {
   flex-shrink: 0;
+}
+
+.track-volume-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.track-vol-btn {
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.track-vol-btn:hover {
+  color: var(--primary);
+  background: var(--bg-muted);
+}
+
+.track-vol-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 64px;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.track-vol-slider:hover {
+  background: #cbd5e1;
+}
+
+.track-vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.track-vol-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.track-vol-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: none;
+  cursor: pointer;
 }
 
 .btn-download {

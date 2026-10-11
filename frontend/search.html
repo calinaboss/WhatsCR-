@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Search - WhatsCR?</title>
+  <title>Search Free Audio & Music Tracks - WhatsCR?</title>
+  <meta name="description" content="Search copyright-free background music, sound effects, gaming audio, and loops on WhatsCR.">
+  <meta property="og:title" content="Search Free Audio - WhatsCR?">
+  <meta property="og:description" content="Find and download copyright-free music and loops for your games and creative projects.">
+  <meta property="og:image" content="Immagini/brand/Logo.webp">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="Immagini/brand/Logo.webp">
   <link rel="icon" type="image/x-icon" href="Immagini/favicons/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="Immagini/favicons/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="Immagini/favicons/favicon-16x16.png">
@@ -204,6 +211,12 @@
             <span class="badge badge-cc">${escapeHtml(t.license_type || 'CC0 Free')}</span>
           </div>
           <span class="track-time" id="time-${t.id}">${escapeHtml(t.duration || '0:00')}</span>
+          <div class="track-volume-wrap">
+            <button class="track-vol-btn" data-track-id="${t.id}" aria-label="Toggle mute">
+              <i class="fa-solid fa-volume-high"></i>
+            </button>
+            <input type="range" class="track-vol-slider" min="0" max="1" step="0.05" value="0.8" data-track-id="${t.id}" aria-label="Volume slider">
+          </div>
           <div class="track-actions">
             <a href="${t.audio_url}" download class="btn-download" title="Download track">
               <i class="fa-solid fa-download"></i>
@@ -245,10 +258,41 @@
           url: t.audio_url
         });
 
+        ws.setVolume(0.8);
+
         const row = document.getElementById(`track-row-${t.id}`);
         const btn = row.querySelector('.track-play-btn');
         const icon = btn.querySelector('i');
         const timeEl = document.getElementById(`time-${t.id}`);
+        const volBtn = row.querySelector('.track-vol-btn');
+        const volSlider = row.querySelector('.track-vol-slider');
+        const volIcon = volBtn.querySelector('i');
+
+        volSlider.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          ws.setVolume(val);
+          if (val === 0) {
+            volIcon.className = 'fa-solid fa-volume-xmark';
+          } else if (val < 0.5) {
+            volIcon.className = 'fa-solid fa-volume-low';
+          } else {
+            volIcon.className = 'fa-solid fa-volume-high';
+          }
+        });
+
+        let prevVolume = 0.8;
+        volBtn.addEventListener('click', () => {
+          if (ws.getVolume() > 0) {
+            prevVolume = ws.getVolume();
+            ws.setVolume(0);
+            volSlider.value = 0;
+            volIcon.className = 'fa-solid fa-volume-xmark';
+          } else {
+            ws.setVolume(prevVolume || 0.8);
+            volSlider.value = prevVolume || 0.8;
+            volIcon.className = prevVolume < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
+          }
+        });
 
         ws.on('ready', () => {
           const totalSec = Math.floor(ws.getDuration());
