@@ -1,5 +1,14 @@
 const rateLimitCache = new Map();
 
+function isValidAudioUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (trimmed.startsWith('javascript:') || trimmed.startsWith('data:') || trimmed.startsWith('vbscript:')) {
+    return false;
+  }
+  return trimmed.startsWith('audio/') || trimmed.startsWith('http://') || trimmed.startsWith('https://');
+}
+
 export async function onRequestGet(context) {
   const { request, env } = context;
   const ip = request.headers.get('CF-Connecting-IP') || 'anonymous';
@@ -69,6 +78,9 @@ export async function onRequestGet(context) {
     const dbUrl = new URL(env.DATABASE_URL);
     const endpoint = `https://${dbUrl.host}/sql`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
     const neonRes = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -78,8 +90,11 @@ export async function onRequestGet(context) {
       body: JSON.stringify({
         query: sql,
         params: params
-      })
+      }),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     if (!neonRes.ok) {
       return new Response(JSON.stringify({ error: 'Database request failed' }), {
@@ -96,7 +111,15 @@ export async function onRequestGet(context) {
       rows = data[0].rows;
     }
 
-    return new Response(JSON.stringify(rows), {
+    const sanitizedRows = rows.map(r => {
+      const audioUrl = isValidAudioUrl(r.audio_url) ? r.audio_url : '#';
+      return {
+        ...r,
+        audio_url: audioUrl
+      };
+    });
+
+    return new Response(JSON.stringify(sanitizedRows), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
