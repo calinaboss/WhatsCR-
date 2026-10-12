@@ -41,7 +41,7 @@
         <p>WhatsCR respects the intellectual property rights of creators and copyright owners. If you are a copyright owner or an authorized representative and believe that any audio asset accessible on our website infringes upon your copyright, please transmit a formal takedown notice to our designated agent:</p>
         <p style="background: #f8fafc; border: 1px solid var(--border-light); padding: 16px 20px; border-radius: 12px; font-weight: 600;">
           <i class="fa-solid fa-envelope" style="color: var(--primary); margin-right: 8px;"></i>
-          Designated Contact Email: <a href="mailto:whatscrorg@gmail.com?subject=[Copyright%20Notice%20/%20Takedown%20Request]%20-%20WhatsCR" style="color: var(--primary);">whatscrorg@gmail.com</a>
+          Designated Contact Email: <a href="#" class="safe-mail" data-u="whatscrorg" data-d="gmail.com" data-sub="[Copyright Notice / Takedown Request] - WhatsCR" style="color: var(--primary);"></a>
         </p>
       </section>
 
@@ -74,5 +74,19 @@
     <p>&copy; 2026 WhatsCR? All rights reserved. <a href="index.html">Return to Home</a> &bull; <a href="https://discord.gg/A3qEvfdgDP" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-discord"></i> Discord Server</a></p>
   </footer>
 
+  <script>
+    document.querySelectorAll('.safe-mail').forEach(el => {
+      const u = el.getAttribute('data-u');
+      const d = el.getAttribute('data-d');
+      const sub = el.getAttribute('data-sub');
+      if (u && d) {
+        const addr = `${u}@${d}`;
+        if (el.tagName === 'A') {
+          el.href = sub ? `mailto:${addr}?subject=${encodeURIComponent(sub)}` : `mailto:${addr}`;
+        }
+        el.textContent = addr;
+      }
+    });
+  </script>
 </body>
 </html>

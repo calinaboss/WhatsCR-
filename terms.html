@@ -52,7 +52,7 @@
         <p>WhatsCR operates strictly as an intermediary technical hosting provider. We do not exercise prior editorial control or continuous supervision over every third-party submission. In accordance with EU Directive 2000/31/EC, the EU Digital Services Act (Regulation EU 2022/2065), and the Digital Millennium Copyright Act (17 U.S.C. &sect; 512):</p>
         <ul>
           <li>WhatsCR shall not be held liable for copyright infringement committed by third parties prior to receiving a valid formal takedown notice.</li>
-          <li>Upon receipt of a substantiated copyright notice sent to our designated legal channel at <strong>whatscrorg@gmail.com</strong>, we will expeditiously remove or disable access to the contested material within 24 to 48 hours.</li>
+          <li>Upon receipt of a substantiated copyright notice sent to our designated legal channel at <strong class="safe-mail" data-u="whatscrorg" data-d="gmail.com">Legal Support</strong>, we will expeditiously remove or disable access to the contested material within 24 to 48 hours.</li>
           <li>Timely removal upon valid notification constitutes the sole, exclusive, and exhaustive remedy against WhatsCR and its administrators.</li>
         </ul>
       </section>
@@ -80,7 +80,7 @@
 
       <section class="legal-section">
         <h2>8. Contact & Legal Notices</h2>
-        <p>For any formal legal inquiries, copyright claims, or official correspondence, please contact us directly at: <a href="mailto:whatscrorg@gmail.com" style="color: var(--primary); font-weight: 600;">whatscrorg@gmail.com</a>.</p>
+        <p>For any formal legal inquiries, copyright claims, or official correspondence, please contact us directly at: <a href="#" class="safe-mail" data-u="whatscrorg" data-d="gmail.com" style="color: var(--primary); font-weight: 600;"></a>.</p>
       </section>
     </div>
   </main>
@@ -89,5 +89,16 @@
     <p>&copy; 2026 WhatsCR? All rights reserved. <a href="index.html">Return to Home</a> &bull; <a href="https://discord.gg/A3qEvfdgDP" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-discord"></i> Discord Server</a></p>
   </footer>
 
+  <script>
+    document.querySelectorAll('.safe-mail').forEach(el => {
+      const u = el.getAttribute('data-u');
+      const d = el.getAttribute('data-d');
+      if (u && d) {
+        const addr = `${u}@${d}`;
+        if (el.tagName === 'A') el.href = `mailto:${addr}`;
+        el.textContent = addr;
+      }
+    });
+  </script>
 </body>
 </html>

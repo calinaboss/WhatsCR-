@@ -43,7 +43,7 @@
 
       <section class="legal-section">
         <h2>Will I get a YouTube Content ID claim?</h2>
-        <p>WhatsCR never registers audio with Content ID or automated fingerprinting networks. In the rare event that a third party creates a false-positive automated claim, dispute the claim using our license or contact us at <a href="mailto:whatscrorg@gmail.com" style="color: var(--primary); font-weight: 600;">whatscrorg@gmail.com</a> and we will assist you promptly.</p>
+        <p>WhatsCR never registers audio with Content ID or automated fingerprinting networks. In the rare event that a third party creates a false-positive automated claim, dispute the claim using our license or contact us at <a href="#" class="safe-mail" data-u="whatscrorg" data-d="gmail.com" style="color: var(--primary); font-weight: 600;"></a> and we will assist you promptly.</p>
       </section>
 
       <section class="legal-section">
@@ -67,5 +67,16 @@
     <p>&copy; 2026 WhatsCR? All rights reserved. <a href="index.html">Return to Home</a> &bull; <a href="https://discord.gg/A3qEvfdgDP" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-discord"></i> Discord Server</a></p>
   </footer>
 
+  <script>
+    document.querySelectorAll('.safe-mail').forEach(el => {
+      const u = el.getAttribute('data-u');
+      const d = el.getAttribute('data-d');
+      if (u && d) {
+        const addr = `${u}@${d}`;
+        if (el.tagName === 'A') el.href = `mailto:${addr}`;
+        el.textContent = addr;
+      }
+    });
+  </script>
 </body>
 </html>

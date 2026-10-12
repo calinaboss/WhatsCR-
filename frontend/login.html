@@ -61,7 +61,7 @@
             <label id="label-identifier" for="auth-identifier" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Email address</label>
             <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; background: #fafcfe;">
               <i class="fa-solid fa-envelope" id="icon-identifier" style="color: var(--text-light); margin-right: 10px; font-size: 0.9rem;"></i>
-              <input type="text" id="auth-identifier" required placeholder="you@example.com" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.94rem; font-family: inherit; color: var(--text-main);">
+              <input type="text" id="auth-identifier" required placeholder="Enter your email or username" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.94rem; font-family: inherit; color: var(--text-main);">
             </div>
           </div>
 
@@ -191,7 +191,7 @@
         tabRegister.style.boxShadow = 'none';
         groupUsername.style.display = 'none';
         labelIdentifier.textContent = 'Email or Username';
-        identifierInput.placeholder = 'you@example.com or username';
+        identifierInput.placeholder = 'Enter your email or username';
         iconIdentifier.className = 'fa-solid fa-user';
         submitText.textContent = 'Log In to WhatsCR';
         passwordHint.style.display = 'none';
@@ -204,7 +204,7 @@
         tabLogin.style.boxShadow = 'none';
         groupUsername.style.display = 'block';
         labelIdentifier.textContent = 'Email address';
-        identifierInput.placeholder = 'you@example.com';
+        identifierInput.placeholder = 'Enter your email address';
         iconIdentifier.className = 'fa-solid fa-envelope';
         submitText.textContent = 'Create Account';
         passwordHint.style.display = 'block';

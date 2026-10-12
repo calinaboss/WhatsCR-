@@ -39,7 +39,7 @@
       <section class="legal-section">
         <h2>1. Data Controller Identification</h2>
         <p>The Data Controller responsible for the processing of personal data on this platform under Regulation (EU) 2016/679 (GDPR) is the WhatsCR Project Administration.</p>
-        <p>Designated contact point for all privacy and data protection inquiries: <a href="mailto:whatscrorg@gmail.com" style="color: var(--primary); font-weight: 600;">whatscrorg@gmail.com</a>.</p>
+        <p>Designated contact point for all privacy and data protection inquiries: <a href="#" class="safe-mail" data-u="whatscrorg" data-d="gmail.com" style="color: var(--primary); font-weight: 600;"></a>.</p>
       </section>
 
       <section class="legal-section">
@@ -73,7 +73,7 @@
           <li><strong>Right to Erasure (Art. 17 GDPR):</strong> Request deletion of your personal data.</li>
           <li><strong>Right to Restriction and Objection (Art. 18 & 21 GDPR):</strong> Object to processing on legitimate grounds.</li>
         </ul>
-        <p>To exercise any of these rights, please transmit your request to <a href="mailto:whatscrorg@gmail.com" style="color: var(--primary); font-weight: 600;">whatscrorg@gmail.com</a>. We will respond within 30 days without undue delay.</p>
+        <p>To exercise any of these rights, please transmit your request to <a href="#" class="safe-mail" data-u="whatscrorg" data-d="gmail.com" style="color: var(--primary); font-weight: 600;"></a>. We will respond within 30 days without undue delay.</p>
       </section>
 
       <section class="legal-section">
@@ -87,5 +87,16 @@
     <p>&copy; 2026 WhatsCR? All rights reserved. <a href="index.html">Return to Home</a> &bull; <a href="https://discord.gg/A3qEvfdgDP" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-discord"></i> Discord Server</a></p>
   </footer>
 
+  <script>
+    document.querySelectorAll('.safe-mail').forEach(el => {
+      const u = el.getAttribute('data-u');
+      const d = el.getAttribute('data-d');
+      if (u && d) {
+        const addr = `${u}@${d}`;
+        if (el.tagName === 'A') el.href = `mailto:${addr}`;
+        el.textContent = addr;
+      }
+    });
+  </script>
 </body>
 </html>
