@@ -73,12 +73,15 @@
               <option value="Sound Effects">Sound Effects</option>
             </select>
           </div>
-          <div style="display: flex; align-items: center; padding-top: 24px;">
-            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 600; color: var(--text-main); cursor: pointer;">
-              <input type="checkbox" id="track-loop" style="width: 18px; height: 18px; accent-color: var(--primary);">
-              <span>Seamless Game Loop</span>
-            </label>
-            <button type="button" class="wiki-term-btn" data-term="seamless-loop" title="What is a Seamless Game Loop? Click to learn more" style="background: none; border: none; color: var(--primary); cursor: pointer; padding: 2px 6px; font-size: 0.95rem; margin-left: 2px;"><i class="fa-solid fa-circle-question"></i></button>
+          <div style="padding-top: 18px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label for="track-loop" style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 700; color: var(--text-main); cursor: pointer;" title="Audio engineered to loop seamlessly in games">
+                <input type="checkbox" id="track-loop" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                <span>Seamless Game Loop</span>
+              </label>
+              <button type="button" class="wiki-term-btn" data-term="seamless-loop" title="What is a Seamless Game Loop? Click to learn more" aria-label="Audio definition" style="background: none; border: none; color: var(--primary); cursor: pointer; padding: 2px 6px; font-size: 1rem;"><i class="fa-solid fa-circle-question"></i></button>
+            </div>
+            <span style="display: block; font-size: 0.76rem; color: var(--text-muted); margin-top: 4px; margin-left: 26px;">Continuously looping audio without gaps, clicks, or interruptions in game engines.</span>
           </div>
         </div>
 
@@ -100,6 +103,32 @@
   <footer class="legal-footer">
     <p>&copy; 2026 WhatsCR? All rights reserved. <a href="index.html">Return to Home</a> &bull; <a href="https://discord.gg/A3qEvfdgDP" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-discord"></i> Discord Server</a></p>
   </footer>
+
+  <div id="wiki-modal" class="wiki-modal-backdrop" style="display: none;">
+    <div class="wiki-modal-content">
+      <div class="wiki-modal-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: #e0f2fe; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+            <i class="fa-solid fa-book-bookmark"></i>
+          </div>
+          <div>
+            <h3 id="wiki-title" style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin: 0;">Audio Encyclopedia</h3>
+            <span style="font-size: 0.76rem; color: var(--text-muted);">WhatsCR Creator Knowledge Base</span>
+          </div>
+        </div>
+        <button id="wiki-close" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 8px;" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="wiki-modal-body">
+        <span id="wiki-pronounce" class="wiki-pronounce">Term Definition</span>
+        <div id="wiki-callout" class="wiki-callout"></div>
+        <div id="wiki-details"></div>
+      </div>
+      <div class="wiki-modal-footer">
+        <span style="font-size: 0.78rem; color: var(--text-light);"><i class="fa-solid fa-scale-balanced" style="margin-right: 4px;"></i>Royalty-Free Audio Standard</span>
+        <button id="wiki-btn-close" style="background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-main); padding: 7px 18px; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 600; cursor: pointer;">Close</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     let selectedFile = null;
@@ -297,27 +326,29 @@
     const wikiBtnClose = document.getElementById('wiki-btn-close');
 
     function openWikiModal(termKey) {
+      const modal = document.getElementById('wiki-modal');
+      const title = document.getElementById('wiki-title');
+      const pronounce = document.getElementById('wiki-pronounce');
+      const callout = document.getElementById('wiki-callout');
+      const details = document.getElementById('wiki-details');
+      if (!modal || !title) return;
       const data = wikiGlossary[termKey] || wikiGlossary['seamless-loop'];
-      wikiTitle.textContent = data.title;
-      wikiPronounce.innerHTML = data.pronounce;
-      wikiCallout.textContent = data.definition;
-      wikiDetails.innerHTML = (data.details || []).map(d => `
-        <h4 class="wiki-subheading"><i class="fa-solid fa-circle-info" style="color: var(--primary); font-size: 0.85rem;"></i>${d.heading}</h4>
-        <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px;">${d.text}</p>
-      `).join('');
-      wikiModal.style.display = 'flex';
+      if (!data) return;
+      title.textContent = data.title;
+      if (pronounce) pronounce.innerHTML = data.pronounce;
+      if (callout) callout.textContent = data.definition;
+      if (details) {
+        details.innerHTML = (data.details || []).map(d => `
+          <h4 class="wiki-subheading"><i class="fa-solid fa-circle-info" style="color: var(--primary); font-size: 0.85rem;"></i>${d.heading}</h4>
+          <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px;">${d.text}</p>
+        `).join('');
+      }
+      modal.style.display = 'flex';
     }
 
     function closeWikiModal() {
-      wikiModal.style.display = 'none';
-    }
-
-    if (wikiClose) wikiClose.addEventListener('click', closeWikiModal);
-    if (wikiBtnClose) wikiBtnClose.addEventListener('click', closeWikiModal);
-    if (wikiModal) {
-      wikiModal.addEventListener('click', (e) => {
-        if (e.target === wikiModal) closeWikiModal();
-      });
+      const modal = document.getElementById('wiki-modal');
+      if (modal) modal.style.display = 'none';
     }
 
     document.addEventListener('click', (e) => {
@@ -326,34 +357,12 @@
         e.preventDefault();
         const term = btn.getAttribute('data-term');
         if (term) openWikiModal(term);
+        return;
+      }
+      if (e.target.closest('#wiki-close') || e.target.closest('#wiki-btn-close') || e.target.id === 'wiki-modal') {
+        closeWikiModal();
       }
     });
   </script>
-
-  <div id="wiki-modal" class="wiki-modal-backdrop" style="display: none;">
-    <div class="wiki-modal-content">
-      <div class="wiki-modal-header">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="width: 36px; height: 36px; border-radius: 10px; background: #e0f2fe; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
-            <i class="fa-solid fa-book-bookmark"></i>
-          </div>
-          <div>
-            <h3 id="wiki-title" style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin: 0;">Audio Encyclopedia</h3>
-            <span style="font-size: 0.76rem; color: var(--text-muted);">WhatsCR Creator Knowledge Base</span>
-          </div>
-        </div>
-        <button id="wiki-close" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 8px;" aria-label="Close modal">&times;</button>
-      </div>
-      <div class="wiki-modal-body">
-        <span id="wiki-pronounce" class="wiki-pronounce">Term Definition</span>
-        <div id="wiki-callout" class="wiki-callout"></div>
-        <div id="wiki-details"></div>
-      </div>
-      <div class="wiki-modal-footer">
-        <span style="font-size: 0.78rem; color: var(--text-light);"><i class="fa-solid fa-scale-balanced" style="margin-right: 4px;"></i>Royalty-Free Audio Standard</span>
-        <button id="wiki-btn-close" style="background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-main); padding: 7px 18px; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 600; cursor: pointer;">Close</button>
-      </div>
-    </div>
-  </div>
 </body>
 </html>
