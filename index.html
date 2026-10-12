@@ -60,7 +60,7 @@
 
       <div class="header-nav right-nav" id="header-user-nav">
         <a href="login.html" class="nav-link">Log in</a>
-        <a href="login.html?tab=register" class="nav-link">Register</a>
+        <a href="login.html?tab=register" class="nav-link nav-register-btn">Register</a>
         <a href="upload.html" class="btn-upload">
           <i class="fa-solid fa-arrow-up-from-bracket"></i>
           <span>Upload</span>
@@ -467,9 +467,9 @@
           const isAdmin = data.user.role === 'admin';
           const userName = data.user.username ? `@${data.user.username}` : (data.user.email || '').split('@')[0];
           rightNav.innerHTML = `
-            ${isAdmin ? '<a href="admin.html" class="nav-link" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-shield-halved"></i> Admin</a>' : ''}
-            <a href="login.html" class="nav-link" style="font-weight: 700; color: var(--text-main); text-decoration: none;"><i class="fa-solid fa-user" style="margin-right: 4px;"></i>${userName}</a>
-            <button id="nav-logout-btn" style="background: none; border: none; font-family: inherit; font-size: inherit; color: var(--text-muted); cursor: pointer; padding: 0 8px; font-weight: 600;">Log out</button>
+            ${isAdmin ? '<a href="admin.html" class="nav-link nav-admin-btn" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-shield-halved"></i> Admin</a>' : ''}
+            <a href="login.html" class="nav-link nav-user-link" title="My Account"><i class="fa-solid fa-user"></i><span class="nav-user-name">${userName}</span></a>
+            <button id="nav-logout-btn" class="nav-logout-btn">Log out</button>
             <a href="upload.html" class="btn-upload">
               <i class="fa-solid fa-arrow-up-from-bracket"></i>
               <span>Upload</span>
