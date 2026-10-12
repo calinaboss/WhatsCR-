@@ -87,7 +87,7 @@ async function verifyHumanCaptcha(token, secretKey) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        secret: secretKey || '1x0000000000000000000000000000000AA',
+        secret: secretKey || '0x4AAAAAAFU20J4IcKpc6qVzjGj3VcM2iOg',
         response: token
       })
     });
