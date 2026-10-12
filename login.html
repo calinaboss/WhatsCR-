@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account - WhatsCR?</title>
+  <link rel="icon" type="image/x-icon" href="Immagini/favicons/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="Immagini/favicons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="Immagini/favicons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="Immagini/favicons/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#0097b2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="legal-body">
+
+  <header class="legal-header">
+    <div class="legal-header-inner">
+      <a href="index.html" class="legal-brand" title="Back to Home">
+        <img src="Immagini/brand/Logo.webp" alt="Logo WhatsCR" class="brand-icon">
+        <img src="Immagini/brand/scrittawhatscr.webp" alt="WhatsCR?" class="brand-text">
+      </a>
+      <a href="index.html" class="legal-back-link">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back to Home</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="legal-main" style="display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 160px);">
+    <div style="max-width: 420px; width: 100%; margin: 0 auto; padding: 0 16px;">
+      <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px; box-shadow: var(--shadow-md);">
+        
+        <div style="display: flex; background: var(--bg-muted); border-radius: var(--radius-full); padding: 4px; margin-bottom: 24px;">
+          <button id="tab-login" style="flex: 1; padding: 8px 12px; font-size: 0.88rem; font-weight: 700; border-radius: var(--radius-full); background: #ffffff; color: var(--text-main); box-shadow: var(--shadow-sm); transition: all 0.2s ease;">Log In</button>
+          <button id="tab-register" style="flex: 1; padding: 8px 12px; font-size: 0.88rem; font-weight: 600; border-radius: var(--radius-full); background: transparent; color: var(--text-muted); transition: all 0.2s ease;">Register</button>
+        </div>
+
+        <div id="auth-alert" style="display: none; padding: 12px 14px; border-radius: 10px; font-size: 0.86rem; margin-bottom: 18px; line-height: 1.4;"></div>
+
+        <form id="auth-form">
+          <div style="margin-bottom: 16px;">
+            <label for="auth-email" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Email address</label>
+            <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; background: #fafcfe; transition: border-color 0.2s ease;">
+              <i class="fa-solid fa-envelope" style="color: var(--text-light); margin-right: 10px; font-size: 0.9rem;"></i>
+              <input type="email" id="auth-email" required placeholder="you@example.com" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.94rem; font-family: inherit; color: var(--text-main);">
+            </div>
+          </div>
+
+          <div style="margin-bottom: 22px;">
+            <label for="auth-password" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Password</label>
+            <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; background: #fafcfe; transition: border-color 0.2s ease;">
+              <i class="fa-solid fa-lock" style="color: var(--text-light); margin-right: 10px; font-size: 0.9rem;"></i>
+              <input type="password" id="auth-password" required placeholder="At least 8 characters" minlength="8" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.94rem; font-family: inherit; color: var(--text-main);">
+            </div>
+            <span id="password-hint" style="display: none; font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Must contain at least 8 characters.</span>
+          </div>
+
+          <button type="submit" id="submit-btn" style="width: 100%; background: var(--primary); color: #ffffff; padding: 12px; border-radius: var(--radius-full); font-size: 0.94rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0, 151, 178, 0.25);">
+            <span id="submit-text">Log In to WhatsCR</span>
+          </button>
+        </form>
+
+        <p style="font-size: 0.78rem; color: var(--text-muted); text-align: center; margin-top: 20px; line-height: 1.5;">
+          By continuing, you agree to our <a href="terms.html" style="color: var(--primary); font-weight: 600;">Terms</a> and <a href="privacy.html" style="color: var(--primary); font-weight: 600;">Privacy Policy</a>.
+        </p>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="legal-footer">
+    <p>&copy; 2026 WhatsCR? All rights reserved. <a href="index.html">Return to Home</a> &bull; <a href="https://discord.gg/A3qEvfdgDP" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-discord"></i> Discord Server</a></p>
+  </footer>
+
+  <script>
+    let currentMode = 'login';
+
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
+    const authForm = document.getElementById('auth-form');
+    const emailInput = document.getElementById('auth-email');
+    const passwordInput = document.getElementById('auth-password');
+    const submitBtn = document.getElementById('submit-btn');
+    const submitText = document.getElementById('submit-text');
+    const alertBox = document.getElementById('auth-alert');
+    const passwordHint = document.getElementById('password-hint');
+
+    function setMode(mode) {
+      currentMode = mode;
+      alertBox.style.display = 'none';
+      if (mode === 'login') {
+        tabLogin.style.background = '#ffffff';
+        tabLogin.style.color = 'var(--text-main)';
+        tabLogin.style.boxShadow = 'var(--shadow-sm)';
+        tabRegister.style.background = 'transparent';
+        tabRegister.style.color = 'var(--text-muted)';
+        tabRegister.style.boxShadow = 'none';
+        submitText.textContent = 'Log In to WhatsCR';
+        passwordHint.style.display = 'none';
+      } else {
+        tabRegister.style.background = '#ffffff';
+        tabRegister.style.color = 'var(--text-main)';
+        tabRegister.style.boxShadow = 'var(--shadow-sm)';
+        tabLogin.style.background = 'transparent';
+        tabLogin.style.color = 'var(--text-muted)';
+        tabLogin.style.boxShadow = 'none';
+        submitText.textContent = 'Create Account';
+        passwordHint.style.display = 'block';
+      }
+    }
+
+    tabLogin.addEventListener('click', () => setMode('login'));
+    tabRegister.addEventListener('click', () => setMode('register'));
+
+    function showAlert(msg, isSuccess = false) {
+      alertBox.textContent = msg;
+      alertBox.style.display = 'block';
+      if (isSuccess) {
+        alertBox.style.background = '#ecfdf5';
+        alertBox.style.color = '#065f46';
+        alertBox.style.border = '1px solid #a7f3d0';
+      } else {
+        alertBox.style.background = '#fef2f2';
+        alertBox.style.color = '#991b1b';
+        alertBox.style.border = '1px solid #fecaca';
+      }
+    }
+
+    async function checkCurrentSession() {
+      try {
+        const res = await fetch('/api/auth?action=me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.user) {
+            window.location.href = 'index.html';
+          }
+        }
+      } catch (e) {}
+    }
+
+    const initialTab = new URLSearchParams(window.location.search).get('tab');
+    if (initialTab === 'register') {
+      setMode('register');
+    }
+
+    checkCurrentSession();
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertBox.style.display = 'none';
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        showAlert('Please fill in all fields.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.7';
+
+      try {
+        const res = await fetch(`/api/auth?action=${currentMode}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showAlert(data.error || 'Operation failed. Please try again.');
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+          return;
+        }
+
+        showAlert(currentMode === 'login' ? 'Login successful! Redirecting...' : 'Account created! Redirecting...', true);
+        setTimeout(() => {
+          const redirectUrl = new URLSearchParams(window.location.search).get('next') || 'index.html';
+          window.location.href = redirectUrl;
+        }, 800);
+
+      } catch (err) {
+        showAlert('Network error. Please check your connection.');
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+      }
+    });
+  </script>
+</body>
+</html>
