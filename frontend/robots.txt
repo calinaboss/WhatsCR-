@@ -1,4 +1,3 @@
 User-agent: *
-Disallow: /admin.html
-Disallow: /api/admin
-Sitemap:
+Allow: /
+Disallow: /api/
