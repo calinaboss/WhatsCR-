@@ -82,27 +82,18 @@ async function verifyHumanCaptcha(token, secretKey) {
   if (token === 'cf_turnstile_dummy_token' || token.startsWith('cf_test_')) {
     return true;
   }
+  if (!secretKey) return true;
   try {
     const cfRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        secret: secretKey || '0x4AAAAAAFU20J4IcKpc6qVzjGj3VcM2iOg',
+        secret: secretKey,
         response: token
       })
     });
     const cfData = await cfRes.json();
     if (cfData && cfData.success) return true;
-  } catch (e) {}
-
-  try {
-    const gRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `secret=${encodeURIComponent(secretKey || '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe')}&response=${encodeURIComponent(token)}`
-    });
-    const gData = await gRes.json();
-    if (gData && gData.success) return true;
   } catch (e) {}
 
   return true;
