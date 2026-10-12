@@ -27,7 +27,7 @@ async function runNeonSql(databaseUrl, sql, params = []) {
   const dbUrl = new URL(databaseUrl);
   const endpoint = `https://${dbUrl.host}/sql`;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 6000);
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   const res = await fetch(endpoint, {
     method: 'POST',
@@ -74,6 +74,17 @@ function verifyAudioMagicBytes(buffer) {
   return false;
 }
 
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i += 32768) {
+    const chunk = bytes.subarray(i, Math.min(i + 32768, len));
+    binary += String.fromCharCode.apply(null, chunk);
+  }
+  return btoa(binary);
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
 
@@ -95,8 +106,8 @@ export async function onRequest(context) {
   }
   uploadRateLimit.set(ip, userRate);
 
-  if (userRate.count > 10) {
-    return new Response(JSON.stringify({ error: 'Upload limit exceeded. Max 10 uploads per hour.' }), {
+  if (userRate.count > 15) {
+    return new Response(JSON.stringify({ error: 'Upload limit exceeded. Max 15 uploads per hour.' }), {
       status: 429,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -123,7 +134,7 @@ export async function onRequest(context) {
     const tokenHash = await sha256Hex(sessionToken);
     const rows = await runNeonSql(
       env.DATABASE_URL,
-      'SELECT u.id, u.email, u.role FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+      'SELECT u.id, u.email, u.role, u.username FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
       [tokenHash]
     );
     if (!rows || rows.length === 0) {
@@ -150,11 +161,30 @@ export async function onRequest(context) {
     });
   }
 
+  const botTrap = formData.get('bot_trap');
+  if (botTrap) {
+    return new Response(JSON.stringify({ error: 'Automated submission detected.' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  const formTime = parseInt(formData.get('form_time'), 10);
+  if (formTime && (Date.now() - formTime < 1000)) {
+    return new Response(JSON.stringify({ error: 'Submission too fast. Please verify.' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
   const file = formData.get('file');
   const title = (formData.get('title') || '').toString().trim().slice(0, 100);
-  const artist = (formData.get('artist') || '').toString().trim().slice(0, 80) || user.email.split('@')[0];
+  const artist = (formData.get('artist') || '').toString().trim().slice(0, 80) || (user.username || user.email.split('@')[0]);
   const genre = (formData.get('genre') || 'Soundtrack').toString().trim().slice(0, 50);
-  const duration = (formData.get('duration') || '0:00').toString().trim().slice(0, 10);
+  let duration = (formData.get('duration') || '0:01').toString().trim().slice(0, 10);
+  if (!duration || duration === '0:00' || duration === '0:0') {
+    duration = '0:01';
+  }
   const isLoop = formData.get('is_loop') === 'true' || formData.get('is_loop') === 'on';
 
   if (!title) {
@@ -189,18 +219,38 @@ export async function onRequest(context) {
 
   const fileId = crypto.randomUUID();
   const safeFilename = `${fileId}.mp3`;
-  let audioUrl = `audio/${safeFilename}`;
+  const audioUrl = `/api/audio/${safeFilename}`;
+
+  let mimeType = 'audio/mpeg';
+  if (file.name && file.name.toLowerCase().endsWith('.wav')) {
+    mimeType = 'audio/wav';
+  } else if (file.name && file.name.toLowerCase().endsWith('.ogg')) {
+    mimeType = 'audio/ogg';
+  }
 
   if (env.AUDIO_BUCKET) {
     try {
       await env.AUDIO_BUCKET.put(safeFilename, buffer, {
         httpMetadata: {
-          contentType: 'audio/mpeg',
+          contentType: mimeType,
           cacheControl: 'public, max-age=31536000'
         }
       });
-      audioUrl = `/api/audio/${safeFilename}`;
     } catch (e) {}
+  }
+
+  try {
+    const base64Data = arrayBufferToBase64(buffer);
+    await runNeonSql(
+      env.DATABASE_URL,
+      "INSERT INTO audio_files (filename, mime_type, data) VALUES ($1, $2, decode($3, 'base64')) ON CONFLICT (filename) DO NOTHING",
+      [safeFilename, mimeType, base64Data]
+    );
+  } catch (storageErr) {
+    return new Response(JSON.stringify({ error: 'Failed to save audio file to database' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   const initialStatus = (user.role === 'admin') ? 'approved' : 'pending';

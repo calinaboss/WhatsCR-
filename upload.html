@@ -39,6 +39,9 @@
       <div id="upload-alert" style="display: none; padding: 14px 18px; border-radius: 12px; font-size: 0.9rem; margin-bottom: 24px; line-height: 1.5;"></div>
 
       <form id="upload-form">
+        <input type="text" name="bot_trap" id="bot_trap" style="display: none !important;" tabindex="-1" autocomplete="off">
+        <input type="hidden" name="form_time" id="form_time">
+
         <div id="drop-zone" style="border: 2px dashed var(--border); border-radius: 16px; padding: 36px 20px; text-align: center; background: #fafcfe; cursor: pointer; transition: all 0.2s ease; margin-bottom: 24px;">
           <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.2rem; color: var(--primary); margin-bottom: 12px;"></i>
           <h3 id="drop-text" style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Click or drag & drop an MP3 audio file</h3>
@@ -85,7 +88,7 @@
           </label>
         </div>
 
-        <button type="submit" id="upload-submit-btn" style="width: 100%; background: var(--primary); color: #ffffff; padding: 14px; border-radius: var(--radius-full); font-size: 0.98rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 14px rgba(0, 151, 178, 0.25);">
+        <button type="submit" id="upload-submit-btn" style="width: 100%; background: var(--primary); color: #ffffff; padding: 14px; border-radius: var(--radius-full); font-size: 0.98rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 14px rgba(0, 151, 178, 0.25); border: none;">
           <span id="btn-text">Submit Track for Review</span>
         </button>
       </form>
@@ -99,7 +102,8 @@
 
   <script>
     let selectedFile = null;
-    let detectedDuration = '0:00';
+    let detectedDuration = '0:01';
+    let currentUser = null;
 
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('audio-file-input');
@@ -109,6 +113,10 @@
     const uploadAlert = document.getElementById('upload-alert');
     const submitBtn = document.getElementById('upload-submit-btn');
     const btnText = document.getElementById('btn-text');
+    const artistInput = document.getElementById('track-artist');
+    const formTimeInput = document.getElementById('form_time');
+
+    formTimeInput.value = Date.now();
 
     async function checkAuth() {
       try {
@@ -120,6 +128,12 @@
         const data = await res.json();
         if (!data || !data.user) {
           window.location.href = 'login.html?next=upload.html';
+          return;
+        }
+        currentUser = data.user;
+        const initialHandle = currentUser.username || currentUser.email.split('@')[0];
+        if (!artistInput.value) {
+          artistInput.value = initialHandle;
         }
       } catch (err) {
         window.location.href = 'login.html?next=upload.html';
@@ -166,14 +180,22 @@
       dropSub.textContent = `Size: ${sizeMb} MB - Analyzing audio duration...`;
 
       const audioObj = new Audio();
-      audioObj.src = URL.createObjectURL(file);
-      audioObj.addEventListener('loadedmetadata', () => {
-        const totalSec = Math.floor(audioObj.duration);
-        const mins = Math.floor(totalSec / 60);
-        const secs = (totalSec % 60).toString().padStart(2, '0');
-        detectedDuration = `${mins}:${secs}`;
-        dropSub.textContent = `Size: ${sizeMb} MB • Duration: ${detectedDuration}`;
-      });
+      const objectUrl = URL.createObjectURL(file);
+      audioObj.src = objectUrl;
+
+      function updateDuration() {
+        if (!isNaN(audioObj.duration) && isFinite(audioObj.duration)) {
+          const totalSec = Math.max(1, Math.round(audioObj.duration));
+          const mins = Math.floor(totalSec / 60);
+          const secs = (totalSec % 60).toString().padStart(2, '0');
+          detectedDuration = `${mins}:${secs}`;
+          dropSub.textContent = `Size: ${sizeMb} MB • Duration: ${detectedDuration}`;
+        }
+      }
+
+      audioObj.addEventListener('loadedmetadata', updateDuration);
+      audioObj.addEventListener('canplaythrough', updateDuration);
+      setTimeout(updateDuration, 800);
     }
 
     function showAlert(msg, isSuccess = false) {
@@ -194,6 +216,12 @@
       e.preventDefault();
       uploadAlert.style.display = 'none';
 
+      const botTrap = document.getElementById('bot_trap').value;
+      if (botTrap) {
+        showAlert('Automated submission blocked.');
+        return;
+      }
+
       if (!selectedFile) {
         showAlert('Please choose an audio file to upload.');
         return;
@@ -211,6 +239,8 @@
       formData.append('genre', genre);
       formData.append('duration', detectedDuration);
       formData.append('is_loop', isLoop ? 'true' : 'false');
+      formData.append('form_time', formTimeInput.value);
+      formData.append('bot_trap', botTrap);
 
       submitBtn.disabled = true;
       submitBtn.style.opacity = '0.7';
@@ -240,6 +270,9 @@
         btnText.textContent = 'Upload another track';
         submitBtn.disabled = false;
         submitBtn.style.opacity = '1';
+        if (currentUser) {
+          artistInput.value = currentUser.username || currentUser.email.split('@')[0];
+        }
 
       } catch (err) {
         showAlert('Network error occurred during upload.');

@@ -404,10 +404,10 @@
           const rightNav = document.getElementById('header-user-nav');
           if (!rightNav) return;
           const isAdmin = data.user.role === 'admin';
-          const userName = (data.user.email || '').split('@')[0];
+          const userName = data.user.username ? `@${data.user.username}` : (data.user.email || '').split('@')[0];
           rightNav.innerHTML = `
             ${isAdmin ? '<a href="admin.html" class="nav-link" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-shield-halved"></i> Admin</a>' : ''}
-            <span class="nav-link" style="font-weight: 700; color: var(--text-main);"><i class="fa-solid fa-user" style="margin-right: 4px;"></i>${userName}</span>
+            <a href="login.html" class="nav-link" style="font-weight: 700; color: var(--text-main); text-decoration: none;"><i class="fa-solid fa-user" style="margin-right: 4px;"></i>${userName}</a>
             <button id="nav-logout-btn" style="background: none; border: none; font-family: inherit; font-size: inherit; color: var(--text-muted); cursor: pointer; padding: 0 8px; font-weight: 600;">Log out</button>
             <a href="upload.html" class="btn-upload">
               <i class="fa-solid fa-arrow-up-from-bracket"></i>
