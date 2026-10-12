@@ -41,7 +41,7 @@
         <p>In accordance with Articles 11 and 12 of the Digital Services Act, WhatsCR has established a single electronic point of contact for direct communications with Member States' authorities, the European Commission, the European Board for Digital Services, and users of the service:</p>
         <p style="background: #f8fafc; border: 1px solid var(--border-light); padding: 16px 20px; border-radius: 12px; font-weight: 600;">
           <i class="fa-solid fa-envelope" style="color: var(--primary); margin-right: 8px;"></i>
-          Official Contact Email: <a href="mailto:whatscrorg@gmail.com" style="color: var(--primary);">whatscrorg@gmail.com</a>
+          Official Contact Email: <a href="#" class="safe-mail" data-u="whatscrorg" data-d="gmail.com" style="color: var(--primary);"></a>
         </p>
         <p>Communications to this point of contact may be submitted in <strong>English</strong> or <strong>Italian</strong>.</p>
       </section>
@@ -62,5 +62,16 @@
     <p>&copy; 2026 WhatsCR? All rights reserved. <a href="index.html">Return to Home</a> &bull; <a href="https://discord.gg/A3qEvfdgDP" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-discord"></i> Discord Server</a></p>
   </footer>
 
+  <script>
+    document.querySelectorAll('.safe-mail').forEach(el => {
+      const u = el.getAttribute('data-u');
+      const d = el.getAttribute('data-d');
+      if (u && d) {
+        const addr = `${u}@${d}`;
+        if (el.tagName === 'A') el.href = `mailto:${addr}`;
+        el.textContent = addr;
+      }
+    });
+  </script>
 </body>
 </html>
