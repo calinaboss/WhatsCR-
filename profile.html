@@ -511,27 +511,29 @@
     const wikiBtnClose = document.getElementById('wiki-btn-close');
 
     function openWikiModal(termKey) {
+      const modal = document.getElementById('wiki-modal');
+      const title = document.getElementById('wiki-title');
+      const pronounce = document.getElementById('wiki-pronounce');
+      const callout = document.getElementById('wiki-callout');
+      const details = document.getElementById('wiki-details');
+      if (!modal || !title) return;
       const data = wikiGlossary[termKey] || wikiGlossary['seamless-loop'];
-      wikiTitle.textContent = data.title;
-      wikiPronounce.innerHTML = data.pronounce;
-      wikiCallout.textContent = data.definition;
-      wikiDetails.innerHTML = (data.details || []).map(d => `
-        <h4 class="wiki-subheading"><i class="fa-solid fa-circle-info" style="color: var(--primary); font-size: 0.85rem;"></i>${d.heading}</h4>
-        <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px;">${d.text}</p>
-      `).join('');
-      wikiModal.style.display = 'flex';
+      if (!data) return;
+      title.textContent = data.title;
+      if (pronounce) pronounce.innerHTML = data.pronounce;
+      if (callout) callout.textContent = data.definition;
+      if (details) {
+        details.innerHTML = (data.details || []).map(d => `
+          <h4 class="wiki-subheading"><i class="fa-solid fa-circle-info" style="color: var(--primary); font-size: 0.85rem;"></i>${d.heading}</h4>
+          <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px;">${d.text}</p>
+        `).join('');
+      }
+      modal.style.display = 'flex';
     }
 
     function closeWikiModal() {
-      wikiModal.style.display = 'none';
-    }
-
-    if (wikiClose) wikiClose.addEventListener('click', closeWikiModal);
-    if (wikiBtnClose) wikiBtnClose.addEventListener('click', closeWikiModal);
-    if (wikiModal) {
-      wikiModal.addEventListener('click', (e) => {
-        if (e.target === wikiModal) closeWikiModal();
-      });
+      const modal = document.getElementById('wiki-modal');
+      if (modal) modal.style.display = 'none';
     }
 
     document.addEventListener('click', (e) => {
@@ -540,6 +542,10 @@
         e.preventDefault();
         const term = badge.getAttribute('data-term');
         if (term) openWikiModal(term);
+        return;
+      }
+      if (e.target.closest('#wiki-close') || e.target.closest('#wiki-btn-close') || e.target.id === 'wiki-modal') {
+        closeWikiModal();
       }
     });
 
