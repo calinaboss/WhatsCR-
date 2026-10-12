@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">Creator Profile - WhatsCR?</title>
+  <meta name="description" content="Explore royalty-free music and loops published by verified creators on WhatsCR.">
+  <link rel="icon" type="image/x-icon" href="Immagini/favicons/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="Immagini/favicons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="Immagini/favicons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="Immagini/favicons/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#0097b2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/wavesurfer.js@7"></script>
+</head>
+<body>
+
+  <header class="top-header">
+    <div class="header-container">
+      <nav class="header-nav left-nav">
+        <a href="index.html" class="nav-link">Explore</a>
+        <a href="index.html#categorie" class="nav-link">Genres</a>
+        <a href="index.html#licenza" class="nav-link">License</a>
+      </nav>
+
+      <div class="header-brand-center">
+        <a href="index.html" class="brand-link">
+          <img src="Immagini/brand/Logo.webp" alt="Logo WhatsCR" class="brand-icon">
+          <img src="Immagini/brand/scrittawhatscr.webp" alt="WhatsCR?" class="brand-text">
+        </a>
+      </div>
+
+      <div class="header-nav right-nav" id="header-user-nav">
+        <a href="login.html" class="nav-link">Log in</a>
+        <a href="login.html?tab=register" class="nav-link">Register</a>
+        <a href="upload.html" class="btn-upload">
+          <i class="fa-solid fa-arrow-up-from-bracket"></i>
+          <span>Upload</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="profile-page-main">
+    <div class="section-container">
+
+      <nav aria-label="Breadcrumb" style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
+        <a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">Home</a>
+        <span>&rsaquo;</span>
+        <span style="color: var(--text-muted);">Creators</span>
+        <span>&rsaquo;</span>
+        <span id="breadcrumb-username" style="color: var(--text-main); font-weight: 700;">@Creator</span>
+      </nav>
+
+      <section class="profile-hero">
+        <div class="profile-identity">
+          <div class="profile-avatar-large" id="creator-avatar">C</div>
+          <div class="profile-details">
+            <h1 id="creator-name">
+              <span id="creator-handle">@Creator</span>
+              <i class="fa-solid fa-circle-check" style="color: var(--primary); font-size: 1.15rem;" title="Verified Creator"></i>
+            </h1>
+            <div class="profile-meta-row">
+              <span id="creator-badge" style="display: inline-block; padding: 2px 10px; font-size: 0.76rem; font-weight: 700; border-radius: var(--radius-full); background: #e0f2fe; color: #0369a1;">Verified Artist</span>
+              <span id="creator-joined" style="font-size: 0.82rem; color: var(--text-muted);"><i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>WhatsCR Creator</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button id="btn-share-profile" class="btn" style="background: #ffffff; border: 1px solid var(--border); color: var(--text-main); padding: 9px 18px; border-radius: var(--radius-full); font-size: 0.86rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
+            <i class="fa-solid fa-share-nodes"></i>
+            <span id="share-btn-text">Share Profile</span>
+          </button>
+          <a id="btn-edit-profile" href="login.html" class="btn" style="display: none; background: var(--primary); color: #ffffff; padding: 9px 18px; border-radius: var(--radius-full); font-size: 0.86rem; font-weight: 700; text-decoration: none; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0, 151, 178, 0.25);">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span>Edit Profile</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="profile-stats-grid">
+        <div class="profile-stat-card">
+          <div class="profile-stat-number" id="stat-tracks">0</div>
+          <div class="profile-stat-label">Published Tracks</div>
+        </div>
+        <div class="profile-stat-card">
+          <div class="profile-stat-number" id="stat-duration">0:00</div>
+          <div class="profile-stat-label">Total Duration</div>
+        </div>
+        <div class="profile-stat-card">
+          <div class="profile-stat-number" style="color: #16a34a;">100%</div>
+          <div class="profile-stat-label">CC0 Royalty Free</div>
+        </div>
+        <div class="profile-stat-card">
+          <div class="profile-stat-number" style="color: #0284c7;">320k</div>
+          <div class="profile-stat-label">High Quality MP3</div>
+        </div>
+      </section>
+
+      <section>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <h2 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main);">
+            Tracks by <span id="tracks-heading-artist">Creator</span>
+          </h2>
+          <span id="tracks-count-badge" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Loading...</span>
+        </div>
+
+        <div class="tracks-list" id="creator-tracks-container">
+          <div style="text-align:center; padding: 48px; color: #64748b;">Loading creator tracks...</div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="footer-logo-row">
+          <img src="Immagini/brand/Logo.webp" alt="Logo" class="footer-logo">
+          <img src="Immagini/brand/scrittawhatscr.webp" alt="WhatsCR" class="footer-text">
+        </div>
+        <p class="footer-desc">The platform dedicated to high quality copyright-free music for game developers and digital creators.</p>
+      </div>
+
+      <div class="footer-cols">
+        <div class="f-col">
+          <h4>Explore</h4>
+          <ul>
+            <li><a href="search.html?genre=Gaming">Game Music</a></li>
+            <li><a href="search.html?genre=Chiptune">8-Bit Loops</a></li>
+            <li><a href="search.html?genre=Lo-Fi">Lo-Fi Beats</a></li>
+            <li><a href="search.html?genre=Sound%20Effects">Sound Effects</a></li>
+            <li><a href="api.html">Developer API</a></li>
+          </ul>
+        </div>
+        <div class="f-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="report.html">Report Content</a></li>
+            <li><a href="https://discord.gg/A3qEvfdgDP" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-discord"></i> Discord Server</a></li>
+          </ul>
+        </div>
+        <div class="f-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="license.html">License Summary</a></li>
+            <li><a href="terms.html">Terms of Service</a></li>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="cookies.html">Cookie Policy</a></li>
+            <li><a href="dsa.html">Digital Services Act</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div id="wiki-modal" class="wiki-modal-backdrop" style="display: none;">
+    <div class="wiki-modal-content">
+      <div class="wiki-modal-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: #e0f2fe; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+            <i class="fa-solid fa-book-bookmark"></i>
+          </div>
+          <div>
+            <h3 id="wiki-title" style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin: 0;">Audio Encyclopedia</h3>
+            <span style="font-size: 0.76rem; color: var(--text-muted);">WhatsCR Creator Knowledge Base</span>
+          </div>
+        </div>
+        <button id="wiki-close" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 8px;" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="wiki-modal-body">
+        <span id="wiki-pronounce" class="wiki-pronounce">Term Definition</span>
+        <div id="wiki-callout" class="wiki-callout"></div>
+        <div id="wiki-details"></div>
+      </div>
+      <div class="wiki-modal-footer">
+        <span style="font-size: 0.78rem; color: var(--text-light);"><i class="fa-solid fa-scale-balanced" style="margin-right: 4px;"></i>Royalty-Free Audio Standard</span>
+        <button id="wiki-btn-close" style="background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-main); padding: 7px 18px; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 600; cursor: pointer;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetUsername = (urlParams.get('u') || urlParams.get('username') || '').trim();
+
+    const pageTitle = document.getElementById('page-title');
+    const breadcrumbUsername = document.getElementById('breadcrumb-username');
+    const creatorAvatar = document.getElementById('creator-avatar');
+    const creatorHandle = document.getElementById('creator-handle');
+    const creatorBadge = document.getElementById('creator-badge');
+    const creatorJoined = document.getElementById('creator-joined');
+    const tracksHeadingArtist = document.getElementById('tracks-heading-artist');
+    const tracksCountBadge = document.getElementById('tracks-count-badge');
+    const tracksContainer = document.getElementById('creator-tracks-container');
+    const statTracks = document.getElementById('stat-tracks');
+    const statDuration = document.getElementById('stat-duration');
+    const btnShareProfile = document.getElementById('btn-share-profile');
+    const shareBtnText = document.getElementById('share-btn-text');
+    const btnEditProfile = document.getElementById('btn-edit-profile');
+
+    const waveSurferInstances = new Map();
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    async function loadProfile() {
+      if (!targetUsername) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      const displayUser = targetUsername.startsWith('@') ? targetUsername.slice(1) : targetUsername;
+      pageTitle.textContent = `@${displayUser} - Creator Profile • WhatsCR?`;
+      breadcrumbUsername.textContent = `@${displayUser}`;
+      creatorHandle.textContent = `@${displayUser}`;
+      tracksHeadingArtist.textContent = `@${displayUser}`;
+      creatorAvatar.textContent = (displayUser[0] || 'C').toUpperCase();
+
+      try {
+        const profileRes = await fetch(`/api/auth?action=profile&username=${encodeURIComponent(displayUser)}`);
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          if (profileData && profileData.user) {
+            const u = profileData.user;
+            if (u.role === 'admin') {
+              creatorBadge.textContent = 'Administrator';
+              creatorBadge.style.background = '#fee2e2';
+              creatorBadge.style.color = '#991b1b';
+            } else {
+              creatorBadge.textContent = 'Verified Creator';
+              creatorBadge.style.background = '#e0f2fe';
+              creatorBadge.style.color = '#0369a1';
+            }
+            if (u.created_at) {
+              const d = new Date(u.created_at);
+              creatorJoined.innerHTML = `<i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>Member since ${d.toLocaleString('default', { month: 'short', year: 'numeric' })}`;
+            }
+          }
+        }
+      } catch (e) {}
+
+      loadTracks(displayUser);
+    }
+
+    async function loadTracks(artistName) {
+      try {
+        const res = await fetch(`/api/tracks?artist=${encodeURIComponent(artistName)}`);
+        if (!res.ok) throw new Error('Tracks fetch error');
+        const tracks = await res.json();
+
+        statTracks.textContent = tracks.length;
+        tracksCountBadge.textContent = `${tracks.length} track${tracks.length !== 1 ? 's' : ''}`;
+
+        let totalSeconds = 0;
+        tracks.forEach(t => {
+          if (t.duration && t.duration.includes(':')) {
+            const [m, s] = t.duration.split(':').map(Number);
+            totalSeconds += (m || 0) * 60 + (s || 0);
+          }
+        });
+        const totalMins = Math.floor(totalSeconds / 60);
+        const totalSecs = (totalSeconds % 60).toString().padStart(2, '0');
+        statDuration.textContent = `${totalMins}:${totalSecs}`;
+
+        if (!tracks || tracks.length === 0) {
+          tracksContainer.innerHTML = `
+            <div style="text-align: center; padding: 48px 20px; background: #fafcfe; border: 1px dashed var(--border); border-radius: 16px;">
+              <i class="fa-solid fa-music" style="font-size: 2.2rem; color: #cbd5e1; margin-bottom: 12px;"></i>
+              <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">No tracks published yet</h3>
+              <p style="font-size: 0.88rem; color: var(--text-muted);">This creator hasn't uploaded any public audio tracks yet.</p>
+            </div>
+          `;
+          return;
+        }
+
+        tracksContainer.innerHTML = tracks.map(t => `
+          <article class="track-row" id="track-row-${t.id}">
+            <button class="track-play-btn" data-track-id="${t.id}" aria-label="Play ${escapeHtml(t.title)}">
+              <i class="fa-solid fa-play"></i>
+            </button>
+            <div class="track-meta">
+              <h4 class="track-name">${escapeHtml(t.title)}</h4>
+              <span class="track-artist">${escapeHtml(t.artist || 'Unknown')} • ${escapeHtml(t.genre || 'Soundtrack')}</span>
+            </div>
+            <div class="track-waveform" id="waveform-${t.id}"></div>
+            <div class="track-badges">
+              ${t.is_loop ? '<span class="badge badge-loop term-badge" data-term="seamless-loop" title="Click to view definition in Audio Encyclopedia">Seamless Loop</span>' : ''}
+              <span class="badge badge-cc term-badge" data-term="cc0-license" title="Click to view definition in Audio Encyclopedia">${escapeHtml(t.license_type || 'CC0 Free')}</span>
+            </div>
+            <span class="track-time" id="time-${t.id}">${escapeHtml(t.duration || '0:00')}</span>
+            <div class="track-volume-wrap">
+              <button class="track-vol-btn" data-track-id="${t.id}" aria-label="Toggle mute">
+                <i class="fa-solid fa-volume-high"></i>
+              </button>
+              <input type="range" class="track-vol-slider" min="0" max="1" step="0.05" value="0.8" data-track-id="${t.id}" aria-label="Volume slider">
+            </div>
+            <div class="track-actions">
+              <a href="${t.audio_url}" download class="btn-download" title="Download track">
+                <i class="fa-solid fa-download"></i>
+                <span>Download</span>
+              </a>
+            </div>
+          </article>
+        `).join('');
+
+        initWaveSurfers(tracks);
+
+      } catch (err) {
+        tracksContainer.innerHTML = '<div style="text-align: center; padding: 48px; color: #ef4444;">Failed to load creator tracks.</div>';
+      }
+    }
+
+    function initWaveSurfers(tracks) {
+      waveSurferInstances.forEach(ws => ws.destroy());
+      waveSurferInstances.clear();
+
+      tracks.forEach(t => {
+        const container = document.getElementById(`waveform-${t.id}`);
+        if (!container) return;
+
+        const ws = WaveSurfer.create({
+          container: container,
+          waveColor: '#cbd5e1',
+          progressColor: '#0097b2',
+          cursorColor: 'transparent',
+          barWidth: 2,
+          barGap: 3,
+          barRadius: 2,
+          height: 34,
+          url: t.audio_url
+        });
+
+        ws.setVolume(0.8);
+
+        const row = document.getElementById(`track-row-${t.id}`);
+        const btn = row.querySelector('.track-play-btn');
+        const icon = btn.querySelector('i');
+        const timeEl = document.getElementById(`time-${t.id}`);
+        const volBtn = row.querySelector('.track-vol-btn');
+        const volSlider = row.querySelector('.track-vol-slider');
+        const volIcon = volBtn.querySelector('i');
+
+        volSlider.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          ws.setVolume(val);
+          if (val === 0) {
+            volIcon.className = 'fa-solid fa-volume-xmark';
+          } else if (val < 0.5) {
+            volIcon.className = 'fa-solid fa-volume-low';
+          } else {
+            volIcon.className = 'fa-solid fa-volume-high';
+          }
+        });
+
+        let prevVolume = 0.8;
+        volBtn.addEventListener('click', () => {
+          if (ws.getVolume() > 0) {
+            prevVolume = ws.getVolume();
+            ws.setVolume(0);
+            volSlider.value = 0;
+            volIcon.className = 'fa-solid fa-volume-xmark';
+          } else {
+            ws.setVolume(prevVolume || 0.8);
+            volSlider.value = prevVolume || 0.8;
+            volIcon.className = prevVolume < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
+          }
+        });
+
+        ws.on('ready', () => {
+          const totalSec = Math.max(1, Math.round(ws.getDuration()));
+          const mins = Math.floor(totalSec / 60);
+          const secs = (totalSec % 60).toString().padStart(2, '0');
+          if (timeEl) timeEl.textContent = `${mins}:${secs}`;
+        });
+
+        ws.on('timeupdate', (currentTime) => {
+          const totalSec = Math.floor(ws.getDuration());
+          const curSec = Math.floor(currentTime);
+          const mins = Math.floor(curSec / 60);
+          const secs = (curSec % 60).toString().padStart(2, '0');
+          if (timeEl) timeEl.textContent = `${mins}:${secs}`;
+        });
+
+        ws.on('finish', () => {
+          icon.className = 'fa-solid fa-play';
+          row.classList.remove('is-playing');
+        });
+
+        btn.addEventListener('click', () => {
+          waveSurferInstances.forEach((otherWs, otherId) => {
+            if (otherId !== t.id && otherWs.isPlaying()) {
+              otherWs.pause();
+              const otherRow = document.getElementById(`track-row-${otherId}`);
+              if (otherRow) {
+                otherRow.classList.remove('is-playing');
+                otherRow.querySelector('.track-play-btn i').className = 'fa-solid fa-play';
+              }
+            }
+          });
+
+          if (ws.isPlaying()) {
+            ws.pause();
+            icon.className = 'fa-solid fa-play';
+            row.classList.remove('is-playing');
+          } else {
+            ws.play();
+            icon.className = 'fa-solid fa-pause';
+            row.classList.add('is-playing');
+          }
+        });
+
+        waveSurferInstances.set(t.id, ws);
+      });
+    }
+
+    btnShareProfile.addEventListener('click', () => {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(window.location.href);
+        shareBtnText.textContent = 'Link Copied!';
+        setTimeout(() => {
+          shareBtnText.textContent = 'Share Profile';
+        }, 2000);
+      }
+    });
+
+    async function checkHeaderAuth() {
+      try {
+        const res = await fetch('/api/auth?action=me');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.user) {
+          const rightNav = document.getElementById('header-user-nav');
+          if (!rightNav) return;
+          const isAdmin = data.user.role === 'admin';
+          const userName = data.user.username ? `@${data.user.username}` : (data.user.email || '').split('@')[0];
+          rightNav.innerHTML = `
+            ${isAdmin ? '<a href="admin.html" class="nav-link" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-shield-halved"></i> Admin</a>' : ''}
+            <a href="login.html" class="nav-link" style="font-weight: 700; color: var(--text-main); text-decoration: none;"><i class="fa-solid fa-user" style="margin-right: 4px;"></i>${userName}</a>
+            <button id="nav-logout-btn" style="background: none; border: none; font-family: inherit; font-size: inherit; color: var(--text-muted); cursor: pointer; padding: 0 8px; font-weight: 600;">Log out</button>
+            <a href="upload.html" class="btn-upload">
+              <i class="fa-solid fa-arrow-up-from-bracket"></i>
+              <span>Upload</span>
+            </a>
+          `;
+          const logoutBtn = document.getElementById('nav-logout-btn');
+          if (logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
+              await fetch('/api/auth?action=logout', { method: 'POST' });
+              window.location.reload();
+            });
+          }
+
+          const loggedInHandle = data.user.username || data.user.email.split('@')[0];
+          const currentTarget = (targetUsername.startsWith('@') ? targetUsername.slice(1) : targetUsername).toLowerCase();
+          if (loggedInHandle.toLowerCase() === currentTarget) {
+            btnEditProfile.style.display = 'inline-flex';
+          }
+        }
+      } catch (e) {}
+    }
+
+    const wikiGlossary = {
+      'seamless-loop': {
+        title: 'Seamless Game Loop',
+        pronounce: '/ˈsiːm.ləs ɡeɪm luːp/ &bull; Audio Engineering &bull; Interactive Media',
+        definition: 'An audio track designed and mastered so its end transitions into its beginning without any audible gap, click, or tempo disruption. It loops continuously in game engines indefinitely.',
+        details: [
+          { heading: 'Game Engine Integration', text: 'When placed into an AudioSource in Unity, Unreal Engine, or Godot with loop enabled, seamless loops maintain smooth immersion during exploration, combat, and gameplay.' },
+          { heading: 'Mastering Standard', text: 'Rendered at zero-crossing points with identical boundary amplitude to eliminate phase cancellation and audio pops.' }
+        ]
+      },
+      'cc0-license': {
+        title: 'CC0 1.0 Universal (Public Domain)',
+        pronounce: '/ˌsiː.siːˈzɪə.roʊ/ &bull; Legal License &bull; Copyright Waiver',
+        definition: 'A Creative Commons dedication where the creator waives all copyright rights worldwide. Tracks marked as CC0 belong to the public domain and can be freely used in commercial games, videos, and apps without asking permission or giving credit.',
+        details: [
+          { heading: 'Commercial Safety', text: '100% safe for monetized YouTube videos, Steam indie games, iOS/Android apps, podcasts, and Twitch broadcasts with zero risk of DMCA strikes.' },
+          { heading: 'No Royalties or Hidden Fees', text: 'Never registered with automated collection societies (PROs) and completely free of royalties.' }
+        ]
+      },
+      'sfx': {
+        title: 'Sound Effects (SFX)',
+        pronounce: '/ɛs.ɛf.ɛks/ &bull; Interactive Audio &bull; Foley & Sound Design',
+        definition: 'Short, targeted audio samples designed to simulate physical collisions, UI feedback, spells, weapons, and environmental events in software and video games.',
+        details: [
+          { heading: 'Gameplay Role', text: 'Provides immediate sensory feedback to players for button presses, item pickups, jump mechanics, and damage notifications.' }
+        ]
+      }
+    };
+
+    const wikiModal = document.getElementById('wiki-modal');
+    const wikiTitle = document.getElementById('wiki-title');
+    const wikiPronounce = document.getElementById('wiki-pronounce');
+    const wikiCallout = document.getElementById('wiki-callout');
+    const wikiDetails = document.getElementById('wiki-details');
+    const wikiClose = document.getElementById('wiki-close');
+    const wikiBtnClose = document.getElementById('wiki-btn-close');
+
+    function openWikiModal(termKey) {
+      const data = wikiGlossary[termKey] || wikiGlossary['seamless-loop'];
+      wikiTitle.textContent = data.title;
+      wikiPronounce.innerHTML = data.pronounce;
+      wikiCallout.textContent = data.definition;
+      wikiDetails.innerHTML = (data.details || []).map(d => `
+        <h4 class="wiki-subheading"><i class="fa-solid fa-circle-info" style="color: var(--primary); font-size: 0.85rem;"></i>${d.heading}</h4>
+        <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px;">${d.text}</p>
+      `).join('');
+      wikiModal.style.display = 'flex';
+    }
+
+    function closeWikiModal() {
+      wikiModal.style.display = 'none';
+    }
+
+    if (wikiClose) wikiClose.addEventListener('click', closeWikiModal);
+    if (wikiBtnClose) wikiBtnClose.addEventListener('click', closeWikiModal);
+    if (wikiModal) {
+      wikiModal.addEventListener('click', (e) => {
+        if (e.target === wikiModal) closeWikiModal();
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      const badge = e.target.closest('.term-badge');
+      if (badge) {
+        e.preventDefault();
+        const term = badge.getAttribute('data-term');
+        if (term) openWikiModal(term);
+      }
+    });
+
+    checkHeaderAuth();
+    loadProfile();
+  </script>
+</body>
+</html>
