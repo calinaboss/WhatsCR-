@@ -353,7 +353,7 @@
         });
 
         ws.on('ready', () => {
-          const totalSec = Math.floor(ws.getDuration());
+          const totalSec = Math.max(1, Math.round(ws.getDuration()));
           const mins = Math.floor(totalSec / 60);
           const secs = (totalSec % 60).toString().padStart(2, '0');
           if (timeEl) timeEl.textContent = `${mins}:${secs}`;

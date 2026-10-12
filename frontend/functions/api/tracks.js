@@ -6,7 +6,7 @@ function isValidAudioUrl(url) {
   if (trimmed.startsWith('javascript:') || trimmed.startsWith('data:') || trimmed.startsWith('vbscript:')) {
     return false;
   }
-  return trimmed.startsWith('audio/') || trimmed.startsWith('http://') || trimmed.startsWith('https://');
+  return trimmed.startsWith('/api/audio/') || trimmed.startsWith('audio/') || trimmed.startsWith('http://') || trimmed.startsWith('https://');
 }
 
 export async function onRequestGet(context) {

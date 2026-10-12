@@ -331,15 +331,15 @@
           return;
         }
 
-        showAlert(currentMode === 'login' ? 'Login successful!' : 'Account created!', true);
+        showAlert(currentMode === 'login' ? 'Login successful! Redirecting...' : 'Account created! Redirecting...', true);
         setTimeout(() => {
           const redirectUrl = new URLSearchParams(window.location.search).get('next');
           if (redirectUrl) {
             window.location.href = redirectUrl;
           } else {
-            displayProfile(data.user);
+            window.location.href = `thank-you.html?type=${currentMode}`;
           }
-        }, 600);
+        }, 500);
 
       } catch (err) {
         showAlert('Network error. Please check your connection.');
