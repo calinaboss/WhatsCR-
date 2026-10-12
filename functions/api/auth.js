@@ -81,7 +81,7 @@ async function runNeonSql(databaseUrl, sql, params = []) {
   const dbUrl = new URL(databaseUrl);
   const endpoint = `https://${dbUrl.host}/sql`;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
 
   const res = await fetch(endpoint, {
     method: 'POST',
@@ -110,10 +110,12 @@ async function ensureTables(databaseUrl) {
   if (schemaInitialized) return;
   const statements = [
     "CREATE TABLE IF NOT EXISTS users (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), email VARCHAR(255) UNIQUE NOT NULL, password_hash VARCHAR(255) NOT NULL, role VARCHAR(32) NOT NULL DEFAULT 'user', created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(50)",
     "CREATE TABLE IF NOT EXISTS sessions (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, token_hash VARCHAR(255) UNIQUE NOT NULL, expires_at TIMESTAMP WITH TIME ZONE NOT NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)",
     "CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash)",
     "ALTER TABLE tracks ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE SET NULL",
-    "ALTER TABLE tracks ADD COLUMN IF NOT EXISTS status VARCHAR(32) DEFAULT 'approved'"
+    "ALTER TABLE tracks ADD COLUMN IF NOT EXISTS status VARCHAR(32) DEFAULT 'approved'",
+    "CREATE TABLE IF NOT EXISTS audio_files (filename VARCHAR(255) PRIMARY KEY, mime_type VARCHAR(64) NOT NULL, data BYTEA NOT NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)"
   ];
   try {
     for (const stmt of statements) {
@@ -152,7 +154,7 @@ export async function onRequest(context) {
       const tokenHash = await sha256Hex(token);
       const rows = await runNeonSql(
         env.DATABASE_URL,
-        'SELECT u.id, u.email, u.role FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        'SELECT u.id, u.email, u.username, u.role FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
         [tokenHash]
       );
       if (rows && rows.length > 0) {
@@ -167,6 +169,80 @@ export async function onRequest(context) {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
+  }
+
+  if (request.method === 'POST' && action === 'update_profile') {
+    const cookies = parseCookies(request.headers.get('Cookie'));
+    const token = cookies.whatscr_session;
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    let body = {};
+    try {
+      body = await request.json();
+    } catch (e) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON request' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    let username = (body.username || '').trim().toLowerCase();
+    const cleanUsername = username.replace(/[^a-z0-9_]/g, '');
+    if (!cleanUsername || cleanUsername.length < 3 || cleanUsername.length > 30) {
+      return new Response(JSON.stringify({ error: 'Username must be 3-30 letters, numbers, or underscores.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    try {
+      const tokenHash = await sha256Hex(token);
+      const authRows = await runNeonSql(
+        env.DATABASE_URL,
+        'SELECT u.id FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        [tokenHash]
+      );
+      if (!authRows || authRows.length === 0) {
+        return new Response(JSON.stringify({ error: 'Session expired' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      const userId = authRows[0].id;
+
+      const taken = await runNeonSql(
+        env.DATABASE_URL,
+        'SELECT id FROM users WHERE LOWER(username) = $1 AND id != $2 LIMIT 1',
+        [cleanUsername, userId]
+      );
+      if (taken && taken.length > 0) {
+        return new Response(JSON.stringify({ error: 'This username is already taken. Please choose another.' }), {
+          status: 409,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const updated = await runNeonSql(
+        env.DATABASE_URL,
+        'UPDATE users SET username = $1 WHERE id = $2 RETURNING id, email, username, role',
+        [cleanUsername, userId]
+      );
+
+      return new Response(JSON.stringify({ success: true, user: updated[0] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: 'Failed to update username' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
   }
 
   if (request.method === 'POST' && action === 'logout') {
@@ -189,7 +265,7 @@ export async function onRequest(context) {
   }
 
   if (request.method === 'POST' && (action === 'register' || action === 'login')) {
-    if (!checkRateLimit(ip, 8, 60000)) {
+    if (!checkRateLimit(ip, 12, 60000)) {
       return new Response(JSON.stringify({ error: 'Too many attempts. Please wait a minute.' }), {
         status: 429,
         headers: { 'Content-Type': 'application/json' }
@@ -206,18 +282,42 @@ export async function onRequest(context) {
       });
     }
 
-    const email = (body.email || '').trim().toLowerCase();
-    const password = body.password || '';
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email) || email.length > 255) {
-      return new Response(JSON.stringify({ error: 'Please enter a valid email address.' }), {
+    if (body.bot_trap) {
+      return new Response(JSON.stringify({ error: 'Automated submission blocked.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
+    const formTime = parseInt(body.form_time, 10);
+    if (formTime && (Date.now() - formTime < 1000)) {
+      return new Response(JSON.stringify({ error: 'Please wait a moment before submitting.' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const identifier = (body.identifier || body.email || '').trim().toLowerCase();
+    const password = body.password || '';
+
     if (action === 'register') {
+      const email = identifier;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(email) || email.length > 255) {
+        return new Response(JSON.stringify({ error: 'Please enter a valid email address.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      let username = (body.username || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+      if (!username || username.length < 3) {
+        username = email.split('@')[0].replace(/[^a-z0-9_]/g, '').slice(0, 30);
+      }
+      if (username.length < 3) {
+        username = `user_${crypto.randomUUID().slice(0, 8)}`;
+      }
+
       if (!password || password.length < 8 || password.length > 128) {
         return new Response(JSON.stringify({ error: 'Password must be at least 8 characters long.' }), {
           status: 400,
@@ -226,9 +326,13 @@ export async function onRequest(context) {
       }
 
       try {
-        const existing = await runNeonSql(env.DATABASE_URL, 'SELECT id FROM users WHERE email = $1 LIMIT 1', [email]);
+        const existing = await runNeonSql(
+          env.DATABASE_URL,
+          'SELECT id FROM users WHERE LOWER(email) = $1 OR LOWER(username) = $2 LIMIT 1',
+          [email, username]
+        );
         if (existing && existing.length > 0) {
-          return new Response(JSON.stringify({ error: 'An account with this email already exists.' }), {
+          return new Response(JSON.stringify({ error: 'An account with this email or username already exists.' }), {
             status: 409,
             headers: { 'Content-Type': 'application/json' }
           });
@@ -240,8 +344,8 @@ export async function onRequest(context) {
 
         const insertRows = await runNeonSql(
           env.DATABASE_URL,
-          'INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id, email, role',
-          [email, hashed, role]
+          'INSERT INTO users (email, username, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, email, username, role',
+          [email, username, hashed, role]
         );
         const newUser = insertRows[0];
 
@@ -271,8 +375,8 @@ export async function onRequest(context) {
     }
 
     if (action === 'login') {
-      if (!password) {
-        return new Response(JSON.stringify({ error: 'Please enter your password.' }), {
+      if (!identifier || !password) {
+        return new Response(JSON.stringify({ error: 'Please enter your login details.' }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' }
         });
@@ -281,12 +385,12 @@ export async function onRequest(context) {
       try {
         const users = await runNeonSql(
           env.DATABASE_URL,
-          'SELECT id, email, password_hash, role FROM users WHERE email = $1 LIMIT 1',
-          [email]
+          'SELECT id, email, username, password_hash, role FROM users WHERE LOWER(email) = $1 OR LOWER(username) = $1 LIMIT 1',
+          [identifier]
         );
 
         if (!users || users.length === 0) {
-          return new Response(JSON.stringify({ error: 'Invalid email or password.' }), {
+          return new Response(JSON.stringify({ error: 'Invalid login credentials.' }), {
             status: 401,
             headers: { 'Content-Type': 'application/json' }
           });
@@ -295,7 +399,7 @@ export async function onRequest(context) {
         const user = users[0];
         const isValid = await verifyPassword(password, user.password_hash);
         if (!isValid) {
-          return new Response(JSON.stringify({ error: 'Invalid email or password.' }), {
+          return new Response(JSON.stringify({ error: 'Invalid login credentials.' }), {
             status: 401,
             headers: { 'Content-Type': 'application/json' }
           });
@@ -311,7 +415,10 @@ export async function onRequest(context) {
           [user.id, tokenHash, expiresAt]
         );
 
-        return new Response(JSON.stringify({ success: true, user: { id: user.id, email: user.email, role: user.role } }), {
+        return new Response(JSON.stringify({
+          success: true,
+          user: { id: user.id, email: user.email, username: user.username, role: user.role }
+        }), {
           status: 200,
           headers: {
             'Content-Type': 'application/json',

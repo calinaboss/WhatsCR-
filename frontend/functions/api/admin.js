@@ -185,13 +185,18 @@ export async function onRequest(context) {
       }
 
       const track = existing[0];
-      if (env.AUDIO_BUCKET && track.audio_url && track.audio_url.includes('/api/audio/')) {
+      if (track.audio_url && track.audio_url.includes('/api/audio/')) {
         const parts = track.audio_url.split('/');
         const filename = parts[parts.length - 1];
         if (filename && filename.endsWith('.mp3')) {
+          if (env.AUDIO_BUCKET) {
+            try {
+              await env.AUDIO_BUCKET.delete(filename);
+            } catch (r2Err) {}
+          }
           try {
-            await env.AUDIO_BUCKET.delete(filename);
-          } catch (r2Err) {}
+            await runNeonSql(env.DATABASE_URL, 'DELETE FROM audio_files WHERE filename = $1', [filename]);
+          } catch (dbAudioErr) {}
         }
       }
 
