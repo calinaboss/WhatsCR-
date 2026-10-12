@@ -57,6 +57,8 @@ export async function onRequestGet(context) {
     const params = [];
     const conditions = [];
 
+    conditions.push("(status = 'approved' OR status IS NULL)");
+
     if (query) {
       const clean = query.slice(0, 100).toLowerCase();
       params.push(`%${clean}%`);

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Track - WhatsCR?</title>
+  <link rel="icon" type="image/x-icon" href="Immagini/favicons/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="Immagini/favicons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="Immagini/favicons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="Immagini/favicons/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#0097b2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="legal-body">
+
+  <header class="legal-header">
+    <div class="legal-header-inner">
+      <a href="index.html" class="legal-brand" title="Back to Home">
+        <img src="Immagini/brand/Logo.webp" alt="Logo WhatsCR" class="brand-icon">
+        <img src="Immagini/brand/scrittawhatscr.webp" alt="WhatsCR?" class="brand-text">
+      </a>
+      <a href="index.html" class="legal-back-link">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back to Home</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="legal-main" style="padding: 36px 0 64px;">
+    <div class="legal-container" style="max-width: 680px;">
+      <h1 class="legal-title">Upload New Track</h1>
+      <p class="legal-subtitle">Share your royalty-free music and loops with independent creators worldwide.</p>
+
+      <div id="upload-alert" style="display: none; padding: 14px 18px; border-radius: 12px; font-size: 0.9rem; margin-bottom: 24px; line-height: 1.5;"></div>
+
+      <form id="upload-form">
+        <div id="drop-zone" style="border: 2px dashed var(--border); border-radius: 16px; padding: 36px 20px; text-align: center; background: #fafcfe; cursor: pointer; transition: all 0.2s ease; margin-bottom: 24px;">
+          <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.2rem; color: var(--primary); margin-bottom: 12px;"></i>
+          <h3 id="drop-text" style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Click or drag & drop an MP3 audio file</h3>
+          <p id="drop-sub" style="font-size: 0.82rem; color: var(--text-muted);">Max file size: 15 MB. Supported formats: .mp3, .wav, .ogg</p>
+          <input type="file" id="audio-file-input" accept="audio/mp3,audio/mpeg,audio/wav,audio/ogg" style="display: none;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px;">
+          <div>
+            <label for="track-title" style="display: block; font-size: 0.86rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Track Title *</label>
+            <input type="text" id="track-title" required placeholder="e.g. Cyber Drift" maxlength="100" style="width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 0.92rem; font-family: inherit; color: var(--text-main); outline: none; background: #ffffff;">
+          </div>
+          <div>
+            <label for="track-artist" style="display: block; font-size: 0.86rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Artist / Creator</label>
+            <input type="text" id="track-artist" placeholder="Your artist handle" maxlength="80" style="width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 0.92rem; font-family: inherit; color: var(--text-main); outline: none; background: #ffffff;">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+          <div>
+            <label for="track-genre" style="display: block; font-size: 0.86rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Genre</label>
+            <select id="track-genre" style="width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 0.92rem; font-family: inherit; color: var(--text-main); outline: none; background: #ffffff;">
+              <option value="Gaming">Gaming & Combat</option>
+              <option value="Chiptune">Chiptune & 8-Bit</option>
+              <option value="Lo-Fi">Lo-Fi Beats</option>
+              <option value="Synthwave">Synthwave</option>
+              <option value="Orchestral">Orchestral & Cinematic</option>
+              <option value="Ambient">Ambient & Calm</option>
+              <option value="Sound Effects">Sound Effects</option>
+            </select>
+          </div>
+          <div style="display: flex; align-items: center; padding-top: 24px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 600; color: var(--text-main); cursor: pointer;">
+              <input type="checkbox" id="track-loop" style="width: 18px; height: 18px; accent-color: var(--primary);">
+              <span>Seamless Game Loop</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="background: var(--bg-slate); border: 1px solid var(--border-light); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+          <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 0.82rem; color: #334155; line-height: 1.5; cursor: pointer;">
+            <input type="checkbox" id="license-agreement" required style="width: 18px; height: 18px; accent-color: var(--primary); margin-top: 2px;">
+            <span>I certify under penalty of perjury that this audio is my 100% original work or under CC0 public domain, and is not registered with YouTube Content ID or automated copyright collection societies.</span>
+          </label>
+        </div>
+
+        <button type="submit" id="upload-submit-btn" style="width: 100%; background: var(--primary); color: #ffffff; padding: 14px; border-radius: var(--radius-full); font-size: 0.98rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 14px rgba(0, 151, 178, 0.25);">
+          <span id="btn-text">Submit Track for Review</span>
+        </button>
+      </form>
+
+    </div>
+  </main>
+
+  <footer class="legal-footer">
+    <p>&copy; 2026 WhatsCR? All rights reserved. <a href="index.html">Return to Home</a> &bull; <a href="https://discord.gg/A3qEvfdgDP" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-discord"></i> Discord Server</a></p>
+  </footer>
+
+  <script>
+    let selectedFile = null;
+    let detectedDuration = '0:00';
+
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('audio-file-input');
+    const dropText = document.getElementById('drop-text');
+    const dropSub = document.getElementById('drop-sub');
+    const uploadForm = document.getElementById('upload-form');
+    const uploadAlert = document.getElementById('upload-alert');
+    const submitBtn = document.getElementById('upload-submit-btn');
+    const btnText = document.getElementById('btn-text');
+
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth?action=me');
+        if (!res.ok) {
+          window.location.href = 'login.html?next=upload.html';
+          return;
+        }
+        const data = await res.json();
+        if (!data || !data.user) {
+          window.location.href = 'login.html?next=upload.html';
+        }
+      } catch (err) {
+        window.location.href = 'login.html?next=upload.html';
+      }
+    }
+    checkAuth();
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--primary)';
+      dropZone.style.background = '#f0faff';
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.borderColor = 'var(--border)';
+      dropZone.style.background = '#fafcfe';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--border)';
+      dropZone.style.background = '#fafcfe';
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleFileSelection(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files && fileInput.files[0]) {
+        handleFileSelection(fileInput.files[0]);
+      }
+    });
+
+    function handleFileSelection(file) {
+      if (file.size > 15 * 1024 * 1024) {
+        showAlert('File size exceeds the 15 MB limit.');
+        return;
+      }
+      selectedFile = file;
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+      dropText.textContent = `${file.name}`;
+      dropSub.textContent = `Size: ${sizeMb} MB - Analyzing audio duration...`;
+
+      const audioObj = new Audio();
+      audioObj.src = URL.createObjectURL(file);
+      audioObj.addEventListener('loadedmetadata', () => {
+        const totalSec = Math.floor(audioObj.duration);
+        const mins = Math.floor(totalSec / 60);
+        const secs = (totalSec % 60).toString().padStart(2, '0');
+        detectedDuration = `${mins}:${secs}`;
+        dropSub.textContent = `Size: ${sizeMb} MB • Duration: ${detectedDuration}`;
+      });
+    }
+
+    function showAlert(msg, isSuccess = false) {
+      uploadAlert.textContent = msg;
+      uploadAlert.style.display = 'block';
+      if (isSuccess) {
+        uploadAlert.style.background = '#ecfdf5';
+        uploadAlert.style.color = '#065f46';
+        uploadAlert.style.border = '1px solid #a7f3d0';
+      } else {
+        uploadAlert.style.background = '#fef2f2';
+        uploadAlert.style.color = '#991b1b';
+        uploadAlert.style.border = '1px solid #fecaca';
+      }
+    }
+
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      uploadAlert.style.display = 'none';
+
+      if (!selectedFile) {
+        showAlert('Please choose an audio file to upload.');
+        return;
+      }
+
+      const title = document.getElementById('track-title').value.trim();
+      const artist = document.getElementById('track-artist').value.trim();
+      const genre = document.getElementById('track-genre').value;
+      const isLoop = document.getElementById('track-loop').checked;
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('title', title);
+      formData.append('artist', artist);
+      formData.append('genre', genre);
+      formData.append('duration', detectedDuration);
+      formData.append('is_loop', isLoop ? 'true' : 'false');
+
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.7';
+      btnText.textContent = 'Uploading and verifying...';
+
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showAlert(data.error || 'Upload failed.');
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+          btnText.textContent = 'Submit Track for Review';
+          return;
+        }
+
+        showAlert(data.message || 'Track uploaded successfully!', true);
+        uploadForm.reset();
+        selectedFile = null;
+        dropText.textContent = 'Click or drag & drop an MP3 audio file';
+        dropSub.textContent = 'Max file size: 15 MB. Supported formats: .mp3, .wav, .ogg';
+        btnText.textContent = 'Upload another track';
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+
+      } catch (err) {
+        showAlert('Network error occurred during upload.');
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        btnText.textContent = 'Submit Track for Review';
+      }
+    });
+  </script>
+</body>
+</html>
