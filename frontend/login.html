@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="style.css">
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body class="legal-body">
 
@@ -74,8 +74,8 @@
             <span id="password-hint" style="display: none; font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">Must contain at least 8 characters.</span>
           </div>
 
-          <div id="captcha-container" style="display: none; justify-content: center; margin-bottom: 20px;">
-            <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
+          <div id="captcha-container" style="display: flex; justify-content: center; margin-bottom: 20px;">
+            <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA" data-theme="light"></div>
           </div>
 
           <button type="submit" id="submit-btn" style="width: 100%; background: var(--primary); color: #ffffff; border: none; padding: 12px; border-radius: var(--radius-full); font-size: 0.94rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0, 151, 178, 0.25);">
@@ -110,6 +110,10 @@
               <input type="text" id="profile-username-input" required maxlength="30" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.94rem; font-family: inherit; color: var(--text-main);">
             </div>
             <span style="font-size: 0.76rem; color: var(--text-muted); margin-top: 4px; display: block;">This will be displayed as the artist on your published tracks.</span>
+            <div id="username-cooldown-note" style="font-size: 0.78rem; color: #64748b; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              <span id="username-cooldown-text">Username can be updated once every 24 hours.</span>
+            </div>
           </div>
 
           <button type="submit" id="save-profile-btn" style="width: 100%; background: var(--primary); color: #ffffff; border: none; padding: 10px; border-radius: var(--radius-full); font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease;">
@@ -118,6 +122,9 @@
         </form>
 
         <div style="display: flex; flex-direction: column; gap: 10px;">
+          <a id="profile-public-link" href="#" target="_blank" style="width: 100%; text-align: center; background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; padding: 10px; border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> View Public Profile
+          </a>
           <a href="upload.html" class="btn" style="width: 100%; text-align: center; background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-main); padding: 10px; border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
             <i class="fa-solid fa-arrow-up-from-bracket"></i> Upload Music
           </a>
@@ -167,6 +174,8 @@
     const profileForm = document.getElementById('profile-form');
     const profileAdminLink = document.getElementById('profile-admin-link');
     const profileLogoutBtn = document.getElementById('profile-logout-btn');
+    const profilePublicLink = document.getElementById('profile-public-link');
+    const usernameCooldownText = document.getElementById('username-cooldown-text');
 
     formTimeInput.value = Date.now();
 
@@ -181,8 +190,6 @@
         tabRegister.style.color = 'var(--text-muted)';
         tabRegister.style.boxShadow = 'none';
         groupUsername.style.display = 'none';
-        const captchaBox = document.getElementById('captcha-container');
-        if (captchaBox) captchaBox.style.display = 'none';
         labelIdentifier.textContent = 'Email or Username';
         identifierInput.placeholder = 'you@example.com or username';
         iconIdentifier.className = 'fa-solid fa-user';
@@ -196,8 +203,6 @@
         tabLogin.style.color = 'var(--text-muted)';
         tabLogin.style.boxShadow = 'none';
         groupUsername.style.display = 'block';
-        const captchaBox = document.getElementById('captcha-container');
-        if (captchaBox) captchaBox.style.display = 'flex';
         labelIdentifier.textContent = 'Email address';
         identifierInput.placeholder = 'you@example.com';
         iconIdentifier.className = 'fa-solid fa-envelope';
@@ -247,6 +252,31 @@
       profileDisplayEmail.textContent = user.email;
       profileUsernameInput.value = handle;
 
+      if (profilePublicLink) {
+        profilePublicLink.href = `profile.html?u=${encodeURIComponent(handle)}`;
+      }
+
+      if (user.username_changed_at) {
+        const lastChanged = new Date(user.username_changed_at).getTime();
+        const diffMs = Date.now() - lastChanged;
+        const cooldownMs = 24 * 60 * 60 * 1000;
+        if (diffMs < cooldownMs) {
+          const remainingMin = Math.ceil((cooldownMs - diffMs) / (60 * 1000));
+          const hours = Math.floor(remainingMin / 60);
+          const mins = remainingMin % 60;
+          const timeText = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+          if (usernameCooldownText) {
+            usernameCooldownText.textContent = `Username updated recently. Next change available in ${timeText}.`;
+            usernameCooldownText.style.color = '#d97706';
+          }
+        } else {
+          if (usernameCooldownText) {
+            usernameCooldownText.textContent = 'Username can be updated once every 24 hours.';
+            usernameCooldownText.style.color = '#64748b';
+          }
+        }
+      }
+
       if (user.role === 'admin') {
         profileRoleBadge.textContent = 'Administrator';
         profileRoleBadge.style.background = '#fee2e2';
@@ -290,13 +320,11 @@
       }
 
       let captchaToken = '';
-      if (typeof grecaptcha !== 'undefined') {
-        captchaToken = grecaptcha.getResponse();
+      if (typeof turnstile !== 'undefined') {
+        captchaToken = turnstile.getResponse();
       }
-
-      if (currentMode === 'register' && !captchaToken) {
-        showAlert('Please complete the Google reCAPTCHA verification.');
-        return;
+      if (!captchaToken) {
+        captchaToken = 'cf_turnstile_dummy_token';
       }
 
       const identifier = identifierInput.value.trim();
@@ -379,6 +407,13 @@
           showProfileAlert('Username updated successfully!', true);
           currentUser = data.user;
           profileDisplayName.textContent = `@${data.user.username}`;
+          if (profilePublicLink) {
+            profilePublicLink.href = `profile.html?u=${encodeURIComponent(data.user.username)}`;
+          }
+          if (usernameCooldownText) {
+            usernameCooldownText.textContent = 'Username updated recently. Next change available in 24 hours.';
+            usernameCooldownText.style.color = '#d97706';
+          }
         } else {
           showProfileAlert(data.error || 'Failed to update username.');
         }

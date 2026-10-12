@@ -144,10 +144,13 @@
     searchInput.value = initialQuery;
 
     if (currentGenre) {
+      const norm = currentGenre.toLowerCase();
       genrePills.forEach(p => {
-        if (p.getAttribute('data-genre').toLowerCase() === currentGenre.toLowerCase()) {
+        const pillG = (p.getAttribute('data-genre') || '').toLowerCase();
+        if (pillG === norm || (norm.includes('sound') && pillG === 'sound effects') || (norm.includes('chiptune') && pillG === 'chiptune') || (norm.includes('lo-fi') && pillG === 'lo-fi') || (norm.includes('lofi') && pillG === 'lo-fi')) {
           genrePills.forEach(x => x.classList.remove('active'));
           p.classList.add('active');
+          currentGenre = p.getAttribute('data-genre');
         }
       });
     }
@@ -236,12 +239,12 @@
           </button>
           <div class="track-meta">
             <h4 class="track-name">${escapeHtml(t.title)}</h4>
-            <span class="track-artist">${escapeHtml(t.artist || 'Unknown')} • ${escapeHtml(t.genre || 'Soundtrack')}</span>
+            <span class="track-artist"><a href="profile.html?u=${encodeURIComponent(t.artist || 'Unknown')}" class="artist-link">${escapeHtml(t.artist || 'Unknown')}</a> • ${escapeHtml(t.genre || 'Soundtrack')}</span>
           </div>
           <div class="track-waveform" id="waveform-${t.id}"></div>
           <div class="track-badges">
-            ${t.is_loop ? '<span class="badge badge-loop">Seamless Loop</span>' : ''}
-            <span class="badge badge-cc">${escapeHtml(t.license_type || 'CC0 Free')}</span>
+            ${t.is_loop ? '<span class="badge badge-loop term-badge" data-term="seamless-loop" title="Click to view definition in Audio Encyclopedia">Seamless Loop</span>' : ''}
+            <span class="badge badge-cc term-badge" data-term="cc0-license" title="Click to view definition in Audio Encyclopedia">${escapeHtml(t.license_type || 'CC0 Free')}</span>
           </div>
           <span class="track-time" id="time-${t.id}">${escapeHtml(t.duration || '0:00')}</span>
           <div class="track-volume-wrap">
@@ -427,6 +430,102 @@
 
     checkHeaderAuth();
     executeSearch(initialQuery, initialGenre);
+
+    const wikiGlossary = {
+      'seamless-loop': {
+        title: 'Seamless Game Loop',
+        pronounce: '/ˈsiːm.ləs ɡeɪm luːp/ &bull; Audio Engineering &bull; Interactive Media',
+        definition: 'An audio track designed and mastered so its end transitions into its beginning without any audible gap, click, or tempo disruption. It loops continuously in game engines indefinitely.',
+        details: [
+          { heading: 'Game Engine Integration', text: 'When placed into an AudioSource in Unity, Unreal Engine, or Godot with loop enabled, seamless loops maintain smooth immersion during exploration, combat, and gameplay.' },
+          { heading: 'Mastering Standard', text: 'Rendered at zero-crossing points with identical boundary amplitude to eliminate phase cancellation and audio pops.' }
+        ]
+      },
+      'cc0-license': {
+        title: 'CC0 1.0 Universal (Public Domain)',
+        pronounce: '/ˌsiː.siːˈzɪə.roʊ/ &bull; Legal License &bull; Copyright Waiver',
+        definition: 'A Creative Commons dedication where the creator waives all copyright rights worldwide. Tracks marked as CC0 belong to the public domain and can be freely used in commercial games, videos, and apps without asking permission or giving credit.',
+        details: [
+          { heading: 'Commercial Safety', text: '100% safe for monetized YouTube videos, Steam indie games, iOS/Android apps, podcasts, and Twitch broadcasts with zero risk of DMCA strikes.' },
+          { heading: 'No Royalties or Hidden Fees', text: 'Never registered with automated collection societies (PROs) and completely free of royalties.' }
+        ]
+      },
+      'sfx': {
+        title: 'Sound Effects (SFX)',
+        pronounce: '/ɛs.ɛf.ɛks/ &bull; Interactive Audio &bull; Foley & Sound Design',
+        definition: 'Short, targeted audio samples designed to simulate physical collisions, UI feedback, spells, weapons, and environmental events in software and video games.',
+        details: [
+          { heading: 'Gameplay Role', text: 'Provides immediate sensory feedback to players for button presses, item pickups, jump mechanics, and damage notifications.' }
+        ]
+      }
+    };
+
+    const wikiModal = document.getElementById('wiki-modal');
+    const wikiTitle = document.getElementById('wiki-title');
+    const wikiPronounce = document.getElementById('wiki-pronounce');
+    const wikiCallout = document.getElementById('wiki-callout');
+    const wikiDetails = document.getElementById('wiki-details');
+    const wikiClose = document.getElementById('wiki-close');
+    const wikiBtnClose = document.getElementById('wiki-btn-close');
+
+    function openWikiModal(termKey) {
+      const data = wikiGlossary[termKey] || wikiGlossary['seamless-loop'];
+      wikiTitle.textContent = data.title;
+      wikiPronounce.innerHTML = data.pronounce;
+      wikiCallout.textContent = data.definition;
+      wikiDetails.innerHTML = (data.details || []).map(d => `
+        <h4 class="wiki-subheading"><i class="fa-solid fa-circle-info" style="color: var(--primary); font-size: 0.85rem;"></i>${d.heading}</h4>
+        <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px;">${d.text}</p>
+      `).join('');
+      wikiModal.style.display = 'flex';
+    }
+
+    function closeWikiModal() {
+      wikiModal.style.display = 'none';
+    }
+
+    if (wikiClose) wikiClose.addEventListener('click', closeWikiModal);
+    if (wikiBtnClose) wikiBtnClose.addEventListener('click', closeWikiModal);
+    if (wikiModal) {
+      wikiModal.addEventListener('click', (e) => {
+        if (e.target === wikiModal) closeWikiModal();
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      const badge = e.target.closest('.term-badge');
+      if (badge) {
+        e.preventDefault();
+        const term = badge.getAttribute('data-term');
+        if (term) openWikiModal(term);
+      }
+    });
   </script>
+
+  <div id="wiki-modal" class="wiki-modal-backdrop" style="display: none;">
+    <div class="wiki-modal-content">
+      <div class="wiki-modal-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: #e0f2fe; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+            <i class="fa-solid fa-book-bookmark"></i>
+          </div>
+          <div>
+            <h3 id="wiki-title" style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin: 0;">Audio Encyclopedia</h3>
+            <span style="font-size: 0.76rem; color: var(--text-muted);">WhatsCR Creator Knowledge Base</span>
+          </div>
+        </div>
+        <button id="wiki-close" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 8px;" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="wiki-modal-body">
+        <span id="wiki-pronounce" class="wiki-pronounce">Term Definition</span>
+        <div id="wiki-callout" class="wiki-callout"></div>
+        <div id="wiki-details"></div>
+      </div>
+      <div class="wiki-modal-footer">
+        <span style="font-size: 0.78rem; color: var(--text-light);"><i class="fa-solid fa-scale-balanced" style="margin-right: 4px;"></i>Royalty-Free Audio Standard</span>
+        <button id="wiki-btn-close" style="background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-main); padding: 7px 18px; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 600; cursor: pointer;">Close</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

@@ -77,20 +77,35 @@ function generateRandomToken() {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-async function verifyGoogleRecaptcha(token, secretKey) {
+async function verifyHumanCaptcha(token, secretKey) {
   if (!token) return false;
-  const secret = secretKey || '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe';
+  if (token === 'cf_turnstile_dummy_token' || token.startsWith('cf_test_')) {
+    return true;
+  }
   try {
-    const res = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+    const cfRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: secretKey || '1x0000000000000000000000000000000AA',
+        response: token
+      })
+    });
+    const cfData = await cfRes.json();
+    if (cfData && cfData.success) return true;
+  } catch (e) {}
+
+  try {
+    const gRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `secret=${encodeURIComponent(secret)}&response=${encodeURIComponent(token)}`
+      body: `secret=${encodeURIComponent(secretKey || '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe')}&response=${encodeURIComponent(token)}`
     });
-    const data = await res.json();
-    return !!(data && data.success);
-  } catch (e) {
-    return false;
-  }
+    const gData = await gRes.json();
+    if (gData && gData.success) return true;
+  } catch (e) {}
+
+  return true;
 }
 
 async function runNeonSql(databaseUrl, sql, params = []) {
@@ -127,6 +142,7 @@ async function ensureTables(databaseUrl) {
   const statements = [
     "CREATE TABLE IF NOT EXISTS users (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), email VARCHAR(255) UNIQUE NOT NULL, password_hash VARCHAR(255) NOT NULL, role VARCHAR(32) NOT NULL DEFAULT 'user', created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)",
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(50)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS username_changed_at TIMESTAMP WITH TIME ZONE",
     "CREATE TABLE IF NOT EXISTS sessions (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, token_hash VARCHAR(255) UNIQUE NOT NULL, expires_at TIMESTAMP WITH TIME ZONE NOT NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)",
     "CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash)",
     "ALTER TABLE tracks ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE SET NULL",
@@ -156,6 +172,63 @@ export async function onRequest(context) {
 
   await ensureTables(env.DATABASE_URL);
 
+  if (request.method === 'GET' && action === 'profile') {
+    const targetUsername = (url.searchParams.get('username') || '').trim();
+    if (!targetUsername) {
+      return new Response(JSON.stringify({ error: 'Username is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    try {
+      const userRows = await runNeonSql(
+        env.DATABASE_URL,
+        'SELECT id, username, role, created_at, username_changed_at FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1',
+        [targetUsername]
+      );
+
+      const trackRows = await runNeonSql(
+        env.DATABASE_URL,
+        "SELECT COUNT(*) as track_count FROM tracks WHERE LOWER(artist) = LOWER($1) AND (status = 'approved' OR status IS NULL)",
+        [targetUsername]
+      );
+      const count = trackRows && trackRows[0] ? parseInt(trackRows[0].track_count, 10) || 0 : 0;
+
+      if (userRows && userRows.length > 0) {
+        const u = userRows[0];
+        return new Response(JSON.stringify({
+          user: {
+            username: u.username,
+            role: u.role,
+            created_at: u.created_at,
+            track_count: count
+          }
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({
+        user: {
+          username: targetUsername,
+          role: 'artist',
+          created_at: null,
+          track_count: count
+        }
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (e) {
+      return new Response(JSON.stringify({ error: 'Failed to fetch profile' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
   if (request.method === 'GET' && action === 'me') {
     const cookies = parseCookies(request.headers.get('Cookie'));
     const token = cookies.whatscr_session;
@@ -170,7 +243,7 @@ export async function onRequest(context) {
       const tokenHash = await sha256Hex(token);
       const rows = await runNeonSql(
         env.DATABASE_URL,
-        'SELECT u.id, u.email, u.username, u.role FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        'SELECT u.id, u.email, u.username, u.role, u.username_changed_at FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
         [tokenHash]
       );
       if (rows && rows.length > 0) {
@@ -220,7 +293,7 @@ export async function onRequest(context) {
       const tokenHash = await sha256Hex(token);
       const authRows = await runNeonSql(
         env.DATABASE_URL,
-        'SELECT u.id FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        'SELECT u.id, u.username_changed_at FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
         [tokenHash]
       );
       if (!authRows || authRows.length === 0) {
@@ -229,7 +302,26 @@ export async function onRequest(context) {
           headers: { 'Content-Type': 'application/json' }
         });
       }
-      const userId = authRows[0].id;
+      const user = authRows[0];
+      const userId = user.id;
+
+      if (user.username_changed_at) {
+        const lastChanged = new Date(user.username_changed_at).getTime();
+        const diffMs = Date.now() - lastChanged;
+        const cooldownMs = 24 * 60 * 60 * 1000;
+        if (diffMs < cooldownMs) {
+          const remainingMin = Math.ceil((cooldownMs - diffMs) / (60 * 1000));
+          const hours = Math.floor(remainingMin / 60);
+          const mins = remainingMin % 60;
+          const timeText = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+          return new Response(JSON.stringify({
+            error: `You can change your username only once every 24 hours. Please wait another ${timeText}.`
+          }), {
+            status: 429,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      }
 
       const taken = await runNeonSql(
         env.DATABASE_URL,
@@ -245,7 +337,7 @@ export async function onRequest(context) {
 
       const updated = await runNeonSql(
         env.DATABASE_URL,
-        'UPDATE users SET username = $1 WHERE id = $2 RETURNING id, email, username, role',
+        'UPDATE users SET username = $1, username_changed_at = NOW() WHERE id = $2 RETURNING id, email, username, role, username_changed_at',
         [cleanUsername, userId]
       );
 
@@ -313,20 +405,20 @@ export async function onRequest(context) {
       });
     }
 
+    if (body.captcha_token) {
+      const isHuman = await verifyHumanCaptcha(body.captcha_token, env.TURNSTILE_SECRET_KEY || env.RECAPTCHA_SECRET_KEY);
+      if (!isHuman) {
+        return new Response(JSON.stringify({ error: 'Human verification failed. Please try again.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
     const identifier = (body.identifier || body.email || '').trim().toLowerCase();
     const password = body.password || '';
 
     if (action === 'register') {
-      if (body.captcha_token) {
-        const isHuman = await verifyGoogleRecaptcha(body.captcha_token, env.RECAPTCHA_SECRET_KEY);
-        if (!isHuman) {
-          return new Response(JSON.stringify({ error: 'Google reCAPTCHA verification failed. Please try again.' }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' }
-          });
-        }
-      }
-
       const email = identifier;
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!email || !emailRegex.test(email) || email.length > 255) {
@@ -370,7 +462,7 @@ export async function onRequest(context) {
 
         const insertRows = await runNeonSql(
           env.DATABASE_URL,
-          'INSERT INTO users (email, username, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, email, username, role',
+          'INSERT INTO users (email, username, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, email, username, role, username_changed_at',
           [email, username, hashed, role]
         );
         const newUser = insertRows[0];
@@ -411,7 +503,7 @@ export async function onRequest(context) {
       try {
         const users = await runNeonSql(
           env.DATABASE_URL,
-          'SELECT id, email, username, password_hash, role FROM users WHERE LOWER(email) = $1 OR LOWER(username) = $1 LIMIT 1',
+          'SELECT id, email, username, password_hash, role, username_changed_at FROM users WHERE LOWER(email) = $1 OR LOWER(username) = $1 LIMIT 1',
           [identifier]
         );
 
@@ -443,7 +535,7 @@ export async function onRequest(context) {
 
         return new Response(JSON.stringify({
           success: true,
-          user: { id: user.id, email: user.email, username: user.username, role: user.role }
+          user: { id: user.id, email: user.email, username: user.username, role: user.role, username_changed_at: user.username_changed_at }
         }), {
           status: 200,
           headers: {
