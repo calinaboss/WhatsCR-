@@ -152,15 +152,42 @@
       });
     }
 
+    let searchAbortController = null;
+    let lastSearchKey = '';
+    let searchCooldownTime = 0;
+
     async function executeSearch(query = '', genre = '') {
+      const cleanQ = query.trim().slice(0, 100);
+      const cleanG = genre.trim().slice(0, 50);
+      const searchKey = `${cleanQ}:::${cleanG}`;
+
+      if (lastSearchKey === searchKey && tracksContainer.children.length > 0) {
+        return;
+      }
+
+      const now = Date.now();
+      if (now < searchCooldownTime) {
+        return;
+      }
+      searchCooldownTime = now + 400;
+
+      if (searchAbortController) {
+        searchAbortController.abort();
+      }
+      searchAbortController = new AbortController();
+
+      if (searchBtn) {
+        searchBtn.disabled = true;
+      }
+
       tracksContainer.innerHTML = '<div style="text-align:center; padding: 48px; color: #64748b;">Loading tracks...</div>';
 
-      if (query && genre) {
-        searchHeading.textContent = `Results for "${query}" in ${genre}`;
-      } else if (query) {
-        searchHeading.textContent = `Results for "${query}"`;
-      } else if (genre) {
-        searchHeading.textContent = `${genre}`;
+      if (cleanQ && cleanG) {
+        searchHeading.textContent = `Results for "${cleanQ}" in ${cleanG}`;
+      } else if (cleanQ) {
+        searchHeading.textContent = `Results for "${cleanQ}"`;
+      } else if (cleanG) {
+        searchHeading.textContent = `${cleanG}`;
       } else {
         searchHeading.textContent = 'All Found';
       }
@@ -168,17 +195,23 @@
       try {
         let endpoint = '/api/tracks';
         const params = new URLSearchParams();
-        if (query) params.append('q', query);
-        if (genre) params.append('genre', genre);
+        if (cleanQ) params.append('q', cleanQ);
+        if (cleanG) params.append('genre', cleanG);
         if (params.toString()) endpoint += `?${params.toString()}`;
 
-        const res = await fetch(endpoint);
+        const res = await fetch(endpoint, { signal: searchAbortController.signal });
         if (!res.ok) throw new Error('Query error');
         const tracks = await res.json();
 
-        displayResults(tracks, query);
+        lastSearchKey = searchKey;
+        displayResults(tracks, cleanQ);
       } catch (err) {
-        displayResults([], query);
+        if (err.name === 'AbortError') return;
+        displayResults([], cleanQ);
+      } finally {
+        if (searchBtn) {
+          searchBtn.disabled = false;
+        }
       }
     }
 
