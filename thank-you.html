@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thank You - WhatsCR?</title>
+  <meta name="description" content="Thank you for being part of WhatsCR. High quality copyright-free music for all creators.">
+  <link rel="icon" type="image/x-icon" href="Immagini/favicons/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="Immagini/favicons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="Immagini/favicons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="Immagini/favicons/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#0097b2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="legal-body">
+
+  <header class="legal-header">
+    <div class="legal-header-inner">
+      <a href="index.html" class="legal-brand" title="Back to Home">
+        <img src="Immagini/brand/Logo.webp" alt="Logo WhatsCR" class="brand-icon">
+        <img src="Immagini/brand/scrittawhatscr.webp" alt="WhatsCR?" class="brand-text">
+      </a>
+      <a href="index.html" class="legal-back-link">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Explore Library</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="legal-main" style="display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 160px); padding: 40px 16px;">
+    <div style="max-width: 520px; width: 100%; margin: 0 auto;">
+
+      <nav aria-label="Breadcrumb" style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+        <a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">Home</a>
+        <span>&rsaquo;</span>
+        <span style="color: var(--text-main); font-weight: 600;">Confirmation</span>
+      </nav>
+
+      <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 24px; padding: 40px 32px; box-shadow: var(--shadow-md); text-align: center;">
+        
+        <div id="icon-container" style="width: 72px; height: 72px; border-radius: 50%; background: #ecfdf5; color: #16a34a; display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 20px;">
+          <i class="fa-solid fa-circle-check" id="main-icon"></i>
+        </div>
+
+        <h1 id="thank-title" style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.3;">Thank You!</h1>
+        <p id="thank-desc" style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px;">
+          Your request was processed successfully. Thank you for contributing to the copyright-free music ecosystem.
+        </p>
+
+        <div id="cta-buttons" style="display: flex; flex-direction: column; gap: 12px;">
+          <a href="index.html" id="primary-cta" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px; font-weight: 700; border-radius: var(--radius-full); text-decoration: none;">
+            <i class="fa-solid fa-house"></i>
+            <span>Continue to Home</span>
+          </a>
+          <a href="upload.html" id="secondary-cta" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-weight: 600; font-size: 0.9rem; color: var(--text-main); background: var(--bg-muted); border: 1px solid var(--border); border-radius: var(--radius-full); text-decoration: none;">
+            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+            <span>Upload a Track</span>
+          </a>
+        </div>
+
+        <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 24px;">
+          Need support? Reach out on our <a href="https://discord.gg/A3qEvfdgDP" target="_blank" rel="noopener noreferrer" style="color: var(--primary); font-weight: 600;">Discord Server</a>.
+        </p>
+
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="legal-footer">
+    <p>&copy; 2026 WhatsCR? All rights reserved. <a href="index.html">Home</a> &bull; <a href="privacy.html">Privacy</a> &bull; <a href="terms.html">Terms</a> &bull; <a href="faq.html">FAQ</a></p>
+  </footer>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const type = urlParams.get('type');
+    const mainIcon = document.getElementById('main-icon');
+    const iconContainer = document.getElementById('icon-container');
+    const thankTitle = document.getElementById('thank-title');
+    const thankDesc = document.getElementById('thank-desc');
+    const primaryCta = document.getElementById('primary-cta');
+    const secondaryCta = document.getElementById('secondary-cta');
+
+    if (type === 'login') {
+      mainIcon.className = 'fa-solid fa-shield-halved';
+      iconContainer.style.background = '#e0f2fe';
+      iconContainer.style.color = 'var(--primary)';
+      thankTitle.textContent = 'Welcome Back!';
+      thankDesc.textContent = 'You are successfully logged in. Your verified creator session is active and safe. Redirecting to home...';
+      primaryCta.innerHTML = '<i class="fa-solid fa-compass"></i><span>Continue to Home</span>';
+      secondaryCta.innerHTML = '<i class="fa-solid fa-arrow-up-from-bracket"></i><span>Upload New Music</span>';
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 2500);
+    } else if (type === 'register') {
+      mainIcon.className = 'fa-solid fa-party-horn fa-sparkles';
+      iconContainer.style.background = '#ecfdf5';
+      iconContainer.style.color = '#16a34a';
+      thankTitle.textContent = 'Account Created!';
+      thankDesc.textContent = 'Welcome to WhatsCR. You can now publish royalty-free tracks, game loops, and sound effects.';
+      primaryCta.innerHTML = '<i class="fa-solid fa-compass"></i><span>Start Exploring</span>';
+      secondaryCta.innerHTML = '<i class="fa-solid fa-arrow-up-from-bracket"></i><span>Upload Your First Track</span>';
+    } else if (type === 'upload') {
+      mainIcon.className = 'fa-solid fa-cloud-arrow-up';
+      iconContainer.style.background = '#fef3c7';
+      iconContainer.style.color = '#d97706';
+      thankTitle.textContent = 'Track Submitted for Review!';
+      thankDesc.textContent = 'Your music submission is in our moderation queue. Once approved by our team, it will be published immediately to the public library.';
+      primaryCta.innerHTML = '<i class="fa-solid fa-arrow-up-from-bracket"></i><span>Upload Another Track</span>';
+      primaryCta.href = 'upload.html';
+      secondaryCta.innerHTML = '<i class="fa-solid fa-house"></i><span>Return to Home</span>';
+      secondaryCta.href = 'index.html';
+    }
+  </script>
+
+</body>
+</html>

@@ -263,16 +263,9 @@
         }
 
         showAlert(data.message || 'Track uploaded successfully!', true);
-        uploadForm.reset();
-        selectedFile = null;
-        dropText.textContent = 'Click or drag & drop an MP3 audio file';
-        dropSub.textContent = 'Max file size: 15 MB. Supported formats: .mp3, .wav, .ogg';
-        btnText.textContent = 'Upload another track';
-        submitBtn.disabled = false;
-        submitBtn.style.opacity = '1';
-        if (currentUser) {
-          artistInput.value = currentUser.username || currentUser.email.split('@')[0];
-        }
+        setTimeout(() => {
+          window.location.href = 'thank-you.html?type=upload';
+        }, 1200);
 
       } catch (err) {
         showAlert('Network error occurred during upload.');
