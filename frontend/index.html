@@ -200,23 +200,49 @@
     const searchInput = document.querySelector('.search-input');
     const searchBtn = document.querySelector('.search-submit-btn');
 
+    let fetchAbortController = null;
+    let lastFetchKey = '';
+    let fetchCooldownTime = 0;
+
     async function fetchTracks(searchTerm = '', genre = '') {
       if (!tracksContainer) return;
+
+      const cleanTerm = (searchTerm || '').trim().slice(0, 100);
+      const cleanGenre = (genre || '').trim().slice(0, 50);
+      const fetchKey = `${cleanTerm}:::${cleanGenre}`;
+
+      if (lastFetchKey === fetchKey && tracksContainer.children.length > 0) {
+        return;
+      }
+
+      const now = Date.now();
+      if (now < fetchCooldownTime) {
+        return;
+      }
+      fetchCooldownTime = now + 400;
+
+      if (fetchAbortController) {
+        fetchAbortController.abort();
+      }
+      fetchAbortController = new AbortController();
+
       tracksContainer.innerHTML = '<div style="text-align:center; padding: 24px; color: #64748b;">Loading tracks...</div>';
 
       try {
         let url = '/api/tracks';
         const params = new URLSearchParams();
-        if (searchTerm) params.append('q', searchTerm);
-        if (genre) params.append('genre', genre);
+        if (cleanTerm) params.append('q', cleanTerm);
+        if (cleanGenre) params.append('genre', cleanGenre);
         if (params.toString()) url += `?${params.toString()}`;
 
-        const res = await fetch(url);
+        const res = await fetch(url, { signal: fetchAbortController.signal });
         if (!res.ok) throw new Error('API failed');
         const tracks = await res.json();
 
+        lastFetchKey = fetchKey;
         renderTracks(tracks);
       } catch (err) {
+        if (err.name === 'AbortError') return;
         renderFallback();
       }
     }
@@ -373,9 +399,15 @@
       });
     }
 
+    let redirectCooldown = 0;
     function redirectToSearch(query) {
-      if (query) {
-        window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+      const now = Date.now();
+      if (now < redirectCooldown) return;
+      redirectCooldown = now + 400;
+
+      const clean = (query || '').trim().slice(0, 100);
+      if (clean) {
+        window.location.href = `search.html?q=${encodeURIComponent(clean)}`;
       } else {
         window.location.href = 'search.html';
       }
