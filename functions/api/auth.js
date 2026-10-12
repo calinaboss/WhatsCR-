@@ -77,6 +77,22 @@ function generateRandomToken() {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+async function verifyGoogleRecaptcha(token, secretKey) {
+  if (!token) return false;
+  const secret = secretKey || '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe';
+  try {
+    const res = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `secret=${encodeURIComponent(secret)}&response=${encodeURIComponent(token)}`
+    });
+    const data = await res.json();
+    return !!(data && data.success);
+  } catch (e) {
+    return false;
+  }
+}
+
 async function runNeonSql(databaseUrl, sql, params = []) {
   const dbUrl = new URL(databaseUrl);
   const endpoint = `https://${dbUrl.host}/sql`;
@@ -301,6 +317,16 @@ export async function onRequest(context) {
     const password = body.password || '';
 
     if (action === 'register') {
+      if (body.captcha_token) {
+        const isHuman = await verifyGoogleRecaptcha(body.captcha_token, env.RECAPTCHA_SECRET_KEY);
+        if (!isHuman) {
+          return new Response(JSON.stringify({ error: 'Google reCAPTCHA verification failed. Please try again.' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      }
+
       const email = identifier;
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!email || !emailRegex.test(email) || email.length > 255) {

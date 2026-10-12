@@ -15,6 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="style.css">
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body class="legal-body">
 
@@ -73,12 +74,8 @@
             <span id="password-hint" style="display: none; font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">Must contain at least 8 characters.</span>
           </div>
 
-          <div id="human-check-box" style="background: var(--bg-muted); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-            <label style="display: flex; align-items: center; gap: 10px; font-size: 0.86rem; font-weight: 600; color: var(--text-main); cursor: pointer; user-select: none;">
-              <input type="checkbox" id="human-verification" required style="width: 18px; height: 18px; accent-color: var(--primary);">
-              <span>I am a human creator</span>
-            </label>
-            <i class="fa-solid fa-shield-halved" style="color: var(--primary); font-size: 1.1rem;"></i>
+          <div id="captcha-container" style="display: none; justify-content: center; margin-bottom: 20px;">
+            <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
           </div>
 
           <button type="submit" id="submit-btn" style="width: 100%; background: var(--primary); color: #ffffff; border: none; padding: 12px; border-radius: var(--radius-full); font-size: 0.94rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0, 151, 178, 0.25);">
@@ -184,6 +181,8 @@
         tabRegister.style.color = 'var(--text-muted)';
         tabRegister.style.boxShadow = 'none';
         groupUsername.style.display = 'none';
+        const captchaBox = document.getElementById('captcha-container');
+        if (captchaBox) captchaBox.style.display = 'none';
         labelIdentifier.textContent = 'Email or Username';
         identifierInput.placeholder = 'you@example.com or username';
         iconIdentifier.className = 'fa-solid fa-user';
@@ -197,6 +196,8 @@
         tabLogin.style.color = 'var(--text-muted)';
         tabLogin.style.boxShadow = 'none';
         groupUsername.style.display = 'block';
+        const captchaBox = document.getElementById('captcha-container');
+        if (captchaBox) captchaBox.style.display = 'flex';
         labelIdentifier.textContent = 'Email address';
         identifierInput.placeholder = 'you@example.com';
         iconIdentifier.className = 'fa-solid fa-envelope';
@@ -288,9 +289,13 @@
         return;
       }
 
-      const humanCheck = document.getElementById('human-verification').checked;
-      if (!humanCheck) {
-        showAlert('Please complete the verification check.');
+      let captchaToken = '';
+      if (typeof grecaptcha !== 'undefined') {
+        captchaToken = grecaptcha.getResponse();
+      }
+
+      if (currentMode === 'register' && !captchaToken) {
+        showAlert('Please complete the Google reCAPTCHA verification.');
         return;
       }
 
@@ -313,7 +318,8 @@
           password,
           username,
           form_time: formTimeInput.value,
-          bot_trap: botTrap
+          bot_trap: botTrap,
+          captcha_token: captchaToken
         };
 
         const res = await fetch(`/api/auth?action=${currentMode}`, {
