@@ -1,4 +1,4 @@
-﻿    const tracksContainer = document.getElementById('tracks-container');
+    const tracksContainer = document.getElementById('tracks-container');
     const searchInput = document.querySelector('.search-input');
     const searchBtn = document.querySelector('.search-submit-btn');
 
@@ -93,7 +93,7 @@
           </button>
           <div class="track-meta">
             <h4 class="track-name">${safeTitle}</h4>
-            <span class="track-artist"><a href="profile.html?u=${encodeURIComponent(t.artist || 'Unknown')}" class="artist-link">${safeArtist}</a> â€¢ ${safeGenre}</span>
+            <span class="track-artist"><a href="profile.html?u=${encodeURIComponent(t.artist || 'Unknown')}" class="artist-link">${safeArtist}</a> &bull; ${safeGenre}</span>
           </div>
           <div class="track-waveform" id="waveform-${safeId}"></div>
           <div class="track-badges">
@@ -374,7 +374,7 @@
     const wikiGlossary = {
       'seamless-loop': {
         title: 'Seamless Game Loop',
-        pronounce: '/ËˆsiËm.lÉ™s É¡eÉªm luËp/ &bull; Audio Engineering &bull; Interactive Media',
+        pronounce: "/'si:m.l@s geim lu:p/ &bull; Audio Engineering &bull; Interactive Media",
         definition: 'An audio track designed and mastered so its end transitions into its beginning without any audible gap, click, or tempo disruption. It loops continuously in game engines indefinitely.',
         details: [
           { heading: 'Game Engine Integration', text: 'When placed into an AudioSource in Unity, Unreal Engine, or Godot with loop enabled, seamless loops maintain smooth immersion during exploration, combat, and gameplay.' },
@@ -383,7 +383,7 @@
       },
       'cc0-license': {
         title: 'CC0 1.0 Universal (Public Domain)',
-        pronounce: '/ËŒsiË.siËËˆzÉªÉ™.roÊŠ/ &bull; Legal License &bull; Copyright Waiver',
+        pronounce: "/si:.si:.zi:.rou/ &bull; Legal License &bull; Copyright Waiver",
         definition: 'A Creative Commons dedication where the creator waives all copyright rights worldwide. Tracks marked as CC0 belong to the public domain and can be freely used in commercial games, videos, and apps without asking permission or giving credit.',
         details: [
           { heading: 'Commercial Safety', text: '100% safe for monetized YouTube videos, Steam indie games, iOS/Android apps, podcasts, and Twitch broadcasts with zero risk of DMCA strikes.' },
@@ -392,7 +392,7 @@
       },
       'sfx': {
         title: 'Sound Effects (SFX)',
-        pronounce: '/É›s.É›f.É›ks/ &bull; Interactive Audio &bull; Foley & Sound Design',
+        pronounce: "/es.ef.eks/ &bull; Interactive Audio &bull; Foley & Sound Design",
         definition: 'Short, targeted audio samples designed to simulate physical collisions, UI feedback, spells, weapons, and environmental events in software and video games.',
         details: [
           { heading: 'Gameplay Role', text: 'Provides immediate sensory feedback to players for button presses, item pickups, jump mechanics, and damage notifications.' }
