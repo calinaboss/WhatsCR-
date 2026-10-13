@@ -86,7 +86,7 @@ function handleFileSelection(file) {
       const mins = Math.floor(totalSec / 60);
       const secs = (totalSec % 60).toString().padStart(2, '0');
       detectedDuration = `${mins}:${secs}`;
-      dropSub.textContent = `Size: ${sizeMb} MB • Duration: ${detectedDuration}`;
+      dropSub.textContent = `Size: ${sizeMb} MB \u2022 Duration: ${detectedDuration}`;
     }
   }
 
@@ -175,7 +175,7 @@ uploadForm.addEventListener('submit', async (e) => {
 const wikiGlossary = {
   'seamless-loop': {
     title: 'Seamless Game Loop',
-    pronounce: '/ˈsiːm.ləs ɡeɪm luːp/ &bull; Audio Engineering &bull; Interactive Media',
+    pronounce: "/'si:m.l@s geim lu:p/ &bull; Audio Engineering &bull; Interactive Media",
     definition: 'An audio track designed and mastered so its end transitions into its beginning without any audible gap, click, or tempo disruption. It loops continuously in game engines indefinitely.',
     details: [
       { heading: 'Game Engine Integration', text: 'When placed into an AudioSource in Unity, Unreal Engine, or Godot with loop enabled, seamless loops maintain smooth immersion during exploration, combat, and gameplay.' },
