@@ -1,4 +1,4 @@
-﻿    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(window.location.search);
     const targetUsername = (urlParams.get('u') || urlParams.get('username') || '').trim();
 
     const pageTitle = document.getElementById('page-title');
@@ -456,28 +456,26 @@
     const wikiGlossary = {
       'seamless-loop': {
         title: 'Seamless Game Loop',
-        pronounce: "/'si:m.l@s geim lu:p/ &bull; Audio Engineering &bull; Interactive Media",
-        definition: 'An audio track designed and mastered so its end transitions into its beginning without any audible gap, click, or tempo disruption. It loops continuously in game engines indefinitely.',
+        tag: 'Game Audio &bull; Loop',
+        definition: 'An audio track designed to repeat smoothly in a continuous loop without any gap, click, or pause.',
         details: [
-          { heading: 'Game Engine Integration', text: 'When placed into an AudioSource in Unity, Unreal Engine, or Godot with loop enabled, seamless loops maintain smooth immersion during exploration, combat, and gameplay.' },
-          { heading: 'Mastering Standard', text: 'Rendered at zero-crossing points with identical boundary amplitude to eliminate phase cancellation and audio pops.' }
+          { heading: 'In game engines', text: 'Ready for Unity, Unreal Engine, Godot, and streaming software with loop enabled.' }
         ]
       },
       'cc0-license': {
-        title: 'CC0 1.0 Universal (Public Domain)',
-        pronounce: "/si:.si:.zi:.rou/ &bull; Legal License &bull; Copyright Waiver",
-        definition: 'A Creative Commons dedication where the creator waives all copyright rights worldwide. Tracks marked as CC0 belong to the public domain and can be freely used in commercial games, videos, and apps without asking permission or giving credit.',
+        title: 'CC0 Public Domain',
+        tag: 'Free License &bull; Commercial Safe',
+        definition: '100% free copyright-free music. You can use it in commercial games, YouTube videos, and applications without copyright strikes or required attribution.',
         details: [
-          { heading: 'Commercial Safety', text: '100% safe for monetized YouTube videos, Steam indie games, iOS/Android apps, podcasts, and Twitch broadcasts with zero risk of DMCA strikes.' },
-          { heading: 'No Royalties or Hidden Fees', text: 'Never registered with automated collection societies (PROs) and completely free of royalties.' }
+          { heading: 'Safe everywhere', text: 'Free for monetized videos, Steam games, mobile apps, and streams with zero copyright claims.' }
         ]
       },
       'sfx': {
         title: 'Sound Effects (SFX)',
-        pronounce: "/es.ef.eks/ &bull; Interactive Audio &bull; Foley & Sound Design",
-        definition: 'Short, targeted audio samples designed to simulate physical collisions, UI feedback, spells, weapons, and environmental events in software and video games.',
+        tag: 'Sound Design &bull; Audio',
+        definition: 'Short audio effects and foley samples for in-game actions, button clicks, user interfaces, weapons, and animations.',
         details: [
-          { heading: 'Gameplay Role', text: 'Provides immediate sensory feedback to players for button presses, item pickups, jump mechanics, and damage notifications.' }
+          { heading: 'Usage', text: 'Provides immediate audio feedback for player actions, collisions, and interface interactions.' }
         ]
       }
     };
@@ -500,12 +498,12 @@
       const data = wikiGlossary[termKey] || wikiGlossary['seamless-loop'];
       if (!data) return;
       title.textContent = data.title;
-      if (pronounce) pronounce.innerHTML = data.pronounce;
+      if (pronounce) pronounce.innerHTML = data.tag || '';
       if (callout) callout.textContent = data.definition;
       if (details) {
         details.innerHTML = (data.details || []).map(d => `
-          <h4 class="wiki-subheading"><i class="fa-solid fa-circle-info" style="color: var(--primary); font-size: 0.85rem;"></i>${d.heading}</h4>
-          <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px;">${d.text}</p>
+          <h4 class="wiki-subheading"><i class="fa-solid fa-circle-check" style="color: var(--primary); font-size: 0.82rem;"></i>${d.heading}</h4>
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 8px;">${d.text}</p>
         `).join('');
       }
       modal.style.display = 'flex';

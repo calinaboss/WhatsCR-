@@ -175,11 +175,10 @@ uploadForm.addEventListener('submit', async (e) => {
 const wikiGlossary = {
   'seamless-loop': {
     title: 'Seamless Game Loop',
-    pronounce: "/'si:m.l@s geim lu:p/ &bull; Audio Engineering &bull; Interactive Media",
-    definition: 'An audio track designed and mastered so its end transitions into its beginning without any audible gap, click, or tempo disruption. It loops continuously in game engines indefinitely.',
+    tag: 'Game Audio &bull; Loop',
+    definition: 'An audio track designed to repeat smoothly in a continuous loop without any gap, click, or pause.',
     details: [
-      { heading: 'Game Engine Integration', text: 'When placed into an AudioSource in Unity, Unreal Engine, or Godot with loop enabled, seamless loops maintain smooth immersion during exploration, combat, and gameplay.' },
-      { heading: 'Mastering Standard', text: 'Rendered at zero-crossing points with identical boundary amplitude to eliminate phase cancellation and audio pops.' }
+      { heading: 'In game engines', text: 'Ready for Unity, Unreal Engine, Godot, and streaming software with loop enabled.' }
     ]
   }
 };
@@ -202,12 +201,12 @@ function openWikiModal(termKey) {
   const data = wikiGlossary[termKey] || wikiGlossary['seamless-loop'];
   if (!data) return;
   title.textContent = data.title;
-  if (pronounce) pronounce.innerHTML = data.pronounce;
+  if (pronounce) pronounce.innerHTML = data.tag || '';
   if (callout) callout.textContent = data.definition;
   if (details) {
     details.innerHTML = (data.details || []).map(d => `
-      <h4 class="wiki-subheading"><i class="fa-solid fa-circle-info" style="color: var(--primary); font-size: 0.85rem;"></i>${d.heading}</h4>
-      <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px;">${d.text}</p>
+      <h4 class="wiki-subheading"><i class="fa-solid fa-circle-check" style="color: var(--primary); font-size: 0.82rem;"></i>${d.heading}</h4>
+      <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 8px;">${d.text}</p>
     `).join('');
   }
   modal.style.display = 'flex';
