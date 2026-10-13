@@ -189,7 +189,7 @@ export async function onRequest(context) {
         );
         const updated = await runNeonSql(
           env.DATABASE_URL,
-          'UPDATE tracks SET likes_count = GREATEST(0, COALESCE(likes_count, 1) - 1) WHERE id = $1 RETURNING likes_count',
+          'UPDATE tracks SET likes_count = (SELECT COUNT(*) FROM track_likes WHERE track_id = $1) WHERE id = $1 RETURNING likes_count',
           [trackId]
         );
         liked = false;
@@ -202,7 +202,7 @@ export async function onRequest(context) {
         );
         const updated = await runNeonSql(
           env.DATABASE_URL,
-          'UPDATE tracks SET likes_count = COALESCE(likes_count, 0) + 1 WHERE id = $1 RETURNING likes_count',
+          'UPDATE tracks SET likes_count = (SELECT COUNT(*) FROM track_likes WHERE track_id = $1) WHERE id = $1 RETURNING likes_count',
           [trackId]
         );
         liked = true;

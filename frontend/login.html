@@ -383,8 +383,9 @@
       if (typeof turnstile !== 'undefined') {
         captchaToken = turnstile.getResponse();
       }
-      if (!captchaToken) {
-        captchaToken = 'cf_turnstile_dummy_token';
+      if (!captchaToken && currentMode === 'register') {
+        showAlert('Please complete the verification captcha.');
+        return;
       }
 
       const identifier = identifierInput.value.trim();
@@ -420,6 +421,9 @@
 
         if (!res.ok) {
           showAlert(data.error || 'Operation failed. Please try again.');
+          if (typeof turnstile !== 'undefined') {
+            try { turnstile.reset(); } catch (e) {}
+          }
           submitBtn.disabled = false;
           submitBtn.style.opacity = '1';
           return;
@@ -437,6 +441,9 @@
 
       } catch (err) {
         showAlert('Network error. Please check your connection.');
+        if (typeof turnstile !== 'undefined') {
+          try { turnstile.reset(); } catch (e) {}
+        }
         submitBtn.disabled = false;
         submitBtn.style.opacity = '1';
       }

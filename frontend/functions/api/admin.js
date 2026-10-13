@@ -60,9 +60,7 @@ async function authenticateAdmin(request, env) {
     );
     if (!rows || rows.length === 0) return null;
     const user = rows[0];
-    const adminEmail = (env.ADMIN_EMAIL || '').trim().toLowerCase();
-    const isAdmin = user.role === 'admin' || (adminEmail && user.email.toLowerCase() === adminEmail);
-    if (!isAdmin) return null;
+    if (user.role !== 'admin') return null;
     return user;
   } catch (e) {
     return null;
