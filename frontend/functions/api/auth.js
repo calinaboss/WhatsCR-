@@ -371,31 +371,76 @@ export async function onRequest(context) {
   if (request.method === 'GET' && action === 'search_users') {
     const q = (url.searchParams.get('q') || '').trim().replace(/^@/, '').slice(0, 50);
     try {
+      let currentUserId = null;
+      const cookies = parseCookies(request.headers.get('Cookie'));
+      const token = cookies.whatscr_session;
+      if (token) {
+        try {
+          const tokenHash = await sha256Hex(token);
+          const sessionRows = await runNeonSql(
+            env.DATABASE_URL,
+            'SELECT user_id FROM sessions WHERE token_hash = $1 AND expires_at > NOW() LIMIT 1',
+            [tokenHash]
+          );
+          if (sessionRows && sessionRows.length > 0) {
+            currentUserId = sessionRows[0].user_id;
+          }
+        } catch (sessionErr) {}
+      }
+
       let sql;
       let params = [];
       if (q) {
         params.push(`%${q.toLowerCase()}%`);
-        sql = `SELECT u.username, u.role, u.created_at,
-          COUNT(DISTINCT t.id) as track_count,
-          COUNT(DISTINCT f.follower_id) as follower_count
-        FROM users u
-        LEFT JOIN tracks t ON t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)
-        LEFT JOIN follows f ON f.following_id = u.id
-        WHERE u.username IS NOT NULL AND LOWER(u.username) LIKE $1
-        GROUP BY u.id, u.username, u.role, u.created_at
-        ORDER BY follower_count DESC, track_count DESC
-        LIMIT 30`;
+        if (currentUserId) {
+          params.push(currentUserId);
+          sql = `SELECT u.username, u.role, u.created_at,
+            COUNT(DISTINCT t.id) as track_count,
+            COUNT(DISTINCT f.follower_id) as follower_count
+          FROM users u
+          LEFT JOIN tracks t ON t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)
+          LEFT JOIN follows f ON f.following_id = u.id
+          WHERE u.username IS NOT NULL AND LOWER(u.username) LIKE $1 AND u.id != $2
+          GROUP BY u.id, u.username, u.role, u.created_at
+          ORDER BY follower_count DESC, track_count DESC
+          LIMIT 30`;
+        } else {
+          sql = `SELECT u.username, u.role, u.created_at,
+            COUNT(DISTINCT t.id) as track_count,
+            COUNT(DISTINCT f.follower_id) as follower_count
+          FROM users u
+          LEFT JOIN tracks t ON t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)
+          LEFT JOIN follows f ON f.following_id = u.id
+          WHERE u.username IS NOT NULL AND LOWER(u.username) LIKE $1
+          GROUP BY u.id, u.username, u.role, u.created_at
+          ORDER BY follower_count DESC, track_count DESC
+          LIMIT 30`;
+        }
       } else {
-        sql = `SELECT u.username, u.role, u.created_at,
-          COUNT(DISTINCT t.id) as track_count,
-          COUNT(DISTINCT f.follower_id) as follower_count
-        FROM users u
-        LEFT JOIN tracks t ON t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)
-        LEFT JOIN follows f ON f.following_id = u.id
-        WHERE u.username IS NOT NULL
-        GROUP BY u.id, u.username, u.role, u.created_at
-        ORDER BY follower_count DESC, track_count DESC
-        LIMIT 30`;
+        if (currentUserId) {
+          params.push(currentUserId);
+          sql = `SELECT u.username, u.role, u.created_at,
+            COUNT(DISTINCT t.id) as track_count,
+            COUNT(DISTINCT f.follower_id) as follower_count
+          FROM users u
+          LEFT JOIN tracks t ON t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)
+          LEFT JOIN follows f ON f.following_id = u.id
+          WHERE u.username IS NOT NULL AND u.id != $1
+          GROUP BY u.id, u.username, u.role, u.created_at
+          ORDER BY follower_count DESC, track_count DESC
+          LIMIT 30`;
+        } else {
+          sql = `SELECT u.username, u.role, u.created_at,
+            COUNT(DISTINCT t.id) as track_count,
+            COUNT(DISTINCT f.follower_id) as follower_count
+          FROM users u
+          LEFT JOIN tracks t ON t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)
+          LEFT JOIN follows f ON f.following_id = u.id
+          WHERE u.username IS NOT NULL
+          GROUP BY u.id, u.username, u.role, u.created_at
+          ORDER BY follower_count DESC, track_count DESC
+          LIMIT 30`;
+        }
       }
       const rows = await runNeonSql(env.DATABASE_URL, sql, params);
       return new Response(JSON.stringify({ users: rows }), {
