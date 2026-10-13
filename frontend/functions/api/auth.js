@@ -1,27 +1,5 @@
-const rateLimitCache = new Map();
-
 function getClientIp(request) {
   return request.headers.get('CF-Connecting-IP') || 'anonymous';
-}
-
-function checkRateLimit(ip, maxRequests = 10, windowMs = 60000) {
-  const now = Date.now();
-  const current = rateLimitCache.get(ip) || { count: 0, resetTime: now + windowMs };
-  if (now > current.resetTime) {
-    current.count = 1;
-    current.resetTime = now + windowMs;
-  } else {
-    current.count++;
-  }
-  rateLimitCache.set(ip, current);
-
-  if (rateLimitCache.size > 2000) {
-    for (const [key, val] of rateLimitCache.entries()) {
-      if (now > val.resetTime) rateLimitCache.delete(key);
-    }
-  }
-
-  return current.count <= maxRequests;
 }
 
 function parseCookies(cookieHeader) {
@@ -563,7 +541,9 @@ export async function onRequest(context) {
       });
     }
 
-    if (!checkRateLimit(ip, 8, 60000)) {
+    const pwLimitKey = `auth_pw_${ip}`;
+    const pwAllowed = await checkPersistentRateLimit(env.DATABASE_URL, pwLimitKey, 8, 60000);
+    if (!pwAllowed) {
       return new Response(JSON.stringify({ error: 'Too many requests. Please wait a minute.' }), {
         status: 429,
         headers: { 'Content-Type': 'application/json' }
@@ -671,7 +651,9 @@ export async function onRequest(context) {
       });
     }
 
-    if (!checkRateLimit(ip, 30, 60000)) {
+    const followLimitKey = `auth_follow_${ip}`;
+    const followAllowed = await checkPersistentRateLimit(env.DATABASE_URL, followLimitKey, 30, 60000);
+    if (!followAllowed) {
       return new Response(JSON.stringify({ error: 'Too many requests. Please wait a moment.' }), {
         status: 429,
         headers: { 'Content-Type': 'application/json' }
@@ -797,13 +779,6 @@ export async function onRequest(context) {
   }
 
   if (request.method === 'POST' && (action === 'register' || action === 'login')) {
-    if (!checkRateLimit(ip, 12, 60000)) {
-      return new Response(JSON.stringify({ error: 'Too many attempts. Please wait a minute.' }), {
-        status: 429,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
     const rateKey = `auth_${action}_${ip}`;
     const allowed = await checkPersistentRateLimit(env.DATABASE_URL, rateKey, 12, 60000);
     if (!allowed) {

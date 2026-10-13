@@ -1,5 +1,3 @@
-const rateLimitCache = new Map();
-
 function parseCookies(cookieHeader) {
   const list = {};
   if (!cookieHeader) return list;
@@ -54,7 +52,9 @@ async function ensureTrackTables(databaseUrl) {
     "ALTER TABLE tracks ADD COLUMN IF NOT EXISTS likes_count INT DEFAULT 0",
     "CREATE TABLE IF NOT EXISTS track_likes (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, track_id INT NOT NULL REFERENCES tracks(id) ON DELETE CASCADE, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, CONSTRAINT unique_track_like UNIQUE (user_id, track_id))",
     "CREATE INDEX IF NOT EXISTS idx_track_likes_track ON track_likes(track_id)",
-    "CREATE INDEX IF NOT EXISTS idx_track_likes_user ON track_likes(user_id)"
+    "CREATE INDEX IF NOT EXISTS idx_track_likes_user ON track_likes(user_id)",
+    "CREATE TABLE IF NOT EXISTS rate_limits (key VARCHAR(255) PRIMARY KEY, count INT NOT NULL DEFAULT 1, reset_at TIMESTAMP WITH TIME ZONE NOT NULL)",
+    "CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_at)"
   ];
   try {
     for (const stmt of statements) {
@@ -62,6 +62,29 @@ async function ensureTrackTables(databaseUrl) {
     }
     schemaInitialized = true;
   } catch (err) {}
+}
+
+async function checkPersistentRateLimit(databaseUrl, key, maxRequests = 100, windowMs = 60000) {
+  try {
+    const now = new Date();
+    const resetAt = new Date(Date.now() + windowMs);
+    const rows = await runNeonSql(
+      databaseUrl,
+      `INSERT INTO rate_limits (key, count, reset_at)
+       VALUES ($1, 1, $2)
+       ON CONFLICT (key) DO UPDATE
+       SET count = CASE WHEN rate_limits.reset_at < $3 THEN 1 ELSE rate_limits.count + 1 END,
+           reset_at = CASE WHEN rate_limits.reset_at < $3 THEN $2 ELSE rate_limits.reset_at END
+       RETURNING count`,
+      [key, resetAt.toISOString(), now.toISOString()]
+    );
+    if (rows && rows.length > 0) {
+      return parseInt(rows[0].count, 10) <= maxRequests;
+    }
+    return true;
+  } catch (e) {
+    return true;
+  }
 }
 
 function isValidAudioUrl(url) {
@@ -76,34 +99,6 @@ function isValidAudioUrl(url) {
 export async function onRequest(context) {
   const { request, env } = context;
   const ip = request.headers.get('CF-Connecting-IP') || 'anonymous';
-  const now = Date.now();
-  const windowMs = 60000;
-  const maxRequests = 100;
-
-  const current = rateLimitCache.get(ip) || { count: 0, resetTime: now + windowMs };
-  if (now > current.resetTime) {
-    current.count = 1;
-    current.resetTime = now + windowMs;
-  } else {
-    current.count++;
-  }
-  rateLimitCache.set(ip, current);
-
-  if (rateLimitCache.size > 2000) {
-    for (const [key, val] of rateLimitCache.entries()) {
-      if (now > val.resetTime) rateLimitCache.delete(key);
-    }
-  }
-
-  if (current.count > maxRequests) {
-    return new Response(JSON.stringify({ error: 'Too many requests, please slow down' }), {
-      status: 429,
-      headers: {
-        'Content-Type': 'application/json',
-        'Retry-After': '60'
-      }
-    });
-  }
 
   if (!env.DATABASE_URL) {
     return new Response(JSON.stringify({ error: 'DATABASE_URL not configured' }), {
@@ -113,6 +108,17 @@ export async function onRequest(context) {
   }
 
   await ensureTrackTables(env.DATABASE_URL);
+
+  const rateAllowed = await checkPersistentRateLimit(env.DATABASE_URL, `tracks_${ip}`, 100, 60000);
+  if (!rateAllowed) {
+    return new Response(JSON.stringify({ error: 'Too many requests, please slow down' }), {
+      status: 429,
+      headers: {
+        'Content-Type': 'application/json',
+        'Retry-After': '60'
+      }
+    });
+  }
 
   const url = new URL(request.url);
   const action = url.searchParams.get('action');
