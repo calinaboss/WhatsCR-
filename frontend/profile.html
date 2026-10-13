@@ -25,6 +25,7 @@
       <nav class="header-nav left-nav">
         <a href="index.html" class="nav-link">Explore</a>
         <a href="index.html#categorie" class="nav-link">Genres</a>
+        <a href="search.html?type=creators" class="nav-link active">Creators</a>
         <a href="index.html#licenza" class="nav-link">License</a>
       </nav>
 
@@ -72,6 +73,10 @@
         </div>
 
         <div class="profile-actions-row" style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button id="btn-follow" class="btn btn-follow" style="display: none;">
+            <i class="fa-solid fa-user-plus" id="follow-icon"></i>
+            <span id="follow-text">Follow</span>
+          </button>
           <button id="btn-share-profile" class="btn" style="background: #ffffff; border: 1px solid var(--border); color: var(--text-main); padding: 9px 18px; border-radius: var(--radius-full); font-size: 0.86rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
             <i class="fa-solid fa-share-nodes"></i>
             <span id="share-btn-text">Share Profile</span>
@@ -88,17 +93,17 @@
           <div class="profile-stat-number" id="stat-tracks">0</div>
           <div class="profile-stat-label">Published Tracks</div>
         </div>
+        <div class="profile-stat-card" id="card-followers" style="cursor: pointer;" title="Click to view followers">
+          <div class="profile-stat-number" id="stat-followers">0</div>
+          <div class="profile-stat-label">Followers <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem; opacity: 0.6; margin-left: 2px;"></i></div>
+        </div>
+        <div class="profile-stat-card" id="card-following" style="cursor: pointer;" title="Click to view following">
+          <div class="profile-stat-number" id="stat-following">0</div>
+          <div class="profile-stat-label">Following <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem; opacity: 0.6; margin-left: 2px;"></i></div>
+        </div>
         <div class="profile-stat-card">
           <div class="profile-stat-number" id="stat-duration">0:00</div>
           <div class="profile-stat-label">Total Duration</div>
-        </div>
-        <div class="profile-stat-card">
-          <div class="profile-stat-number" style="color: #16a34a;">100%</div>
-          <div class="profile-stat-label">CC0 Royalty Free</div>
-        </div>
-        <div class="profile-stat-card">
-          <div class="profile-stat-number" style="color: #0284c7;">320k</div>
-          <div class="profile-stat-label">High Quality MP3</div>
         </div>
       </section>
 
@@ -188,6 +193,30 @@
     </div>
   </div>
 
+  <div id="users-modal" class="wiki-modal-backdrop" style="display: none;">
+    <div class="wiki-modal-content">
+      <div class="wiki-modal-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: #e0f2fe; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+            <i class="fa-solid fa-users" id="users-modal-icon"></i>
+          </div>
+          <div>
+            <h3 id="users-modal-title" style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin: 0;">Community</h3>
+            <span id="users-modal-subtitle" style="font-size: 0.76rem; color: var(--text-muted);">WhatsCR Creators & Listeners</span>
+          </div>
+        </div>
+        <button id="users-modal-close" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 8px;" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="wiki-modal-body" id="users-modal-body" style="max-height: 60vh; overflow-y: auto;">
+        <div id="users-modal-list"></div>
+      </div>
+      <div class="wiki-modal-footer">
+        <span style="font-size: 0.78rem; color: var(--text-light);"><i class="fa-solid fa-shield-halved" style="margin-right: 4px;"></i>Verified Community</span>
+        <button id="users-modal-btn-close" style="background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-main); padding: 7px 18px; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 600; cursor: pointer;">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const targetUsername = (urlParams.get('u') || urlParams.get('username') || '').trim();
@@ -203,9 +232,23 @@
     const tracksContainer = document.getElementById('creator-tracks-container');
     const statTracks = document.getElementById('stat-tracks');
     const statDuration = document.getElementById('stat-duration');
+    const statFollowers = document.getElementById('stat-followers');
+    const statFollowing = document.getElementById('stat-following');
+    const cardFollowers = document.getElementById('card-followers');
+    const cardFollowing = document.getElementById('card-following');
+    const btnFollow = document.getElementById('btn-follow');
+    const followIcon = document.getElementById('follow-icon');
+    const followText = document.getElementById('follow-text');
     const btnShareProfile = document.getElementById('btn-share-profile');
     const shareBtnText = document.getElementById('share-btn-text');
     const btnEditProfile = document.getElementById('btn-edit-profile');
+    const usersModal = document.getElementById('users-modal');
+    const usersModalTitle = document.getElementById('users-modal-title');
+    const usersModalList = document.getElementById('users-modal-list');
+    const usersModalClose = document.getElementById('users-modal-close');
+    const usersModalBtnClose = document.getElementById('users-modal-btn-close');
+
+    let currentUserSession = null;
 
     const waveSurferInstances = new Map();
 
@@ -238,6 +281,9 @@
             creatorBadge.textContent = 'Creator';
             creatorBadge.style.background = '#f1f5f9';
             creatorBadge.style.color = '#64748b';
+            statFollowers.textContent = u.follower_count || 0;
+            statFollowing.textContent = u.following_count || 0;
+            updateFollowBtnState(Boolean(u.is_following));
             if (u.created_at) {
               const d = new Date(u.created_at);
               creatorJoined.innerHTML = `<i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>Member since ${d.toLocaleString('default', { month: 'short', year: 'numeric' })}`;
@@ -302,6 +348,10 @@
               <input type="range" class="track-vol-slider" min="0" max="1" step="0.05" value="0.8" data-track-id="${t.id}" aria-label="Volume slider">
             </div>
             <div class="track-actions">
+              <button type="button" class="track-like-btn ${t.is_liked ? 'liked' : ''}" data-track-id="${t.id}" aria-label="Like track" title="${t.is_liked ? 'Unlike' : 'Like'}">
+                <i class="${t.is_liked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                <span class="like-count">${t.likes_count || 0}</span>
+              </button>
               <a href="${t.audio_url}" download class="btn-download" title="Download track">
                 <i class="fa-solid fa-download"></i>
                 <span>Download</span>
@@ -309,6 +359,10 @@
             </div>
           </article>
         `).join('');
+
+        tracksContainer.querySelectorAll('.track-like-btn').forEach(btn => {
+          btn.addEventListener('click', () => handleLikeTrack(btn));
+        });
 
         initWaveSurfers(tracks);
 
@@ -430,40 +484,178 @@
       }
     });
 
+    function updateFollowBtnState(isFollowing) {
+      if (isFollowing) {
+        btnFollow.classList.add('following');
+        followIcon.className = 'fa-solid fa-user-check';
+        followText.textContent = 'Following';
+      } else {
+        btnFollow.classList.remove('following');
+        followIcon.className = 'fa-solid fa-user-plus';
+        followText.textContent = 'Follow';
+      }
+    }
+
+    btnFollow.addEventListener('click', async () => {
+      if (!currentUserSession) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const displayUser = targetUsername.startsWith('@') ? targetUsername.slice(1) : targetUsername;
+      btnFollow.disabled = true;
+      try {
+        const res = await fetch('/api/auth?action=follow', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: displayUser })
+        });
+        if (res.status === 401) {
+          window.location.href = 'login.html';
+          return;
+        }
+        const data = await res.json();
+        if (res.ok && data.success) {
+          updateFollowBtnState(Boolean(data.is_following));
+          if (typeof data.follower_count === 'number') {
+            statFollowers.textContent = data.follower_count;
+          }
+        }
+      } catch (err) {
+      } finally {
+        btnFollow.disabled = false;
+      }
+    });
+
+    async function handleLikeTrack(btn) {
+      const trackId = btn.getAttribute('data-track-id');
+      if (!trackId) return;
+
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/tracks?action=like', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ track_id: parseInt(trackId, 10) })
+        });
+        if (res.status === 401) {
+          window.location.href = 'login.html';
+          return;
+        }
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const icon = btn.querySelector('i');
+          const countSpan = btn.querySelector('.like-count');
+          if (data.liked) {
+            btn.classList.add('liked');
+            btn.title = 'Unlike';
+            if (icon) icon.className = 'fa-solid fa-heart';
+          } else {
+            btn.classList.remove('liked');
+            btn.title = 'Like';
+            if (icon) icon.className = 'fa-regular fa-heart';
+          }
+          if (countSpan) {
+            countSpan.textContent = data.likes_count;
+          }
+        }
+      } catch (err) {
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function openUsersModal(type) {
+      const displayUser = targetUsername.startsWith('@') ? targetUsername.slice(1) : targetUsername;
+      usersModalTitle.textContent = type === 'followers' ? `Followers of @${displayUser}` : `Following of @${displayUser}`;
+      usersModalList.innerHTML = '<div style="text-align: center; padding: 32px; color: #64748b;">Loading...</div>';
+      usersModal.style.display = 'flex';
+
+      try {
+        const res = await fetch(`/api/auth?action=${type}&username=${encodeURIComponent(displayUser)}`);
+        if (!res.ok) throw new Error('Fetch failed');
+        const data = await res.json();
+        const users = data.users || [];
+        if (users.length === 0) {
+          usersModalList.innerHTML = `<div style="text-align: center; padding: 32px; color: #64748b;">No ${type} yet.</div>`;
+          return;
+        }
+        usersModalList.innerHTML = users.map(u => `
+          <div class="user-list-item">
+            <div class="user-list-left">
+              <div class="user-list-avatar">${escapeHtml((u.username || 'C')[0].toUpperCase())}</div>
+              <div class="user-list-meta">
+                <a href="profile.html?u=${encodeURIComponent(u.username)}" class="user-list-name">@${escapeHtml(u.username)}</a>
+                <span class="user-list-sub">${u.track_count || 0} published tracks</span>
+              </div>
+            </div>
+            <a href="profile.html?u=${encodeURIComponent(u.username)}" class="btn" style="background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-main); padding: 5px 14px; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 700; text-decoration: none;">View</a>
+          </div>
+        `).join('');
+      } catch (err) {
+        usersModalList.innerHTML = '<div style="text-align: center; padding: 32px; color: #ef4444;">Failed to load list.</div>';
+      }
+    }
+
+    cardFollowers.addEventListener('click', () => openUsersModal('followers'));
+    cardFollowing.addEventListener('click', () => openUsersModal('following'));
+
+    usersModalClose.addEventListener('click', () => { usersModal.style.display = 'none'; });
+    usersModalBtnClose.addEventListener('click', () => { usersModal.style.display = 'none'; });
+    usersModal.addEventListener('click', (e) => {
+      if (e.target === usersModal) usersModal.style.display = 'none';
+    });
+
     async function checkHeaderAuth() {
       try {
         const res = await fetch('/api/auth?action=me');
-        if (!res.ok) return;
+        if (!res.ok) {
+          btnFollow.style.display = 'inline-flex';
+          btnEditProfile.style.display = 'none';
+          return;
+        }
         const data = await res.json();
         if (data && data.user) {
+          currentUserSession = data.user;
           const rightNav = document.getElementById('header-user-nav');
-          if (!rightNav) return;
-          const isAdmin = data.user.role === 'admin';
-          const userName = data.user.username ? `@${data.user.username}` : (data.user.email || '').split('@')[0];
-          rightNav.innerHTML = `
-            ${isAdmin ? '<a href="admin.html" class="nav-link nav-admin-btn" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-shield-halved"></i> Admin</a>' : ''}
-            <a href="login.html" class="nav-link nav-user-link" title="My Account"><i class="fa-solid fa-user"></i><span class="nav-user-name">${userName}</span></a>
-            <button id="nav-logout-btn" class="nav-logout-btn">Log out</button>
-            <a href="upload.html" class="btn-upload">
-              <i class="fa-solid fa-arrow-up-from-bracket"></i>
-              <span>Upload</span>
-            </a>
-          `;
-          const logoutBtn = document.getElementById('nav-logout-btn');
-          if (logoutBtn) {
-            logoutBtn.addEventListener('click', async () => {
-              await fetch('/api/auth?action=logout', { method: 'POST' });
-              window.location.reload();
-            });
+          if (rightNav) {
+            const isAdmin = data.user.role === 'admin';
+            const userName = data.user.username ? `@${data.user.username}` : (data.user.email || '').split('@')[0];
+            rightNav.innerHTML = `
+              ${isAdmin ? '<a href="admin.html" class="nav-link nav-admin-btn" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-shield-halved"></i> Admin</a>' : ''}
+              <a href="login.html" class="nav-link nav-user-link" title="My Account"><i class="fa-solid fa-user"></i><span class="nav-user-name">${userName}</span></a>
+              <button id="nav-logout-btn" class="nav-logout-btn">Log out</button>
+              <a href="upload.html" class="btn-upload">
+                <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                <span>Upload</span>
+              </a>
+            `;
+            const logoutBtn = document.getElementById('nav-logout-btn');
+            if (logoutBtn) {
+              logoutBtn.addEventListener('click', async () => {
+                await fetch('/api/auth?action=logout', { method: 'POST' });
+                window.location.reload();
+              });
+            }
           }
 
           const loggedInHandle = data.user.username || data.user.email.split('@')[0];
           const currentTarget = (targetUsername.startsWith('@') ? targetUsername.slice(1) : targetUsername).toLowerCase();
           if (loggedInHandle.toLowerCase() === currentTarget) {
             btnEditProfile.style.display = 'inline-flex';
+            btnFollow.style.display = 'none';
+          } else {
+            btnEditProfile.style.display = 'none';
+            btnFollow.style.display = 'inline-flex';
           }
+        } else {
+          btnFollow.style.display = 'inline-flex';
+          btnEditProfile.style.display = 'none';
         }
-      } catch (e) {}
+      } catch (e) {
+        btnFollow.style.display = 'inline-flex';
+        btnEditProfile.style.display = 'none';
+      }
     }
 
     const wikiGlossary = {

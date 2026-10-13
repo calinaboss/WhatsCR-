@@ -48,6 +48,7 @@
       <nav class="header-nav left-nav">
         <a href="#esplora" class="nav-link active">Explore</a>
         <a href="#categorie" class="nav-link">Genres</a>
+        <a href="search.html?type=creators" class="nav-link">Creators</a>
         <a href="#licenza" class="nav-link">License</a>
       </nav>
 
@@ -301,6 +302,10 @@
             <input type="range" class="track-vol-slider" min="0" max="1" step="0.05" value="0.8" data-track-id="${t.id}" aria-label="Volume slider">
           </div>
           <div class="track-actions">
+            <button type="button" class="track-like-btn ${t.is_liked ? 'liked' : ''}" data-track-id="${t.id}" aria-label="Like track" title="${t.is_liked ? 'Unlike' : 'Like'}">
+              <i class="${t.is_liked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+              <span class="like-count">${t.likes_count || 0}</span>
+            </button>
             <a href="${t.audio_url}" download class="btn-download" title="Download track">
               <i class="fa-solid fa-download"></i>
               <span>Download</span>
@@ -308,6 +313,10 @@
           </div>
         </article>
       `).join('');
+
+      tracksContainer.querySelectorAll('.track-like-btn').forEach(btn => {
+        btn.addEventListener('click', () => handleLikeTrack(btn));
+      });
 
       initWaveSurfers(tracks);
     }
@@ -425,6 +434,44 @@
       });
     }
 
+    async function handleLikeTrack(btn) {
+      const trackId = btn.getAttribute('data-track-id');
+      if (!trackId) return;
+
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/tracks?action=like', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ track_id: parseInt(trackId, 10) })
+        });
+        if (res.status === 401) {
+          window.location.href = 'login.html';
+          return;
+        }
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const icon = btn.querySelector('i');
+          const countSpan = btn.querySelector('.like-count');
+          if (data.liked) {
+            btn.classList.add('liked');
+            btn.title = 'Unlike';
+            if (icon) icon.className = 'fa-solid fa-heart';
+          } else {
+            btn.classList.remove('liked');
+            btn.title = 'Like';
+            if (icon) icon.className = 'fa-regular fa-heart';
+          }
+          if (countSpan) {
+            countSpan.textContent = data.likes_count;
+          }
+        }
+      } catch (err) {
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
     let redirectCooldown = 0;
     function redirectToSearch(query) {
       const now = Date.now();
@@ -432,7 +479,9 @@
       redirectCooldown = now + 400;
 
       const clean = (query || '').trim().slice(0, 100);
-      if (clean) {
+      if (clean.startsWith('@')) {
+        window.location.href = `search.html?q=${encodeURIComponent(clean.slice(1))}&type=creators`;
+      } else if (clean) {
         window.location.href = `search.html?q=${encodeURIComponent(clean)}`;
       } else {
         window.location.href = 'search.html';

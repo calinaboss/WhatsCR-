@@ -138,7 +138,14 @@ async function ensureTables(databaseUrl) {
     "CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash)",
     "ALTER TABLE tracks ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE SET NULL",
     "ALTER TABLE tracks ADD COLUMN IF NOT EXISTS status VARCHAR(32) DEFAULT 'approved'",
-    "CREATE TABLE IF NOT EXISTS audio_files (filename VARCHAR(255) PRIMARY KEY, mime_type VARCHAR(64) NOT NULL, data BYTEA NOT NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)"
+    "ALTER TABLE tracks ADD COLUMN IF NOT EXISTS likes_count INT DEFAULT 0",
+    "CREATE TABLE IF NOT EXISTS audio_files (filename VARCHAR(255) PRIMARY KEY, mime_type VARCHAR(64) NOT NULL, data BYTEA NOT NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)",
+    "CREATE TABLE IF NOT EXISTS follows (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), follower_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, following_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, CONSTRAINT unique_follow UNIQUE (follower_id, following_id))",
+    "CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id)",
+    "CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id)",
+    "CREATE TABLE IF NOT EXISTS track_likes (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, track_id INT NOT NULL REFERENCES tracks(id) ON DELETE CASCADE, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, CONSTRAINT unique_track_like UNIQUE (user_id, track_id))",
+    "CREATE INDEX IF NOT EXISTS idx_track_likes_track ON track_likes(track_id)",
+    "CREATE INDEX IF NOT EXISTS idx_track_likes_user ON track_likes(user_id)"
   ];
   try {
     for (const stmt of statements) {
@@ -164,7 +171,7 @@ export async function onRequest(context) {
   await ensureTables(env.DATABASE_URL);
 
   if (request.method === 'GET' && action === 'profile') {
-    const targetUsername = (url.searchParams.get('username') || '').trim();
+    const targetUsername = (url.searchParams.get('username') || '').trim().replace(/^@/, '');
     if (!targetUsername) {
       return new Response(JSON.stringify({ error: 'Username is required' }), {
         status: 400,
@@ -188,12 +195,47 @@ export async function onRequest(context) {
 
       if (userRows && userRows.length > 0) {
         const u = userRows[0];
+
+        const followStats = await runNeonSql(
+          env.DATABASE_URL,
+          'SELECT (SELECT COUNT(*) FROM follows WHERE following_id = $1) AS follower_count, (SELECT COUNT(*) FROM follows WHERE follower_id = $1) AS following_count',
+          [u.id]
+        );
+        const followerCount = followStats && followStats[0] ? parseInt(followStats[0].follower_count, 10) || 0 : 0;
+        const followingCount = followStats && followStats[0] ? parseInt(followStats[0].following_count, 10) || 0 : 0;
+
+        let isFollowing = false;
+        const cookies = parseCookies(request.headers.get('Cookie'));
+        const token = cookies.whatscr_session;
+        if (token) {
+          try {
+            const tokenHash = await sha256Hex(token);
+            const sessionRows = await runNeonSql(
+              env.DATABASE_URL,
+              'SELECT user_id FROM sessions WHERE token_hash = $1 AND expires_at > NOW() LIMIT 1',
+              [tokenHash]
+            );
+            if (sessionRows && sessionRows.length > 0) {
+              const currentUserId = sessionRows[0].user_id;
+              const isF = await runNeonSql(
+                env.DATABASE_URL,
+                'SELECT id FROM follows WHERE follower_id = $1 AND following_id = $2 LIMIT 1',
+                [currentUserId, u.id]
+              );
+              if (isF && isF.length > 0) isFollowing = true;
+            }
+          } catch (sessionErr) {}
+        }
+
         return new Response(JSON.stringify({
           user: {
             username: u.username,
             role: u.role,
             created_at: u.created_at,
-            track_count: count
+            track_count: count,
+            follower_count: followerCount,
+            following_count: followingCount,
+            is_following: isFollowing
           }
         }), {
           status: 200,
@@ -204,9 +246,12 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({
         user: {
           username: targetUsername,
-          role: 'artist',
+          role: 'Creator',
           created_at: null,
-          track_count: count
+          track_count: count,
+          follower_count: 0,
+          following_count: 0,
+          is_following: false
         }
       }), {
         status: 200,
@@ -214,6 +259,116 @@ export async function onRequest(context) {
       });
     } catch (e) {
       return new Response(JSON.stringify({ error: 'Failed to fetch profile' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
+  if (request.method === 'GET' && action === 'followers') {
+    const targetUsername = (url.searchParams.get('username') || '').trim().replace(/^@/, '');
+    if (!targetUsername) {
+      return new Response(JSON.stringify({ error: 'Username is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    try {
+      const rows = await runNeonSql(
+        env.DATABASE_URL,
+        `SELECT u.username, u.role, u.created_at,
+          (SELECT COUNT(*) FROM tracks t WHERE t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)) as track_count
+        FROM follows f
+        JOIN users u ON f.follower_id = u.id
+        JOIN users target ON f.following_id = target.id
+        WHERE LOWER(target.username) = LOWER($1)
+        ORDER BY f.created_at DESC
+        LIMIT 50`,
+        [targetUsername]
+      );
+      return new Response(JSON.stringify({ users: rows }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: 'Failed to fetch followers' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
+  if (request.method === 'GET' && action === 'following') {
+    const targetUsername = (url.searchParams.get('username') || '').trim().replace(/^@/, '');
+    if (!targetUsername) {
+      return new Response(JSON.stringify({ error: 'Username is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    try {
+      const rows = await runNeonSql(
+        env.DATABASE_URL,
+        `SELECT u.username, u.role, u.created_at,
+          (SELECT COUNT(*) FROM tracks t WHERE t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)) as track_count
+        FROM follows f
+        JOIN users u ON f.following_id = u.id
+        JOIN users target ON f.follower_id = target.id
+        WHERE LOWER(target.username) = LOWER($1)
+        ORDER BY f.created_at DESC
+        LIMIT 50`,
+        [targetUsername]
+      );
+      return new Response(JSON.stringify({ users: rows }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: 'Failed to fetch following' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
+  if (request.method === 'GET' && action === 'search_users') {
+    const q = (url.searchParams.get('q') || '').trim().replace(/^@/, '').slice(0, 50);
+    try {
+      let sql;
+      let params = [];
+      if (q) {
+        params.push(`%${q.toLowerCase()}%`);
+        sql = `SELECT u.username, u.role, u.created_at,
+          COUNT(DISTINCT t.id) as track_count,
+          COUNT(DISTINCT f.follower_id) as follower_count
+        FROM users u
+        LEFT JOIN tracks t ON t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)
+        LEFT JOIN follows f ON f.following_id = u.id
+        WHERE u.username IS NOT NULL AND LOWER(u.username) LIKE $1
+        GROUP BY u.id, u.username, u.role, u.created_at
+        ORDER BY follower_count DESC, track_count DESC
+        LIMIT 30`;
+      } else {
+        sql = `SELECT u.username, u.role, u.created_at,
+          COUNT(DISTINCT t.id) as track_count,
+          COUNT(DISTINCT f.follower_id) as follower_count
+        FROM users u
+        LEFT JOIN tracks t ON t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)
+        LEFT JOIN follows f ON f.following_id = u.id
+        WHERE u.username IS NOT NULL
+        GROUP BY u.id, u.username, u.role, u.created_at
+        ORDER BY follower_count DESC, track_count DESC
+        LIMIT 30`;
+      }
+      const rows = await runNeonSql(env.DATABASE_URL, sql, params);
+      return new Response(JSON.stringify({ users: rows }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: 'Failed to search users' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -431,6 +586,122 @@ export async function onRequest(context) {
       });
     } catch (err) {
       return new Response(JSON.stringify({ error: 'Failed to update password' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
+  if (request.method === 'POST' && action === 'follow') {
+    const cookies = parseCookies(request.headers.get('Cookie'));
+    const token = cookies.whatscr_session;
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Authentication required. Please log in.' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!checkRateLimit(ip, 30, 60000)) {
+      return new Response(JSON.stringify({ error: 'Too many requests. Please wait a moment.' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    let body = {};
+    try {
+      body = await request.json();
+    } catch (e) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON request' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const targetUsername = (body.username || '').trim().replace(/^@/, '');
+    if (!targetUsername) {
+      return new Response(JSON.stringify({ error: 'Target username is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    try {
+      const tokenHash = await sha256Hex(token);
+      const sessionRows = await runNeonSql(
+        env.DATABASE_URL,
+        'SELECT u.id, u.username FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        [tokenHash]
+      );
+      if (!sessionRows || sessionRows.length === 0) {
+        return new Response(JSON.stringify({ error: 'Session expired. Please log in again.' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      const currentUser = sessionRows[0];
+
+      const targetRows = await runNeonSql(
+        env.DATABASE_URL,
+        'SELECT id, username FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1',
+        [targetUsername]
+      );
+      if (!targetRows || targetRows.length === 0) {
+        return new Response(JSON.stringify({ error: 'User not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      const targetUser = targetRows[0];
+
+      if (currentUser.id === targetUser.id) {
+        return new Response(JSON.stringify({ error: 'You cannot follow yourself.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const existingFollow = await runNeonSql(
+        env.DATABASE_URL,
+        'SELECT id FROM follows WHERE follower_id = $1 AND following_id = $2 LIMIT 1',
+        [currentUser.id, targetUser.id]
+      );
+
+      let isFollowing = false;
+      if (existingFollow && existingFollow.length > 0) {
+        await runNeonSql(
+          env.DATABASE_URL,
+          'DELETE FROM follows WHERE follower_id = $1 AND following_id = $2',
+          [currentUser.id, targetUser.id]
+        );
+        isFollowing = false;
+      } else {
+        await runNeonSql(
+          env.DATABASE_URL,
+          'INSERT INTO follows (follower_id, following_id) VALUES ($1, $2) ON CONFLICT (follower_id, following_id) DO NOTHING',
+          [currentUser.id, targetUser.id]
+        );
+        isFollowing = true;
+      }
+
+      const countRows = await runNeonSql(
+        env.DATABASE_URL,
+        'SELECT COUNT(*) as follower_count FROM follows WHERE following_id = $1',
+        [targetUser.id]
+      );
+      const followerCount = countRows && countRows[0] ? parseInt(countRows[0].follower_count, 10) || 0 : 0;
+
+      return new Response(JSON.stringify({
+        success: true,
+        is_following: isFollowing,
+        follower_count: followerCount
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: 'Failed to update follow status' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });

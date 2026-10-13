@@ -31,6 +31,7 @@
       <nav class="header-nav left-nav">
         <a href="index.html" class="nav-link">Explore</a>
         <a href="index.html#categorie" class="nav-link">Genres</a>
+        <a href="search.html?type=creators" class="nav-link">Creators</a>
         <a href="index.html#licenza" class="nav-link">License</a>
       </nav>
 
@@ -55,6 +56,15 @@
   <main class="search-page-main">
     <div class="section-container">
       <div class="search-top-container">
+        <div class="search-type-tabs" id="search-type-tabs">
+          <button type="button" class="search-type-btn active" id="tab-tracks" data-type="tracks">
+            <i class="fa-solid fa-music"></i> Tracks
+          </button>
+          <button type="button" class="search-type-btn" id="tab-creators" data-type="creators">
+            <i class="fa-solid fa-users"></i> Creators
+          </button>
+        </div>
+
         <div class="search-box search-page-bar">
           <div class="search-icon-wrapper">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -80,6 +90,8 @@
       </div>
 
       <div class="tracks-list" id="search-tracks-container">
+      </div>
+      <div class="creators-grid" id="search-creators-container" style="display: none;">
       </div>
     </div>
   </main>
@@ -162,10 +174,16 @@
     const searchInput = document.getElementById('page-search-input');
     const searchBtn = document.getElementById('page-search-btn');
     const tracksContainer = document.getElementById('search-tracks-container');
+    const creatorsContainer = document.getElementById('search-creators-container');
     const searchHeading = document.getElementById('search-heading');
     const resultsCount = document.getElementById('results-count');
     const genrePills = document.querySelectorAll('#genre-pills .pill');
+    const genrePillsWrap = document.getElementById('genre-pills');
+    const tabTracks = document.getElementById('tab-tracks');
+    const tabCreators = document.getElementById('tab-creators');
 
+    const initialType = (urlParams.get('type') || urlParams.get('tab') || '').toLowerCase();
+    let currentSearchMode = (initialType === 'creators' || initialType === 'users') ? 'creators' : 'tracks';
     let currentGenre = initialGenre;
     searchInput.value = initialQuery;
 
@@ -280,6 +298,10 @@
             <input type="range" class="track-vol-slider" min="0" max="1" step="0.05" value="0.8" data-track-id="${t.id}" aria-label="Volume slider">
           </div>
           <div class="track-actions">
+            <button type="button" class="track-like-btn ${t.is_liked ? 'liked' : ''}" data-track-id="${t.id}" aria-label="Like track" title="${t.is_liked ? 'Unlike' : 'Like'}">
+              <i class="${t.is_liked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+              <span class="like-count">${t.likes_count || 0}</span>
+            </button>
             <a href="${t.audio_url}" download class="btn-download" title="Download track">
               <i class="fa-solid fa-download"></i>
               <span>Download</span>
@@ -288,7 +310,49 @@
         </article>
       `).join('');
 
+      tracksContainer.querySelectorAll('.track-like-btn').forEach(btn => {
+        btn.addEventListener('click', () => handleLikeTrack(btn));
+      });
+
       initWaveSurfers(tracks);
+    }
+
+    async function handleLikeTrack(btn) {
+      const trackId = btn.getAttribute('data-track-id');
+      if (!trackId) return;
+
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/tracks?action=like', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ track_id: parseInt(trackId, 10) })
+        });
+        if (res.status === 401) {
+          window.location.href = 'login.html';
+          return;
+        }
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const icon = btn.querySelector('i');
+          const countSpan = btn.querySelector('.like-count');
+          if (data.liked) {
+            btn.classList.add('liked');
+            btn.title = 'Unlike';
+            if (icon) icon.className = 'fa-solid fa-heart';
+          } else {
+            btn.classList.remove('liked');
+            btn.title = 'Like';
+            if (icon) icon.className = 'fa-regular fa-heart';
+          }
+          if (countSpan) {
+            countSpan.textContent = data.likes_count;
+          }
+        }
+      } catch (err) {
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     function escapeHtml(str) {
@@ -403,15 +467,121 @@
       });
     }
 
+    async function executeUserSearch(query = '') {
+      const cleanQ = query.trim().replace(/^@/, '').slice(0, 50);
+
+      if (searchAbortController) {
+        searchAbortController.abort();
+      }
+      searchAbortController = new AbortController();
+
+      if (searchBtn) {
+        searchBtn.disabled = true;
+      }
+
+      creatorsContainer.innerHTML = '<div style="text-align:center; padding: 48px; color: #64748b; grid-column: 1 / -1;">Searching creators...</div>';
+
+      if (cleanQ) {
+        searchHeading.textContent = `Creators matching "@${cleanQ}"`;
+      } else {
+        searchHeading.textContent = 'Top Creators';
+      }
+
+      try {
+        const endpoint = `/api/auth?action=search_users${cleanQ ? `&q=${encodeURIComponent(cleanQ)}` : ''}`;
+        const res = await fetch(endpoint, { signal: searchAbortController.signal });
+        if (!res.ok) throw new Error('Search failed');
+        const data = await res.json();
+        displayUserResults(data.users || [], cleanQ);
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        displayUserResults([], cleanQ);
+      } finally {
+        if (searchBtn) {
+          searchBtn.disabled = false;
+        }
+      }
+    }
+
+    function displayUserResults(users, query) {
+      if (!users || users.length === 0) {
+        resultsCount.textContent = '0 creators';
+        creatorsContainer.innerHTML = `
+          <div class="no-results-box" style="grid-column: 1 / -1;">
+            <h3>No creators found</h3>
+            <p>${query ? `No creators matching "@${escapeHtml(query)}"` : 'No creators found yet.'}</p>
+          </div>
+        `;
+        return;
+      }
+
+      resultsCount.textContent = `${users.length} creator${users.length > 1 ? 's' : ''}`;
+      creatorsContainer.innerHTML = users.map(u => {
+        const initial = (u.username || 'C')[0].toUpperCase();
+        return `
+          <article class="creator-card">
+            <div class="creator-card-header">
+              <div class="creator-card-avatar">${escapeHtml(initial)}</div>
+              <div class="creator-card-info">
+                <a href="profile.html?u=${encodeURIComponent(u.username)}" class="creator-card-name">@${escapeHtml(u.username)}</a>
+                <span style="font-size: 0.74rem; font-weight: 700; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 9999px; display: inline-block; width: fit-content;">Creator</span>
+              </div>
+            </div>
+            <div class="creator-card-stats">
+              <span><i class="fa-solid fa-music" style="color: var(--primary);"></i> ${u.track_count || 0} tracks</span>
+              <span><i class="fa-solid fa-users" style="color: var(--primary);"></i> ${u.follower_count || 0} followers</span>
+            </div>
+            <div class="creator-card-actions">
+              <a href="profile.html?u=${encodeURIComponent(u.username)}" class="btn-view-profile">
+                <i class="fa-solid fa-user"></i> View Profile
+              </a>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function setSearchMode(mode) {
+      currentSearchMode = mode;
+      if (mode === 'creators') {
+        tabCreators.classList.add('active');
+        tabTracks.classList.remove('active');
+        genrePillsWrap.style.display = 'none';
+        tracksContainer.style.display = 'none';
+        creatorsContainer.style.display = 'grid';
+        searchInput.placeholder = 'Search creators by username...';
+        executeUserSearch(searchInput.value.trim());
+      } else {
+        tabTracks.classList.add('active');
+        tabCreators.classList.remove('active');
+        genrePillsWrap.style.display = 'flex';
+        tracksContainer.style.display = 'flex';
+        creatorsContainer.style.display = 'none';
+        searchInput.placeholder = 'Search music, loops, genres...';
+        executeSearch(searchInput.value.trim(), currentGenre);
+      }
+    }
+
+    tabTracks.addEventListener('click', () => setSearchMode('tracks'));
+    tabCreators.addEventListener('click', () => setSearchMode('creators'));
+
     searchBtn.addEventListener('click', () => {
       const q = searchInput.value.trim();
-      executeSearch(q, currentGenre);
+      if (currentSearchMode === 'creators') {
+        executeUserSearch(q);
+      } else {
+        executeSearch(q, currentGenre);
+      }
     });
 
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         const q = searchInput.value.trim();
-        executeSearch(q, currentGenre);
+        if (currentSearchMode === 'creators') {
+          executeUserSearch(q);
+        } else {
+          executeSearch(q, currentGenre);
+        }
       }
     });
 
@@ -420,7 +590,9 @@
         genrePills.forEach(p => p.classList.remove('active'));
         pill.classList.add('active');
         currentGenre = pill.getAttribute('data-genre');
-        executeSearch(searchInput.value.trim(), currentGenre);
+        if (currentSearchMode === 'tracks') {
+          executeSearch(searchInput.value.trim(), currentGenre);
+        }
       });
     });
 
@@ -455,7 +627,11 @@
     }
 
     checkHeaderAuth();
-    executeSearch(initialQuery, initialGenre);
+    if (currentSearchMode === 'creators') {
+      setSearchMode('creators');
+    } else {
+      executeSearch(initialQuery, initialGenre);
+    }
 
     const wikiGlossary = {
       'seamless-loop': {
