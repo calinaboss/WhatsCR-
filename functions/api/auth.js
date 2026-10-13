@@ -43,33 +43,59 @@ async function sha256Hex(str) {
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+function constantTimeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const aBuf = new TextEncoder().encode(a);
+  const bBuf = new TextEncoder().encode(b);
+  if (aBuf.byteLength !== bBuf.byteLength) return false;
+  let c = 0;
+  for (let i = 0; i < aBuf.byteLength; i++) {
+    c |= aBuf[i] ^ bBuf[i];
+  }
+  return c === 0;
+}
+
 async function hashPassword(password) {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
   const pwBuf = new TextEncoder().encode(password);
   const key = await crypto.subtle.importKey('raw', pwBuf, 'PBKDF2', false, ['deriveBits']);
   const derived = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: salt, iterations: 210000, hash: 'SHA-256' },
     key,
     256
   );
   const hashHex = Array.from(new Uint8Array(derived)).map(b => b.toString(16).padStart(2, '0')).join('');
-  return `${saltHex}:${hashHex}`;
+  return `210000:${saltHex}:${hashHex}`;
 }
 
 async function verifyPassword(password, stored) {
   if (!stored || !stored.includes(':')) return false;
-  const [saltHex, originalHashHex] = stored.split(':');
+  const parts = stored.split(':');
+  let iterations = 100000;
+  let saltHex = '';
+  let originalHashHex = '';
+  if (parts.length === 3) {
+    iterations = parseInt(parts[0], 10) || 210000;
+    saltHex = parts[1];
+    originalHashHex = parts[2];
+  } else if (parts.length === 2) {
+    saltHex = parts[0];
+    originalHashHex = parts[1];
+  } else {
+    return false;
+  }
+  if (!saltHex || !originalHashHex) return false;
   const salt = new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
   const pwBuf = new TextEncoder().encode(password);
   const key = await crypto.subtle.importKey('raw', pwBuf, 'PBKDF2', false, ['deriveBits']);
   const derived = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: salt, iterations: iterations, hash: 'SHA-256' },
     key,
     256
   );
   const derivedHex = Array.from(new Uint8Array(derived)).map(b => b.toString(16).padStart(2, '0')).join('');
-  return derivedHex === originalHashHex;
+  return constantTimeEqual(derivedHex, originalHashHex);
 }
 
 function generateRandomToken() {
@@ -77,26 +103,29 @@ function generateRandomToken() {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-async function verifyHumanCaptcha(token, secretKey) {
-  if (!token) return false;
+async function verifyHumanCaptcha(token, secretKey, remoteIp) {
+  if (!token || typeof token !== 'string') return false;
   if (token === 'cf_turnstile_dummy_token' || token.startsWith('cf_test_')) {
-    return true;
+    return false;
   }
-  if (!secretKey) return true;
+  if (!secretKey) return false;
   try {
+    const formData = new URLSearchParams();
+    formData.append('secret', secretKey);
+    formData.append('response', token);
+    if (remoteIp && remoteIp !== 'anonymous') {
+      formData.append('remoteip', remoteIp);
+    }
     const cfRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        secret: secretKey,
-        response: token
-      })
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData.toString()
     });
     const cfData = await cfRes.json();
-    if (cfData && cfData.success) return true;
-  } catch (e) {}
-
-  return true;
+    return Boolean(cfData && cfData.success === true);
+  } catch (e) {
+    return false;
+  }
 }
 
 async function runNeonSql(databaseUrl, sql, params = []) {
@@ -145,7 +174,9 @@ async function ensureTables(databaseUrl) {
     "CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id)",
     "CREATE TABLE IF NOT EXISTS track_likes (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, track_id INT NOT NULL REFERENCES tracks(id) ON DELETE CASCADE, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, CONSTRAINT unique_track_like UNIQUE (user_id, track_id))",
     "CREATE INDEX IF NOT EXISTS idx_track_likes_track ON track_likes(track_id)",
-    "CREATE INDEX IF NOT EXISTS idx_track_likes_user ON track_likes(user_id)"
+    "CREATE INDEX IF NOT EXISTS idx_track_likes_user ON track_likes(user_id)",
+    "CREATE TABLE IF NOT EXISTS rate_limits (key VARCHAR(255) PRIMARY KEY, count INT NOT NULL DEFAULT 1, reset_at TIMESTAMP WITH TIME ZONE NOT NULL)",
+    "CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_at)"
   ];
   try {
     for (const stmt of statements) {
@@ -153,6 +184,29 @@ async function ensureTables(databaseUrl) {
     }
     schemaInitialized = true;
   } catch (err) {}
+}
+
+async function checkPersistentRateLimit(databaseUrl, key, maxRequests = 10, windowMs = 60000) {
+  try {
+    const now = new Date();
+    const resetAt = new Date(Date.now() + windowMs);
+    const rows = await runNeonSql(
+      databaseUrl,
+      `INSERT INTO rate_limits (key, count, reset_at)
+       VALUES ($1, 1, $2)
+       ON CONFLICT (key) DO UPDATE
+       SET count = CASE WHEN rate_limits.reset_at < $3 THEN 1 ELSE rate_limits.count + 1 END,
+           reset_at = CASE WHEN rate_limits.reset_at < $3 THEN $2 ELSE rate_limits.reset_at END
+       RETURNING count`,
+      [key, resetAt.toISOString(), now.toISOString()]
+    );
+    if (rows && rows.length > 0) {
+      return parseInt(rows[0].count, 10) <= maxRequests;
+    }
+    return true;
+  } catch (e) {
+    return true;
+  }
 }
 
 export async function onRequest(context) {
@@ -565,6 +619,15 @@ export async function onRequest(context) {
       }
       const user = authRows[0];
 
+      const changePwKey = `auth_change_pw_${user.id}`;
+      const allowed = await checkPersistentRateLimit(env.DATABASE_URL, changePwKey, 5, 300000);
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: 'Too many attempts. Please wait 5 minutes.' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
       const isCurrentValid = await verifyPassword(currentPassword, user.password_hash);
       if (!isCurrentValid) {
         return new Response(JSON.stringify({ error: 'Current password is incorrect.' }), {
@@ -578,6 +641,12 @@ export async function onRequest(context) {
         env.DATABASE_URL,
         'UPDATE users SET password_hash = $1 WHERE id = $2',
         [newHashed, user.id]
+      );
+
+      await runNeonSql(
+        env.DATABASE_URL,
+        'DELETE FROM sessions WHERE user_id = $1 AND token_hash != $2',
+        [user.id, tokenHash]
       );
 
       return new Response(JSON.stringify({ success: true, message: 'Password updated successfully!' }), {
@@ -735,6 +804,15 @@ export async function onRequest(context) {
       });
     }
 
+    const rateKey = `auth_${action}_${ip}`;
+    const allowed = await checkPersistentRateLimit(env.DATABASE_URL, rateKey, 12, 60000);
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: 'Too many attempts. Please wait a minute.' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     let body = {};
     try {
       body = await request.json();
@@ -760,8 +838,24 @@ export async function onRequest(context) {
       });
     }
 
-    if (body.captcha_token) {
-      const isHuman = await verifyHumanCaptcha(body.captcha_token, env.TURNSTILE_SECRET_KEY || env.RECAPTCHA_SECRET_KEY);
+    const turnstileSecret = env.TURNSTILE_SECRET_KEY || env.RECAPTCHA_SECRET_KEY;
+
+    if (action === 'register') {
+      if (!body.captcha_token) {
+        return new Response(JSON.stringify({ error: 'Human verification required.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      const isHuman = await verifyHumanCaptcha(body.captcha_token, turnstileSecret, ip);
+      if (!isHuman) {
+        return new Response(JSON.stringify({ error: 'Human verification failed. Please try again.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    } else if (action === 'login' && body.captcha_token) {
+      const isHuman = await verifyHumanCaptcha(body.captcha_token, turnstileSecret, ip);
       if (!isHuman) {
         return new Response(JSON.stringify({ error: 'Human verification failed. Please try again.' }), {
           status: 400,
@@ -812,8 +906,7 @@ export async function onRequest(context) {
         }
 
         const hashed = await hashPassword(password);
-        const adminEmail = (env.ADMIN_EMAIL || '').trim().toLowerCase();
-        const role = (adminEmail && email === adminEmail) ? 'admin' : 'user';
+        const role = 'user';
 
         const insertRows = await runNeonSql(
           env.DATABASE_URL,

@@ -25,7 +25,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="style.css">
-  <script src="https://unpkg.com/wavesurfer.js@7"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.8.14/wavesurfer.min.js"></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -274,45 +274,77 @@
       }
     }
 
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function sanitizeUrl(url) {
+      if (!url || typeof url !== 'string') return '#';
+      const clean = url.trim();
+      if (clean.startsWith('audio/') || clean.startsWith('/api/') || clean.startsWith('http://') || clean.startsWith('https://')) {
+        return clean.replace(/"/g, '%22').replace(/'/g, '%27').replace(/</g, '%3C').replace(/>/g, '%3E');
+      }
+      return '#';
+    }
+
     function renderTracks(tracks) {
       if (!tracks || tracks.length === 0) {
         tracksContainer.innerHTML = '<div style="text-align:center; padding: 32px; color: #64748b;">No tracks found.</div>';
         return;
       }
 
-      tracksContainer.innerHTML = tracks.map(t => `
-        <article class="track-row" id="track-row-${t.id}">
-          <button class="track-play-btn" data-track-id="${t.id}" aria-label="Play ${t.title}">
+      tracksContainer.innerHTML = tracks.map(t => {
+        const safeId = parseInt(t.id, 10) || 0;
+        const safeTitle = escapeHtml(t.title || 'Untitled');
+        const safeArtist = escapeHtml(t.artist || 'Unknown');
+        const safeGenre = escapeHtml(t.genre || 'Soundtrack');
+        const safeLicense = escapeHtml(t.license_type || 'CC0 Free');
+        const safeDuration = escapeHtml(t.duration || '0:00');
+        const safeLikes = parseInt(t.likes_count, 10) || 0;
+        const safeAudioUrl = sanitizeUrl(t.audio_url);
+        const isLiked = Boolean(t.is_liked);
+        const isLoop = Boolean(t.is_loop);
+
+        return `
+        <article class="track-row" id="track-row-${safeId}">
+          <button class="track-play-btn" data-track-id="${safeId}" aria-label="Play ${safeTitle}">
             <i class="fa-solid fa-play"></i>
           </button>
           <div class="track-meta">
-            <h4 class="track-name">${t.title}</h4>
-            <span class="track-artist"><a href="profile.html?u=${encodeURIComponent(t.artist || 'Unknown')}" class="artist-link">${t.artist || 'Unknown'}</a> • ${t.genre || 'Soundtrack'}</span>
+            <h4 class="track-name">${safeTitle}</h4>
+            <span class="track-artist"><a href="profile.html?u=${encodeURIComponent(t.artist || 'Unknown')}" class="artist-link">${safeArtist}</a> • ${safeGenre}</span>
           </div>
-          <div class="track-waveform" id="waveform-${t.id}"></div>
+          <div class="track-waveform" id="waveform-${safeId}"></div>
           <div class="track-badges">
-            ${t.is_loop ? '<span class="badge badge-loop term-badge" data-term="seamless-loop" title="Click to view definition in Audio Encyclopedia">Seamless Loop</span>' : ''}
-            <span class="badge badge-cc term-badge" data-term="cc0-license" title="Click to view definition in Audio Encyclopedia">${t.license_type || 'CC0 Free'}</span>
+            ${isLoop ? '<span class="badge badge-loop term-badge" data-term="seamless-loop" title="Click to view definition in Audio Encyclopedia">Seamless Loop</span>' : ''}
+            <span class="badge badge-cc term-badge" data-term="cc0-license" title="Click to view definition in Audio Encyclopedia">${safeLicense}</span>
           </div>
-          <span class="track-time" id="time-${t.id}">${t.duration || '0:00'}</span>
+          <span class="track-time" id="time-${safeId}">${safeDuration}</span>
           <div class="track-volume-wrap">
-            <button class="track-vol-btn" data-track-id="${t.id}" aria-label="Toggle mute">
+            <button class="track-vol-btn" data-track-id="${safeId}" aria-label="Toggle mute">
               <i class="fa-solid fa-volume-high"></i>
             </button>
-            <input type="range" class="track-vol-slider" min="0" max="1" step="0.05" value="0.8" data-track-id="${t.id}" aria-label="Volume slider">
+            <input type="range" class="track-vol-slider" min="0" max="1" step="0.05" value="0.8" data-track-id="${safeId}" aria-label="Volume slider">
           </div>
           <div class="track-actions">
-            <button type="button" class="track-like-btn ${t.is_liked ? 'liked' : ''}" data-track-id="${t.id}" aria-label="Like track" title="${t.is_liked ? 'Unlike' : 'Like'}">
-              <i class="${t.is_liked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
-              <span class="like-count">${t.likes_count || 0}</span>
+            <button type="button" class="track-like-btn ${isLiked ? 'liked' : ''}" data-track-id="${safeId}" aria-label="Like track" title="${isLiked ? 'Unlike' : 'Like'}">
+              <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+              <span class="like-count">${safeLikes}</span>
             </button>
-            <a href="${t.audio_url}" download class="btn-download" title="Download track">
+            <a href="${safeAudioUrl}" download class="btn-download" title="Download track">
               <i class="fa-solid fa-download"></i>
               <span>Download</span>
             </a>
           </div>
         </article>
-      `).join('');
+      `;
+      }).join('');
 
       tracksContainer.querySelectorAll('.track-like-btn').forEach(btn => {
         btn.addEventListener('click', () => handleLikeTrack(btn));
@@ -540,7 +572,7 @@
           const rightNav = document.getElementById('header-user-nav');
           if (!rightNav) return;
           const isAdmin = data.user.role === 'admin';
-          const userName = data.user.username ? `@${data.user.username}` : (data.user.email || '').split('@')[0];
+          const userName = escapeHtml(data.user.username ? `@${data.user.username}` : (data.user.email || '').split('@')[0]);
           rightNav.innerHTML = `
             ${isAdmin ? '<a href="admin.html" class="nav-link nav-admin-btn" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-shield-halved"></i> Admin</a>' : ''}
             <a href="login.html" class="nav-link nav-user-link" title="My Account"><i class="fa-solid fa-user"></i><span class="nav-user-name">${userName}</span></a>
