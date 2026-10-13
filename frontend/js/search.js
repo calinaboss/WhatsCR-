@@ -33,6 +33,9 @@
     let searchAbortController = null;
     let lastSearchKey = '';
     let searchCooldownTime = 0;
+    let currentAuthUser = null;
+    let latestUsersResult = [];
+    let latestUsersQuery = '';
 
     async function executeSearch(query = '', genre = '') {
       const cleanQ = query.trim().slice(0, 100);
@@ -338,9 +341,13 @@
         const res = await fetch(endpoint, { signal: searchAbortController.signal });
         if (!res.ok) throw new Error('Search failed');
         const data = await res.json();
-        displayUserResults(data.users || [], cleanQ);
+        latestUsersResult = data.users || [];
+        latestUsersQuery = cleanQ;
+        displayUserResults(latestUsersResult, cleanQ);
       } catch (err) {
         if (err.name === 'AbortError') return;
+        latestUsersResult = [];
+        latestUsersQuery = cleanQ;
         displayUserResults([], cleanQ);
       } finally {
         if (searchBtn) {
@@ -350,7 +357,17 @@
     }
 
     function displayUserResults(users, query) {
-      if (!users || users.length === 0) {
+      const filtered = (users || []).filter(u => {
+        if (!u || !u.username) return false;
+        if (currentAuthUser && currentAuthUser.username) {
+          if (u.username.toLowerCase() === currentAuthUser.username.toLowerCase()) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      if (!filtered || filtered.length === 0) {
         resultsCount.textContent = '0 creators';
         creatorsContainer.innerHTML = `
           <div class="no-results-box" style="grid-column: 1 / -1;">
@@ -361,8 +378,8 @@
         return;
       }
 
-      resultsCount.textContent = `${users.length} creator${users.length > 1 ? 's' : ''}`;
-      creatorsContainer.innerHTML = users.map(u => {
+      resultsCount.textContent = `${filtered.length} creator${filtered.length > 1 ? 's' : ''}`;
+      creatorsContainer.innerHTML = filtered.map(u => {
         const initial = (u.username || 'C')[0].toUpperCase();
         return `
           <article class="creator-card">
@@ -448,6 +465,10 @@
         if (!res.ok) return;
         const data = await res.json();
         if (data && data.user) {
+          currentAuthUser = data.user;
+          if (currentSearchMode === 'creators' && latestUsersResult.length > 0) {
+            displayUserResults(latestUsersResult, latestUsersQuery);
+          }
           const rightNav = document.getElementById('header-user-nav');
           if (!rightNav) return;
           const isAdmin = data.user.role === 'admin';
