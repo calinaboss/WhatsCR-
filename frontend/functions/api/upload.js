@@ -72,27 +72,100 @@ async function checkPersistentRateLimit(databaseUrl, key, maxRequests = 15, wind
   }
 }
 
-function verifyAudioMagicBytes(buffer) {
-  if (!buffer || buffer.byteLength < 4) return false;
-  const bytes = new Uint8Array(buffer.slice(0, 4));
+function inspectAudioHeader(buffer) {
+  if (!buffer || buffer.byteLength < 64) {
+    return { valid: false, error: 'File is too small or empty' };
+  }
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.length;
 
-  if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
-    return true;
+  if (bytes[0] === 0x4D && bytes[1] === 0x5A) {
+    return { valid: false, error: 'Upload rejected: DOS or Windows executable header detected' };
+  }
+  if (bytes[0] === 0x7F && bytes[1] === 0x45 && bytes[2] === 0x4C && bytes[3] === 0x46) {
+    return { valid: false, error: 'Upload rejected: Linux ELF executable header detected' };
+  }
+  if (bytes[0] === 0x50 && bytes[1] === 0x4B && ((bytes[2] === 0x03 && bytes[3] === 0x04) || (bytes[2] === 0x05 && bytes[3] === 0x06))) {
+    return { valid: false, error: 'Upload rejected: ZIP or JAR archive header detected' };
+  }
+  if (bytes[0] === 0x52 && bytes[1] === 0x61 && bytes[2] === 0x72 && bytes[3] === 0x21) {
+    return { valid: false, error: 'Upload rejected: RAR archive header detected' };
+  }
+  if (bytes[0] === 0x37 && bytes[1] === 0x7A && bytes[2] === 0xBC && bytes[3] === 0xAF && bytes[4] === 0x27 && bytes[5] === 0x1C) {
+    return { valid: false, error: 'Upload rejected: 7-Zip archive header detected' };
+  }
+  if (
+    (bytes[0] === 0xCA && bytes[1] === 0xFE && bytes[2] === 0xBA && bytes[3] === 0xBE) ||
+    (bytes[0] === 0xCE && bytes[1] === 0xFA && bytes[2] === 0xED && bytes[3] === 0xFE) ||
+    (bytes[0] === 0xCF && bytes[1] === 0xFA && bytes[2] === 0xED && bytes[3] === 0xFE) ||
+    (bytes[0] === 0xFE && bytes[1] === 0xED && bytes[2] === 0xFA && bytes[3] === 0xCE) ||
+    (bytes[0] === 0xFE && bytes[1] === 0xED && bytes[2] === 0xFA && bytes[3] === 0xCF)
+  ) {
+    return { valid: false, error: 'Upload rejected: Mach-O binary or Java class header detected' };
+  }
+  if (bytes[0] === 0x23 && bytes[1] === 0x21) {
+    return { valid: false, error: 'Upload rejected: Shell script shebang header detected' };
+  }
+  if (bytes[0] === 0x3C) {
+    const headText = String.fromCharCode(...bytes.slice(0, 16)).toLowerCase();
+    if (headText.startsWith('<!doctype') || headText.startsWith('<html') || headText.startsWith('<script') || headText.startsWith('<?xml') || headText.startsWith('<svg')) {
+      return { valid: false, error: 'Upload rejected: HTML or XML document header detected' };
+    }
   }
 
-  if (bytes[0] === 0xFF && (bytes[1] & 0xE0) === 0xE0) {
-    return true;
+  const isId3 = bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33;
+  const isMp3Sync = bytes[0] === 0xFF && (bytes[1] & 0xE0) === 0xE0;
+  const isRiffWav = bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+                    bytes[8] === 0x57 && bytes[9] === 0x41 && bytes[10] === 0x56 && bytes[11] === 0x45;
+  const isOgg = bytes[0] === 0x4F && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53;
+
+  if (isId3) {
+    const tagSize = ((bytes[6] & 0x7F) << 21) |
+                    ((bytes[7] & 0x7F) << 14) |
+                    ((bytes[8] & 0x7F) << 7) |
+                    (bytes[9] & 0x7F);
+    const totalId3Header = 10 + tagSize;
+    if (totalId3Header >= len) {
+      return { valid: false, error: 'Truncated or corrupted ID3 tag header' };
+    }
+    const audioStart = totalId3Header;
+    if (audioStart + 2 <= len) {
+      const syncByte1 = bytes[audioStart];
+      const syncByte2 = bytes[audioStart + 1];
+      if (!(syncByte1 === 0xFF && (syncByte2 & 0xE0) === 0xE0)) {
+        let foundSync = false;
+        const searchLimit = Math.min(audioStart + 2048, len - 2);
+        for (let i = audioStart; i < searchLimit; i++) {
+          if (bytes[i] === 0xFF && (bytes[i + 1] & 0xE0) === 0xE0) {
+            foundSync = true;
+            break;
+          }
+        }
+        if (!foundSync) {
+          return { valid: false, error: 'Missing valid MPEG audio sync frame following ID3 tag' };
+        }
+      }
+    }
+    return { valid: true, format: 'mp3' };
   }
 
-  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
-    return true;
+  if (isMp3Sync) {
+    return { valid: true, format: 'mp3' };
   }
 
-  if (bytes[0] === 0x4F && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53) {
-    return true;
+  if (isRiffWav) {
+    const riffSize = bytes[4] | (bytes[5] << 8) | (bytes[6] << 16) | (bytes[7] << 24);
+    if (riffSize > 0 && len > riffSize + 128) {
+      return { valid: false, error: 'WAV file contains suspicious appended data beyond declared RIFF length' };
+    }
+    return { valid: true, format: 'wav' };
   }
 
-  return false;
+  if (isOgg) {
+    return { valid: true, format: 'ogg' };
+  }
+
+  return { valid: false, error: 'Invalid audio format: only genuine MP3, WAV or OGG files are permitted.' };
 }
 
 function arrayBufferToBase64(buffer) {
@@ -230,23 +303,70 @@ export async function onRequest(context) {
   }
 
   const buffer = await file.arrayBuffer();
-  if (!verifyAudioMagicBytes(buffer)) {
-    return new Response(JSON.stringify({ error: 'Invalid audio format. Only genuine MP3, WAV or OGG files are permitted.' }), {
+  const inspection = inspectAudioHeader(buffer);
+  if (!inspection.valid) {
+    return new Response(JSON.stringify({ error: inspection.error }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }
     });
   }
 
-  const fileId = crypto.randomUUID();
-  const safeFilename = `${fileId}.mp3`;
-  const audioUrl = `/api/audio/${safeFilename}`;
+  const detectedFormat = inspection.format;
+  const originalFileName = (file.name || '').toLowerCase();
+  let ext = '';
+  if (originalFileName.endsWith('.mp3')) ext = 'mp3';
+  else if (originalFileName.endsWith('.wav')) ext = 'wav';
+  else if (originalFileName.endsWith('.ogg')) ext = 'ogg';
+
+  if (!ext) {
+    return new Response(JSON.stringify({ error: 'File extension must be .mp3, .wav or .ogg.' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  if (ext !== detectedFormat) {
+    return new Response(JSON.stringify({ error: `File extension (.${ext}) does not match detected audio format (${detectedFormat.toUpperCase()}).` }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  const declaredMime = (file.type || '').toLowerCase();
+  if (declaredMime && declaredMime !== 'application/octet-stream') {
+    if (detectedFormat === 'mp3' && !declaredMime.includes('mpeg') && !declaredMime.includes('mp3') && !declaredMime.includes('mpg')) {
+      return new Response(JSON.stringify({ error: 'Declared MIME type does not match MP3 audio format.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    if (detectedFormat === 'wav' && !declaredMime.includes('wav') && !declaredMime.includes('wave')) {
+      return new Response(JSON.stringify({ error: 'Declared MIME type does not match WAV audio format.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    if (detectedFormat === 'ogg' && !declaredMime.includes('ogg') && !declaredMime.includes('vorbis')) {
+      return new Response(JSON.stringify({ error: 'Declared MIME type does not match OGG audio format.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
 
   let mimeType = 'audio/mpeg';
-  if (file.name && file.name.toLowerCase().endsWith('.wav')) {
+  let safeExt = 'mp3';
+  if (detectedFormat === 'wav') {
     mimeType = 'audio/wav';
-  } else if (file.name && file.name.toLowerCase().endsWith('.ogg')) {
+    safeExt = 'wav';
+  } else if (detectedFormat === 'ogg') {
     mimeType = 'audio/ogg';
+    safeExt = 'ogg';
   }
+
+  const fileId = crypto.randomUUID();
+  const safeFilename = `${fileId}.${safeExt}`;
+  const audioUrl = `/api/audio/${safeFilename}`;
 
   if (env.AUDIO_BUCKET) {
     try {

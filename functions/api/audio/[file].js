@@ -25,16 +25,15 @@ export async function onRequestGet(context) {
         headers.set('etag', object.httpEtag);
         headers.set('Accept-Ranges', 'bytes');
         headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+        headers.set('X-Content-Type-Options', 'nosniff');
 
-        if (!headers.get('Content-Type')) {
-          if (cleanFilename.endsWith('.wav')) {
-            headers.set('Content-Type', 'audio/wav');
-          } else if (cleanFilename.endsWith('.ogg')) {
-            headers.set('Content-Type', 'audio/ogg');
-          } else {
-            headers.set('Content-Type', 'audio/mpeg');
-          }
+        let contentType = 'audio/mpeg';
+        if (cleanFilename.endsWith('.wav')) {
+          contentType = 'audio/wav';
+        } else if (cleanFilename.endsWith('.ogg')) {
+          contentType = 'audio/ogg';
         }
+        headers.set('Content-Type', contentType);
 
         const status = object.body ? (request.headers.get('range') ? 206 : 200) : 304;
 
@@ -79,6 +78,13 @@ export async function onRequestGet(context) {
             bytes[i] = binaryString.charCodeAt(i);
           }
 
+          let contentType = 'audio/mpeg';
+          if (cleanFilename.endsWith('.wav')) {
+            contentType = 'audio/wav';
+          } else if (cleanFilename.endsWith('.ogg')) {
+            contentType = 'audio/ogg';
+          }
+
           const rangeHeader = request.headers.get('range');
           if (rangeHeader && rangeHeader.startsWith('bytes=')) {
             const parts = rangeHeader.replace(/bytes=/, '').split('-');
@@ -89,7 +95,8 @@ export async function onRequestGet(context) {
             return new Response(chunk, {
               status: 206,
               headers: {
-                'Content-Type': row.mime_type || 'audio/mpeg',
+                'Content-Type': contentType,
+                'X-Content-Type-Options': 'nosniff',
                 'Content-Range': `bytes ${start}-${end}/${len}`,
                 'Content-Length': chunk.length.toString(),
                 'Accept-Ranges': 'bytes',
@@ -101,7 +108,8 @@ export async function onRequestGet(context) {
           return new Response(bytes, {
             status: 200,
             headers: {
-              'Content-Type': row.mime_type || 'audio/mpeg',
+              'Content-Type': contentType,
+              'X-Content-Type-Options': 'nosniff',
               'Content-Length': len.toString(),
               'Accept-Ranges': 'bytes',
               'Cache-Control': 'public, max-age=31536000, immutable'
