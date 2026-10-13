@@ -68,6 +68,9 @@ async function checkPersistentRateLimit(databaseUrl, key, maxRequests = 100, win
   try {
     const now = new Date();
     const resetAt = new Date(Date.now() + windowMs);
+    if (Math.random() < 0.05) {
+      runNeonSql(databaseUrl, 'DELETE FROM rate_limits WHERE reset_at < NOW()').catch(() => {});
+    }
     const rows = await runNeonSql(
       databaseUrl,
       `INSERT INTO rate_limits (key, count, reset_at)
@@ -81,9 +84,9 @@ async function checkPersistentRateLimit(databaseUrl, key, maxRequests = 100, win
     if (rows && rows.length > 0) {
       return parseInt(rows[0].count, 10) <= maxRequests;
     }
-    return true;
+    return false;
   } catch (e) {
-    return true;
+    return false;
   }
 }
 
