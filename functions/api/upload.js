@@ -1,5 +1,3 @@
-const uploadRateLimit = new Map();
-
 function getClientIp(request) {
   return request.headers.get('CF-Connecting-IP') || 'anonymous';
 }
@@ -51,6 +49,29 @@ async function runNeonSql(databaseUrl, sql, params = []) {
   return [];
 }
 
+async function checkPersistentRateLimit(databaseUrl, key, maxRequests = 15, windowMs = 3600000) {
+  try {
+    const now = new Date();
+    const resetAt = new Date(Date.now() + windowMs);
+    const rows = await runNeonSql(
+      databaseUrl,
+      `INSERT INTO rate_limits (key, count, reset_at)
+       VALUES ($1, 1, $2)
+       ON CONFLICT (key) DO UPDATE
+       SET count = CASE WHEN rate_limits.reset_at < $3 THEN 1 ELSE rate_limits.count + 1 END,
+           reset_at = CASE WHEN rate_limits.reset_at < $3 THEN $2 ELSE rate_limits.reset_at END
+       RETURNING count`,
+      [key, resetAt.toISOString(), now.toISOString()]
+    );
+    if (rows && rows.length > 0) {
+      return parseInt(rows[0].count, 10) <= maxRequests;
+    }
+    return true;
+  } catch (e) {
+    return true;
+  }
+}
+
 function verifyAudioMagicBytes(buffer) {
   if (!buffer || buffer.byteLength < 4) return false;
   const bytes = new Uint8Array(buffer.slice(0, 4));
@@ -96,17 +117,16 @@ export async function onRequest(context) {
   }
 
   const ip = getClientIp(request);
-  const now = Date.now();
-  const userRate = uploadRateLimit.get(ip) || { count: 0, reset: now + 3600000 };
-  if (now > userRate.reset) {
-    userRate.count = 1;
-    userRate.reset = now + 3600000;
-  } else {
-    userRate.count++;
-  }
-  uploadRateLimit.set(ip, userRate);
 
-  if (userRate.count > 15) {
+  if (!env.DATABASE_URL) {
+    return new Response(JSON.stringify({ error: 'Server database not configured' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  const uploadAllowed = await checkPersistentRateLimit(env.DATABASE_URL, `upload_${ip}`, 15, 3600000);
+  if (!uploadAllowed) {
     return new Response(JSON.stringify({ error: 'Upload limit exceeded. Max 15 uploads per hour.' }), {
       status: 429,
       headers: { 'Content-Type': 'application/json' }
