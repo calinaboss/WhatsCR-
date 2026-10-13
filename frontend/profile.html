@@ -63,10 +63,9 @@
           <div class="profile-details">
             <h1 id="creator-name">
               <span id="creator-handle">@Creator</span>
-              <i class="fa-solid fa-circle-check" style="color: var(--primary); font-size: 1.15rem;" title="Verified Creator"></i>
             </h1>
             <div class="profile-meta-row">
-              <span id="creator-badge" style="display: inline-block; padding: 2px 10px; font-size: 0.76rem; font-weight: 700; border-radius: var(--radius-full); background: #e0f2fe; color: #0369a1;">Verified Artist</span>
+              <span id="creator-badge" style="display: inline-block; padding: 2px 10px; font-size: 0.76rem; font-weight: 700; border-radius: var(--radius-full); background: #f1f5f9; color: var(--text-muted);">Creator</span>
               <span id="creator-joined" style="font-size: 0.82rem; color: var(--text-muted);"><i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>WhatsCR Creator</span>
             </div>
           </div>
@@ -236,15 +235,9 @@
           const profileData = await profileRes.json();
           if (profileData && profileData.user) {
             const u = profileData.user;
-            if (u.role === 'admin') {
-              creatorBadge.textContent = 'Administrator';
-              creatorBadge.style.background = '#fee2e2';
-              creatorBadge.style.color = '#991b1b';
-            } else {
-              creatorBadge.textContent = 'Verified Creator';
-              creatorBadge.style.background = '#e0f2fe';
-              creatorBadge.style.color = '#0369a1';
-            }
+            creatorBadge.textContent = 'Creator';
+            creatorBadge.style.background = '#f1f5f9';
+            creatorBadge.style.color = '#64748b';
             if (u.created_at) {
               const d = new Date(u.created_at);
               creatorJoined.innerHTML = `<i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>Member since ${d.toLocaleString('default', { month: 'short', year: 'numeric' })}`;
