@@ -344,6 +344,99 @@ export async function onRequest(context) {
     }
   }
 
+  if (request.method === 'POST' && action === 'change_password') {
+    const cookies = parseCookies(request.headers.get('Cookie'));
+    const token = cookies.whatscr_session;
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!checkRateLimit(ip, 8, 60000)) {
+      return new Response(JSON.stringify({ error: 'Too many requests. Please wait a minute.' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    let body = {};
+    try {
+      body = await request.json();
+    } catch (e) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON request' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const currentPassword = body.current_password || '';
+    const newPassword = body.new_password || '';
+
+    if (!currentPassword) {
+      return new Response(JSON.stringify({ error: 'Please enter your current password.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!newPassword || newPassword.length < 8 || newPassword.length > 128) {
+      return new Response(JSON.stringify({ error: 'New password must be at least 8 characters long.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (currentPassword === newPassword) {
+      return new Response(JSON.stringify({ error: 'New password must be different from your current password.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    try {
+      const tokenHash = await sha256Hex(token);
+      const authRows = await runNeonSql(
+        env.DATABASE_URL,
+        'SELECT u.id, u.password_hash FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        [tokenHash]
+      );
+      if (!authRows || authRows.length === 0) {
+        return new Response(JSON.stringify({ error: 'Session expired' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      const user = authRows[0];
+
+      const isCurrentValid = await verifyPassword(currentPassword, user.password_hash);
+      if (!isCurrentValid) {
+        return new Response(JSON.stringify({ error: 'Current password is incorrect.' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const newHashed = await hashPassword(newPassword);
+      await runNeonSql(
+        env.DATABASE_URL,
+        'UPDATE users SET password_hash = $1 WHERE id = $2',
+        [newHashed, user.id]
+      );
+
+      return new Response(JSON.stringify({ success: true, message: 'Password updated successfully!' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: 'Failed to update password' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
   if (request.method === 'POST' && action === 'logout') {
     const cookies = parseCookies(request.headers.get('Cookie'));
     const token = cookies.whatscr_session;

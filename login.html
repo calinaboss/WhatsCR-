@@ -70,6 +70,9 @@
             <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; background: #fafcfe;">
               <i class="fa-solid fa-lock" style="color: var(--text-light); margin-right: 10px; font-size: 0.9rem;"></i>
               <input type="password" id="auth-password" required placeholder="At least 8 characters" minlength="8" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.94rem; font-family: inherit; color: var(--text-main);">
+              <button type="button" class="btn-toggle-pw" data-target="auth-password" aria-label="Toggle password visibility" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0 4px; font-size: 0.92rem; display: flex; align-items: center;">
+                <i class="fa-regular fa-eye"></i>
+              </button>
             </div>
             <span id="password-hint" style="display: none; font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">Must contain at least 8 characters.</span>
           </div>
@@ -97,7 +100,6 @@
           </div>
           <h2 id="profile-display-name" style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">My Account</h2>
           <p id="profile-display-email" style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 8px;"></p>
-          <span id="profile-role-badge" style="display: inline-block; padding: 3px 12px; font-size: 0.78rem; font-weight: 700; border-radius: var(--radius-full); background: #f1f5f9; color: var(--text-muted);">Creator</span>
         </div>
 
         <div id="profile-alert" style="display: none; padding: 12px 14px; border-radius: 10px; font-size: 0.86rem; margin-bottom: 18px; line-height: 1.4;"></div>
@@ -121,15 +123,73 @@
           </button>
         </form>
 
+        <div style="border-top: 1px solid var(--border-light); padding-top: 20px; margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-key" style="color: var(--primary); font-size: 0.95rem;"></i>
+              <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);">Change Password</span>
+            </div>
+            <button type="button" id="toggle-pw-section-btn" style="background: none; border: none; color: var(--primary); font-size: 0.82rem; font-weight: 700; cursor: pointer;">
+              <span id="toggle-pw-section-text">Edit</span>
+            </button>
+          </div>
+
+          <div id="pw-change-section" style="display: none; background: #fafcfe; border: 1px solid var(--border); border-radius: 14px; padding: 18px 16px;">
+            <form id="change-pw-form">
+              <div style="margin-bottom: 14px;">
+                <label for="current-pw-input" style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 5px;">Current Password</label>
+                <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: #ffffff;">
+                  <input type="password" id="current-pw-input" required placeholder="Enter current password" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.9rem; font-family: inherit; color: var(--text-main);">
+                  <button type="button" class="btn-toggle-pw" data-target="current-pw-input" aria-label="Toggle password visibility" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0 4px; font-size: 0.9rem; display: flex; align-items: center;">
+                    <i class="fa-regular fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 14px;">
+                <label for="new-pw-input" style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 5px;">New Password</label>
+                <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: #ffffff;">
+                  <input type="password" id="new-pw-input" required minlength="8" placeholder="At least 8 characters" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.9rem; font-family: inherit; color: var(--text-main);">
+                  <button type="button" class="btn-toggle-pw" data-target="new-pw-input" aria-label="Toggle password visibility" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0 4px; font-size: 0.9rem; display: flex; align-items: center;">
+                    <i class="fa-regular fa-eye"></i>
+                  </button>
+                </div>
+                <div id="pw-strength-meter" style="margin-top: 8px; display: none;">
+                  <div style="display: flex; gap: 4px; height: 4px; border-radius: 2px; overflow: hidden; background: #e2e8f0;">
+                    <div id="pw-bar-1" style="flex: 1; background: transparent; transition: background 0.2s;"></div>
+                    <div id="pw-bar-2" style="flex: 1; background: transparent; transition: background 0.2s;"></div>
+                    <div id="pw-bar-3" style="flex: 1; background: transparent; transition: background 0.2s;"></div>
+                    <div id="pw-bar-4" style="flex: 1; background: transparent; transition: background 0.2s;"></div>
+                  </div>
+                  <span id="pw-strength-label" style="display: block; font-size: 0.74rem; color: var(--text-muted); margin-top: 4px; font-weight: 600;"></span>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 16px;">
+                <label for="confirm-pw-input" style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 5px;">Confirm New Password</label>
+                <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: #ffffff;">
+                  <input type="password" id="confirm-pw-input" required minlength="8" placeholder="Re-enter new password" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.9rem; font-family: inherit; color: var(--text-main);">
+                  <button type="button" class="btn-toggle-pw" data-target="confirm-pw-input" aria-label="Toggle password visibility" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0 4px; font-size: 0.9rem; display: flex; align-items: center;">
+                    <i class="fa-regular fa-eye"></i>
+                  </button>
+                </div>
+                <span id="pw-match-error" style="display: none; font-size: 0.74rem; color: #dc2626; margin-top: 4px;">Passwords do not match.</span>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button type="submit" id="save-pw-btn" style="flex: 1; background: var(--primary); color: #ffffff; border: none; padding: 9px; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease;">Update Password</button>
+                <button type="button" id="cancel-pw-btn" style="padding: 9px 16px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 600; cursor: pointer;">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
         <div style="display: flex; flex-direction: column; gap: 10px;">
           <a id="profile-public-link" href="#" target="_blank" style="width: 100%; text-align: center; background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; padding: 10px; border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
             <i class="fa-solid fa-arrow-up-right-from-square"></i> View Public Profile
           </a>
           <a href="upload.html" class="btn" style="width: 100%; text-align: center; background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-main); padding: 10px; border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
             <i class="fa-solid fa-arrow-up-from-bracket"></i> Upload Music
-          </a>
-          <a id="profile-admin-link" href="admin.html" style="display: none; width: 100%; text-align: center; background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; padding: 10px; border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 700; text-decoration: none; align-items: center; justify-content: center; gap: 8px;">
-            <i class="fa-solid fa-shield-halved"></i> Open Admin Panel
           </a>
           <button id="profile-logout-btn" style="width: 100%; background: transparent; border: 1px solid #cbd5e1; color: var(--text-muted); padding: 10px; border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
             Log Out
@@ -172,10 +232,22 @@
     const profileUsernameInput = document.getElementById('profile-username-input');
     const profileAlert = document.getElementById('profile-alert');
     const profileForm = document.getElementById('profile-form');
-    const profileAdminLink = document.getElementById('profile-admin-link');
     const profileLogoutBtn = document.getElementById('profile-logout-btn');
     const profilePublicLink = document.getElementById('profile-public-link');
     const usernameCooldownText = document.getElementById('username-cooldown-text');
+
+    const togglePwSectionBtn = document.getElementById('toggle-pw-section-btn');
+    const togglePwSectionText = document.getElementById('toggle-pw-section-text');
+    const pwChangeSection = document.getElementById('pw-change-section');
+    const changePwForm = document.getElementById('change-pw-form');
+    const currentPwInput = document.getElementById('current-pw-input');
+    const newPwInput = document.getElementById('new-pw-input');
+    const confirmPwInput = document.getElementById('confirm-pw-input');
+    const savePwBtn = document.getElementById('save-pw-btn');
+    const cancelPwBtn = document.getElementById('cancel-pw-btn');
+    const pwStrengthMeter = document.getElementById('pw-strength-meter');
+    const pwStrengthLabel = document.getElementById('pw-strength-label');
+    const pwMatchError = document.getElementById('pw-match-error');
 
     formTimeInput.value = Date.now();
 
@@ -275,18 +347,6 @@
             usernameCooldownText.style.color = '#64748b';
           }
         }
-      }
-
-      if (user.role === 'admin') {
-        profileRoleBadge.textContent = 'Administrator';
-        profileRoleBadge.style.background = '#fee2e2';
-        profileRoleBadge.style.color = '#991b1b';
-        profileAdminLink.style.display = 'flex';
-      } else {
-        profileRoleBadge.textContent = 'Creator';
-        profileRoleBadge.style.background = '#e0f2fe';
-        profileRoleBadge.style.color = '#0369a1';
-        profileAdminLink.style.display = 'none';
       }
     }
 
@@ -424,6 +484,136 @@
         saveBtn.style.opacity = '1';
       }
     });
+
+    document.querySelectorAll('.btn-toggle-pw').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        if (!input) return;
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+          input.type = 'text';
+          if (icon) {
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+          }
+        } else {
+          input.type = 'password';
+          if (icon) {
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+          }
+        }
+      });
+    });
+
+    if (togglePwSectionBtn) {
+      togglePwSectionBtn.addEventListener('click', () => {
+        const isHidden = pwChangeSection.style.display === 'none';
+        pwChangeSection.style.display = isHidden ? 'block' : 'none';
+        togglePwSectionText.textContent = isHidden ? 'Close' : 'Edit';
+        if (isHidden) {
+          currentPwInput.focus();
+        } else {
+          changePwForm.reset();
+          pwStrengthMeter.style.display = 'none';
+          pwMatchError.style.display = 'none';
+        }
+      });
+    }
+
+    if (cancelPwBtn) {
+      cancelPwBtn.addEventListener('click', () => {
+        pwChangeSection.style.display = 'none';
+        togglePwSectionText.textContent = 'Edit';
+        changePwForm.reset();
+        pwStrengthMeter.style.display = 'none';
+        pwMatchError.style.display = 'none';
+      });
+    }
+
+    if (newPwInput) {
+      newPwInput.addEventListener('input', () => {
+        const val = newPwInput.value;
+        if (!val) {
+          pwStrengthMeter.style.display = 'none';
+          return;
+        }
+        pwStrengthMeter.style.display = 'block';
+
+        let score = 0;
+        if (val.length >= 8) score++;
+        if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+        if (/\d/.test(val)) score++;
+        if (/[^A-Za-z0-9]/.test(val)) score++;
+
+        const b1 = document.getElementById('pw-bar-1');
+        const b2 = document.getElementById('pw-bar-2');
+        const b3 = document.getElementById('pw-bar-3');
+        const b4 = document.getElementById('pw-bar-4');
+
+        const colors = ['#e2e8f0', '#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
+        const labels = ['', 'Weak password', 'Fair password', 'Good password', 'Strong password'];
+
+        const activeColor = colors[score] || '#e2e8f0';
+        b1.style.background = score >= 1 ? activeColor : '#e2e8f0';
+        b2.style.background = score >= 2 ? activeColor : '#e2e8f0';
+        b3.style.background = score >= 3 ? activeColor : '#e2e8f0';
+        b4.style.background = score >= 4 ? activeColor : '#e2e8f0';
+
+        pwStrengthLabel.textContent = labels[score];
+        pwStrengthLabel.style.color = activeColor;
+      });
+    }
+
+    if (changePwForm) {
+      changePwForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        profileAlert.style.display = 'none';
+        pwMatchError.style.display = 'none';
+
+        const currentPw = currentPwInput.value;
+        const newPw = newPwInput.value;
+        const confirmPw = confirmPwInput.value;
+
+        if (newPw !== confirmPw) {
+          pwMatchError.style.display = 'block';
+          confirmPwInput.focus();
+          return;
+        }
+
+        savePwBtn.disabled = true;
+        savePwBtn.style.opacity = '0.7';
+        savePwBtn.textContent = 'Updating...';
+
+        try {
+          const res = await fetch('/api/auth?action=change_password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              current_password: currentPw,
+              new_password: newPw
+            })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            showProfileAlert('Password updated successfully! Please keep it safe.', true);
+            changePwForm.reset();
+            pwStrengthMeter.style.display = 'none';
+            pwChangeSection.style.display = 'none';
+            togglePwSectionText.textContent = 'Edit';
+          } else {
+            showProfileAlert(data.error || 'Failed to update password.');
+          }
+        } catch (err) {
+          showProfileAlert('Network error while updating password.');
+        } finally {
+          savePwBtn.disabled = false;
+          savePwBtn.style.opacity = '1';
+          savePwBtn.textContent = 'Update Password';
+        }
+      });
+    }
 
     profileLogoutBtn.addEventListener('click', async () => {
       try {
