@@ -106,6 +106,37 @@ async function verifyHumanCaptcha(token, secretKey, remoteIp) {
   }
 }
 
+async function sendEmailJsOtp(env, toEmail, passcode, timeStr) {
+  const serviceId = env.EMAILJS_SERVICE_ID;
+  const templateId = env.EMAILJS_TEMPLATE_ID;
+  const publicKey = env.EMAILJS_PUBLIC_KEY;
+  const privateKey = env.EMAILJS_PRIVATE_KEY;
+  if (!serviceId || !templateId || !publicKey) return false;
+  try {
+    const payload = {
+      service_id: serviceId,
+      template_id: templateId,
+      user_id: publicKey,
+      template_params: {
+        email: toEmail,
+        passcode: passcode,
+        time: timeStr || '15 minutes'
+      }
+    };
+    if (privateKey) {
+      payload.accessToken = privateKey;
+    }
+    const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return res.ok;
+  } catch (err) {
+    return false;
+  }
+}
+
 async function runNeonSql(databaseUrl, sql, params = []) {
   const dbUrl = new URL(databaseUrl);
   const endpoint = `https://${dbUrl.host}/sql`;
@@ -154,7 +185,10 @@ async function ensureTables(databaseUrl) {
     "CREATE INDEX IF NOT EXISTS idx_track_likes_track ON track_likes(track_id)",
     "CREATE INDEX IF NOT EXISTS idx_track_likes_user ON track_likes(user_id)",
     "CREATE TABLE IF NOT EXISTS rate_limits (key VARCHAR(255) PRIMARY KEY, count INT NOT NULL DEFAULT 1, reset_at TIMESTAMP WITH TIME ZONE NOT NULL)",
-    "CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_at)"
+    "CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_at)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE",
+    "CREATE TABLE IF NOT EXISTS email_verifications (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id) ON DELETE CASCADE, email VARCHAR(255) NOT NULL, code_hash VARCHAR(255) NOT NULL, expires_at TIMESTAMP WITH TIME ZONE NOT NULL, attempts INT DEFAULT 0, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)",
+    "CREATE INDEX IF NOT EXISTS idx_email_verif_email ON email_verifications(email)"
   ];
   try {
     for (const stmt of statements) {
@@ -469,7 +503,7 @@ export async function onRequest(context) {
       const tokenHash = await sha256Hex(token);
       const rows = await runNeonSql(
         env.DATABASE_URL,
-        'SELECT u.id, u.email, u.username, u.role, u.username_changed_at FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        'SELECT u.id, u.email, u.username, u.role, u.username_changed_at, u.email_verified FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
         [tokenHash]
       );
       if (rows && rows.length > 0) {
@@ -563,7 +597,7 @@ export async function onRequest(context) {
 
       const updated = await runNeonSql(
         env.DATABASE_URL,
-        'UPDATE users SET username = $1, username_changed_at = NOW() WHERE id = $2 RETURNING id, email, username, role, username_changed_at',
+        'UPDATE users SET username = $1, username_changed_at = NOW() WHERE id = $2 RETURNING id, email, username, role, username_changed_at, email_verified',
         [cleanUsername, userId]
       );
 
@@ -826,6 +860,177 @@ export async function onRequest(context) {
     });
   }
 
+  if (request.method === 'POST' && action === 'send_verification') {
+    const cookies = parseCookies(request.headers.get('Cookie'));
+    const token = cookies.whatscr_session;
+    let targetEmail = '';
+    let targetUserId = null;
+
+    if (token) {
+      try {
+        const tokenHash = await sha256Hex(token);
+        const sessionRows = await runNeonSql(
+          env.DATABASE_URL,
+          'SELECT u.id, u.email, u.email_verified FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+          [tokenHash]
+        );
+        if (sessionRows && sessionRows.length > 0) {
+          if (sessionRows[0].email_verified) {
+            return new Response(JSON.stringify({ error: 'Email is already verified.' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+          targetEmail = sessionRows[0].email;
+          targetUserId = sessionRows[0].id;
+        }
+      } catch (e) {}
+    }
+
+    if (!targetEmail) {
+      let body = {};
+      try {
+        body = await request.json();
+      } catch (e) {}
+      targetEmail = (body.email || '').trim().toLowerCase();
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!targetEmail || !emailRegex.test(targetEmail)) {
+      return new Response(JSON.stringify({ error: 'Valid email is required.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const rateKey = `otp_send_${targetEmail}`;
+    const allowed = await checkPersistentRateLimit(env.DATABASE_URL, rateKey, 4, 300000);
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: 'Too many requests. Please wait a few minutes before requesting another code.' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeHash = await sha256Hex(otpCode);
+
+    const now = new Date();
+    const expDate = new Date(now.getTime() + 15 * 60 * 1000);
+    const expiresAt = expDate.toISOString();
+    const timeStr = expDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    await runNeonSql(env.DATABASE_URL, 'DELETE FROM email_verifications WHERE LOWER(email) = LOWER($1)', [targetEmail]);
+    await runNeonSql(
+      env.DATABASE_URL,
+      'INSERT INTO email_verifications (user_id, email, code_hash, expires_at) VALUES ($1, $2, $3, $4)',
+      [targetUserId, targetEmail, codeHash, expiresAt]
+    );
+
+    const sent = await sendEmailJsOtp(env, targetEmail, otpCode, timeStr);
+    if (!sent) {
+      return new Response(JSON.stringify({ error: 'Failed to send verification email. Please try again later.' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    return new Response(JSON.stringify({ success: true, message: 'Verification code sent to your email.' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  if (request.method === 'POST' && action === 'verify_email') {
+    const rateKey = `otp_verify_${ip}`;
+    const allowed = await checkPersistentRateLimit(env.DATABASE_URL, rateKey, 8, 300000);
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: 'Too many attempts. Please wait 5 minutes.' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    let body = {};
+    try {
+      body = await request.json();
+    } catch (e) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON request' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const code = (body.code || '').toString().trim().replace(/\D/g, '');
+    let email = (body.email || '').trim().toLowerCase();
+
+    if (!email) {
+      const cookies = parseCookies(request.headers.get('Cookie'));
+      const token = cookies.whatscr_session;
+      if (token) {
+        try {
+          const tokenHash = await sha256Hex(token);
+          const sRows = await runNeonSql(
+            env.DATABASE_URL,
+            'SELECT u.email FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+            [tokenHash]
+          );
+          if (sRows && sRows.length > 0) {
+            email = sRows[0].email;
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (!email || code.length !== 6) {
+      return new Response(JSON.stringify({ error: 'Please enter a valid 6-digit code.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const verifRows = await runNeonSql(
+      env.DATABASE_URL,
+      'SELECT id, user_id, code_hash, attempts, expires_at FROM email_verifications WHERE LOWER(email) = LOWER($1) AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1',
+      [email]
+    );
+
+    if (!verifRows || verifRows.length === 0) {
+      return new Response(JSON.stringify({ error: 'Verification code is invalid or has expired. Please request a new code.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const record = verifRows[0];
+    if (record.attempts >= 5) {
+      await runNeonSql(env.DATABASE_URL, 'DELETE FROM email_verifications WHERE id = $1', [record.id]);
+      return new Response(JSON.stringify({ error: 'Too many incorrect attempts. Please request a new code.' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const inputHash = await sha256Hex(code);
+    const isMatch = constantTimeEqual(inputHash, record.code_hash);
+
+    if (!isMatch) {
+      await runNeonSql(env.DATABASE_URL, 'UPDATE email_verifications SET attempts = attempts + 1 WHERE id = $1', [record.id]);
+      return new Response(JSON.stringify({ error: 'Invalid verification code. Please try again.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    await runNeonSql(env.DATABASE_URL, 'UPDATE users SET email_verified = TRUE WHERE LOWER(email) = LOWER($1)', [email]);
+    await runNeonSql(env.DATABASE_URL, 'DELETE FROM email_verifications WHERE LOWER(email) = LOWER($1)', [email]);
+
+    return new Response(JSON.stringify({ success: true, message: 'Email verified successfully!' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
   if (request.method === 'POST' && (action === 'register' || action === 'login')) {
     const rateKey = `auth_${action}_${ip}`;
     const allowed = await checkPersistentRateLimit(env.DATABASE_URL, rateKey, 12, 60000);
@@ -933,7 +1138,7 @@ export async function onRequest(context) {
 
         const insertRows = await runNeonSql(
           env.DATABASE_URL,
-          'INSERT INTO users (email, username, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, email, username, role, username_changed_at',
+          'INSERT INTO users (email, username, password_hash, role, email_verified) VALUES ($1, $2, $3, $4, FALSE) RETURNING id, email, username, role, username_changed_at, email_verified',
           [email, username, hashed, role]
         );
         const newUser = insertRows[0];
@@ -948,7 +1153,26 @@ export async function onRequest(context) {
           [newUser.id, tokenHash, expiresAt]
         );
 
-        return new Response(JSON.stringify({ success: true, user: newUser }), {
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const codeHash = await sha256Hex(otpCode);
+        const expDate = new Date(Date.now() + 15 * 60 * 1000);
+        const otpExpiresAt = expDate.toISOString();
+        const timeStr = expDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        await runNeonSql(
+          env.DATABASE_URL,
+          'INSERT INTO email_verifications (user_id, email, code_hash, expires_at) VALUES ($1, $2, $3, $4)',
+          [newUser.id, email, codeHash, otpExpiresAt]
+        );
+
+        sendEmailJsOtp(env, email, otpCode, timeStr).catch(() => {});
+
+        return new Response(JSON.stringify({
+          success: true,
+          user: newUser,
+          requires_verification: true,
+          email: email
+        }), {
           status: 201,
           headers: {
             'Content-Type': 'application/json',
