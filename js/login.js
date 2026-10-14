@@ -1,4 +1,4 @@
-﻿    let currentMode = 'login';
+    let currentMode = 'login';
     let currentUser = null;
 
     const authBox = document.getElementById('auth-box');
@@ -17,6 +17,26 @@
     const alertBox = document.getElementById('auth-alert');
     const passwordHint = document.getElementById('password-hint');
     const formTimeInput = document.getElementById('form_time');
+
+    const verifyBox = document.getElementById('verify-box');
+    const verifyEmailDisplay = document.getElementById('verify-email-display');
+    const verifyForm = document.getElementById('verify-form');
+    const verifyCodeInput = document.getElementById('verify-code-input');
+    const verifySubmitBtn = document.getElementById('verify-submit-btn');
+    const verifyResendBtn = document.getElementById('verify-resend-btn');
+    const verifySkipBtn = document.getElementById('verify-skip-btn');
+    const authLegalNote = document.getElementById('auth-legal-note');
+
+    const profileEmailBadgeWrap = document.getElementById('profile-email-badge-wrap');
+    const profileVerifyBanner = document.getElementById('profile-verify-banner');
+    const profileBtnSendCode = document.getElementById('profile-btn-send-code');
+    const profileVerifyBox = document.getElementById('profile-verify-box');
+    const profileVerifyForm = document.getElementById('profile-verify-form');
+    const profileVerifyCode = document.getElementById('profile-verify-code');
+    const profileVerifySubmitBtn = document.getElementById('profile-verify-submit-btn');
+    const profileVerifyCancelBtn = document.getElementById('profile-verify-cancel-btn');
+
+    let pendingVerifyEmail = '';
 
     const profileDisplayName = document.getElementById('profile-display-name');
     const profileDisplayEmail = document.getElementById('profile-display-email');
@@ -46,6 +66,10 @@
     function setMode(mode) {
       currentMode = mode;
       alertBox.style.display = 'none';
+      if (verifyBox) verifyBox.style.display = 'none';
+      if (authForm) authForm.style.display = 'block';
+      if (tabLogin && tabLogin.parentElement) tabLogin.parentElement.style.display = 'flex';
+      if (authLegalNote) authLegalNote.style.display = 'block';
       if (mode === 'login') {
         tabLogin.style.background = '#ffffff';
         tabLogin.style.color = 'var(--text-main)';
@@ -115,6 +139,17 @@
       profileDisplayName.textContent = `@${handle}`;
       profileDisplayEmail.textContent = user.email;
       profileUsernameInput.value = handle;
+
+      if (profileEmailBadgeWrap) {
+        if (user.email_verified) {
+          profileEmailBadgeWrap.innerHTML = '<span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.76rem; font-weight: 700; color: #16a34a; background: #dcfce7; padding: 2px 10px; border-radius: 9999px;"><i class="fa-solid fa-circle-check"></i> Email Verified</span>';
+          if (profileVerifyBanner) profileVerifyBanner.style.display = 'none';
+          if (profileVerifyBox) profileVerifyBox.style.display = 'none';
+        } else {
+          profileEmailBadgeWrap.innerHTML = '<span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.76rem; font-weight: 700; color: #d97706; background: #fef3c7; padding: 2px 10px; border-radius: 9999px;"><i class="fa-solid fa-triangle-exclamation"></i> Not Verified</span>';
+          if (profileVerifyBanner) profileVerifyBanner.style.display = 'flex';
+        }
+      }
 
       if (profilePublicLink) {
         profilePublicLink.href = `profile.html?u=${encodeURIComponent(handle)}`;
@@ -216,6 +251,21 @@
           if (typeof turnstile !== 'undefined') {
             try { turnstile.reset(); } catch (e) {}
           }
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+          return;
+        }
+
+        if (currentMode === 'register' && data.requires_verification) {
+          pendingVerifyEmail = data.email || identifier;
+          authForm.style.display = 'none';
+          tabLogin.parentElement.style.display = 'none';
+          if (authLegalNote) authLegalNote.style.display = 'none';
+          alertBox.style.display = 'none';
+          verifyEmailDisplay.textContent = pendingVerifyEmail;
+          verifyBox.style.display = 'block';
+          verifyCodeInput.value = '';
+          verifyCodeInput.focus();
           submitBtn.disabled = false;
           submitBtn.style.opacity = '1';
           return;
@@ -410,6 +460,157 @@
           savePwBtn.disabled = false;
           savePwBtn.style.opacity = '1';
           savePwBtn.textContent = 'Update Password';
+        }
+      });
+    }
+
+    if (verifyForm) {
+      verifyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const code = verifyCodeInput.value.trim().replace(/\D/g, '');
+        if (code.length !== 6) {
+          showAlert('Please enter the 6-digit code sent to your email.');
+          return;
+        }
+
+        verifySubmitBtn.disabled = true;
+        verifySubmitBtn.style.opacity = '0.7';
+
+        try {
+          const res = await fetch('/api/auth?action=verify_email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: pendingVerifyEmail, code })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            showAlert(data.error || 'Verification failed. Please check the code.');
+            verifySubmitBtn.disabled = false;
+            verifySubmitBtn.style.opacity = '1';
+            return;
+          }
+
+          showAlert('Email verified successfully! Redirecting...', true);
+          setTimeout(() => {
+            const redirectUrl = new URLSearchParams(window.location.search).get('next');
+            if (redirectUrl) {
+              window.location.href = redirectUrl;
+            } else {
+              window.location.href = 'thank-you.html?type=register';
+            }
+          }, 800);
+        } catch (err) {
+          showAlert('Network error. Please try again.');
+          verifySubmitBtn.disabled = false;
+          verifySubmitBtn.style.opacity = '1';
+        }
+      });
+    }
+
+    if (verifyResendBtn) {
+      verifyResendBtn.addEventListener('click', async () => {
+        verifyResendBtn.disabled = true;
+        verifyResendBtn.textContent = 'Sending...';
+        try {
+          const res = await fetch('/api/auth?action=send_verification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: pendingVerifyEmail })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            showAlert('New code sent! Please check your email.', true);
+          } else {
+            showAlert(data.error || 'Failed to resend code.');
+          }
+        } catch (e) {
+          showAlert('Failed to resend code.');
+        } finally {
+          setTimeout(() => {
+            verifyResendBtn.disabled = false;
+            verifyResendBtn.textContent = 'Resend Code';
+          }, 3000);
+        }
+      });
+    }
+
+    if (verifySkipBtn) {
+      verifySkipBtn.addEventListener('click', () => {
+        const redirectUrl = new URLSearchParams(window.location.search).get('next');
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        } else {
+          window.location.href = 'thank-you.html?type=register';
+        }
+      });
+    }
+
+    if (profileBtnSendCode) {
+      profileBtnSendCode.addEventListener('click', async () => {
+        profileBtnSendCode.disabled = true;
+        profileBtnSendCode.textContent = 'Sending...';
+        try {
+          const res = await fetch('/api/auth?action=send_verification', { method: 'POST' });
+          const data = await res.json();
+          if (res.ok) {
+            showProfileAlert('Verification code sent to your email!', true);
+            profileVerifyBanner.style.display = 'none';
+            profileVerifyBox.style.display = 'block';
+            profileVerifyCode.value = '';
+            profileVerifyCode.focus();
+          } else {
+            showProfileAlert(data.error || 'Failed to send verification code.');
+          }
+        } catch (e) {
+          showProfileAlert('Failed to send verification code.');
+        } finally {
+          profileBtnSendCode.disabled = false;
+          profileBtnSendCode.textContent = 'Send Code';
+        }
+      });
+    }
+
+    if (profileVerifyCancelBtn) {
+      profileVerifyCancelBtn.addEventListener('click', () => {
+        profileVerifyBox.style.display = 'none';
+        if (currentUser && !currentUser.email_verified) {
+          profileVerifyBanner.style.display = 'flex';
+        }
+      });
+    }
+
+    if (profileVerifyForm) {
+      profileVerifyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const code = profileVerifyCode.value.trim().replace(/\D/g, '');
+        if (code.length !== 6) {
+          showProfileAlert('Please enter the 6-digit code.');
+          return;
+        }
+
+        profileVerifySubmitBtn.disabled = true;
+        try {
+          const res = await fetch('/api/auth?action=verify_email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            showProfileAlert(data.error || 'Invalid code.');
+            profileVerifySubmitBtn.disabled = false;
+            return;
+          }
+
+          showProfileAlert('Email verified successfully!', true);
+          profileVerifyBox.style.display = 'none';
+          if (currentUser) {
+            currentUser.email_verified = true;
+            displayProfile(currentUser);
+          }
+        } catch (err) {
+          showProfileAlert('Network error. Please try again.');
+          profileVerifySubmitBtn.disabled = false;
         }
       });
     }

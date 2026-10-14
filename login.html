@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -86,7 +86,34 @@
           </button>
         </form>
 
-        <p style="font-size: 0.78rem; color: var(--text-muted); text-align: center; margin-top: 20px; line-height: 1.5;">
+        <div id="verify-box" style="display: none; text-align: center;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: #e0f2fe; color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 16px;">
+            <i class="fa-solid fa-envelope-circle-check"></i>
+          </div>
+          <h2 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Check Your Email</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px;">
+            We sent a 6-digit verification code to<br><strong id="verify-email-display" style="color: var(--text-main);"></strong>
+          </p>
+
+          <form id="verify-form" style="margin-bottom: 18px;">
+            <div style="margin-bottom: 18px;">
+              <input type="text" id="verify-code-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" placeholder="000000" style="width: 100%; text-align: center; font-size: 1.8rem; font-weight: 800; letter-spacing: 10px; padding: 12px; border: 2px solid var(--border); border-radius: 14px; outline: none; background: #fafcfe; color: var(--text-main); font-family: monospace;">
+              <span style="font-size: 0.76rem; color: var(--text-muted); display: block; margin-top: 6px;">Code expires in 15 minutes.</span>
+            </div>
+
+            <button type="submit" id="verify-submit-btn" style="width: 100%; background: var(--primary); color: #ffffff; border: none; padding: 12px; border-radius: var(--radius-full); font-size: 0.94rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0, 151, 178, 0.25);">
+              <span id="verify-submit-text">Verify & Continue</span>
+            </button>
+          </form>
+
+          <div style="display: flex; align-items: center; justify-content: center; gap: 16px; font-size: 0.82rem;">
+            <button type="button" id="verify-resend-btn" style="background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer;">Resend Code</button>
+            <span style="color: var(--text-light);">&bull;</span>
+            <button type="button" id="verify-skip-btn" style="background: none; border: none; color: var(--text-muted); font-weight: 600; cursor: pointer;">Verify Later</button>
+          </div>
+        </div>
+
+        <p id="auth-legal-note" style="font-size: 0.78rem; color: var(--text-muted); text-align: center; margin-top: 20px; line-height: 1.5;">
           By continuing, you agree to our <a href="terms.html" style="color: var(--primary); font-weight: 600;">Terms</a> and <a href="privacy.html" style="color: var(--primary); font-weight: 600;">Privacy Policy</a>.
         </p>
 
@@ -99,7 +126,28 @@
             <i class="fa-solid fa-user"></i>
           </div>
           <h2 id="profile-display-name" style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">My Account</h2>
-          <p id="profile-display-email" style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 8px;"></p>
+          <p id="profile-display-email" style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 4px;"></p>
+          <div id="profile-email-badge-wrap" style="margin-bottom: 8px;"></div>
+        </div>
+
+        <div id="profile-verify-banner" style="display: none; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <div>
+            <span style="font-size: 0.82rem; font-weight: 700; color: #b45309; display: block;"><i class="fa-solid fa-triangle-exclamation"></i> Email not verified</span>
+            <span style="font-size: 0.74rem; color: #78350f;">Verify your email to secure your account.</span>
+          </div>
+          <button type="button" id="profile-btn-send-code" style="background: #f59e0b; color: #ffffff; border: none; padding: 6px 14px; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 700; cursor: pointer; white-space: nowrap;">Send Code</button>
+        </div>
+
+        <div id="profile-verify-box" style="display: none; background: #fafcfe; border: 1px solid var(--border); border-radius: 14px; padding: 18px 16px; margin-bottom: 20px;">
+          <h4 style="font-size: 0.92rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Enter 6-Digit Verification Code</h4>
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 14px;">We sent an OTP code to your email. Enter it below to verify.</p>
+          <form id="profile-verify-form" style="display: flex; flex-direction: column; gap: 10px;">
+            <input type="text" id="profile-verify-code" maxlength="6" inputmode="numeric" placeholder="000000" style="text-align: center; font-size: 1.4rem; font-weight: 800; letter-spacing: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 10px; outline: none; background: #ffffff; font-family: monospace;">
+            <div style="display: flex; gap: 8px;">
+              <button type="submit" id="profile-verify-submit-btn" style="flex: 1; background: var(--primary); color: #ffffff; border: none; padding: 9px; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 700; cursor: pointer;">Confirm Code</button>
+              <button type="button" id="profile-verify-cancel-btn" style="padding: 9px 16px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 600; cursor: pointer;">Cancel</button>
+            </div>
+          </form>
         </div>
 
         <div id="profile-alert" style="display: none; padding: 12px 14px; border-radius: 10px; font-size: 0.86rem; margin-bottom: 18px; line-height: 1.4;"></div>
