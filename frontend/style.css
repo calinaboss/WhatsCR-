@@ -861,17 +861,27 @@ button {
   }
   .categories-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 8px;
   }
   .cat-card {
-    padding: 12px 14px;
+    padding: 10px 12px;
     border-radius: 10px;
+    gap: 8px;
+    min-width: 0;
   }
   .cat-name {
-    font-size: 0.92rem;
+    font-size: 0.8rem;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
   }
   .cat-arrow {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    margin-left: auto;
   }
   .tracks-section {
     padding: 20px 0 44px;
@@ -1140,6 +1150,16 @@ button {
   .search-submit-btn {
     padding: 9px 15px;
     font-size: 0.82rem;
+  }
+  .cat-card {
+    padding: 9px 10px;
+    gap: 6px;
+  }
+  .cat-name {
+    font-size: 0.76rem;
+  }
+  .cat-arrow {
+    font-size: 0.7rem;
   }
   .track-row {
     padding: 14px 12px;
