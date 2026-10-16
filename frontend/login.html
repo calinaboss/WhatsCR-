@@ -138,17 +138,6 @@
           <button type="button" id="profile-btn-send-code" style="background: #f59e0b; color: #ffffff; border: none; padding: 6px 14px; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 700; cursor: pointer; white-space: nowrap;">Send Code</button>
         </div>
 
-        <div id="profile-verify-box" style="display: none; background: #fafcfe; border: 1px solid var(--border); border-radius: 14px; padding: 18px 16px; margin-bottom: 20px;">
-          <h4 style="font-size: 0.92rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Enter 6-Digit Verification Code</h4>
-          <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 14px;">We sent an OTP code to your email. Enter it below to verify.</p>
-          <form id="profile-verify-form" style="display: flex; flex-direction: column; gap: 10px;">
-            <input type="text" id="profile-verify-code" maxlength="6" inputmode="numeric" placeholder="000000" style="text-align: center; font-size: 1.4rem; font-weight: 800; letter-spacing: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 10px; outline: none; background: #ffffff; font-family: monospace;">
-            <div style="display: flex; gap: 8px;">
-              <button type="submit" id="profile-verify-submit-btn" style="flex: 1; background: var(--primary); color: #ffffff; border: none; padding: 9px; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 700; cursor: pointer;">Confirm Code</button>
-              <button type="button" id="profile-verify-cancel-btn" style="padding: 9px 16px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 600; cursor: pointer;">Cancel</button>
-            </div>
-          </form>
-        </div>
 
         <div id="profile-alert" style="display: none; padding: 12px 14px; border-radius: 10px; font-size: 0.86rem; margin-bottom: 18px; line-height: 1.4;"></div>
 
@@ -252,6 +241,36 @@
   <footer class="legal-footer">
     <p>&copy; 2026 WhatsCR? All rights reserved. <a href="index.html">Return to Home</a> &bull; <a href="https://discord.gg/A3qEvfdgDP" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-discord"></i> Discord Server</a></p>
   </footer>
+
+  <div id="otp-modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+    <div id="otp-modal-card" style="background: #ffffff; border-radius: 20px; max-width: 420px; width: 100%; padding: 32px 28px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.2); text-align: center; position: relative;">
+      <button type="button" id="otp-modal-close-btn" aria-label="Close" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; font-size: 1.2rem; color: #94a3b8; cursor: pointer; padding: 4px 8px; border-radius: 8px;">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div style="width: 60px; height: 60px; border-radius: 50%; background: #e0f2fe; color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 16px;">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Email Verification</h3>
+      <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px;">
+        Enter the 6-digit verification code sent to<br><strong id="otp-modal-email-display" style="color: var(--text-main);"></strong>
+      </p>
+      <div id="otp-modal-alert" style="display: none; padding: 10px 14px; border-radius: 10px; font-size: 0.84rem; margin-bottom: 16px; line-height: 1.4;"></div>
+      <form id="otp-modal-form">
+        <div style="margin-bottom: 18px;">
+          <input type="text" id="otp-modal-code-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" placeholder="000000" style="width: 100%; text-align: center; font-size: 2rem; font-weight: 800; letter-spacing: 12px; padding: 12px; border: 2px solid var(--border); border-radius: 14px; outline: none; background: #fafcfe; color: var(--text-main); font-family: monospace; transition: border-color 0.2s ease;">
+          <span style="font-size: 0.76rem; color: var(--text-muted); display: block; margin-top: 6px;">Code expires in 15 minutes.</span>
+        </div>
+        <button type="submit" id="otp-modal-submit-btn" style="width: 100%; background: var(--primary); color: #ffffff; border: none; padding: 12px; border-radius: var(--radius-full); font-size: 0.94rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0, 151, 178, 0.25); margin-bottom: 14px;">
+          <span id="otp-modal-submit-text">Confirm & Verify</span>
+        </button>
+      </form>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 16px; font-size: 0.82rem;">
+        <button type="button" id="otp-modal-resend-btn" style="background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer;">Resend Code</button>
+        <span style="color: var(--text-light);">&bull;</span>
+        <button type="button" id="otp-modal-cancel-btn" style="background: none; border: none; color: var(--text-muted); font-weight: 600; cursor: pointer;">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <script src="js/login.js"></script>
 </body>
