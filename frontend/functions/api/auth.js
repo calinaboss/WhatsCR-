@@ -39,12 +39,12 @@ async function hashPassword(password) {
   const pwBuf = new TextEncoder().encode(password);
   const key = await crypto.subtle.importKey('raw', pwBuf, 'PBKDF2', false, ['deriveBits']);
   const derived = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt: salt, iterations: 210000, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
     key,
     256
   );
   const hashHex = Array.from(new Uint8Array(derived)).map(b => b.toString(16).padStart(2, '0')).join('');
-  return `210000:${saltHex}:${hashHex}`;
+  return `100000:${saltHex}:${hashHex}`;
 }
 
 async function verifyPassword(password, stored) {
@@ -54,7 +54,8 @@ async function verifyPassword(password, stored) {
   let saltHex = '';
   let originalHashHex = '';
   if (parts.length === 3) {
-    iterations = parseInt(parts[0], 10) || 210000;
+    iterations = parseInt(parts[0], 10) || 100000;
+    if (iterations > 100000) iterations = 100000;
     saltHex = parts[1];
     originalHashHex = parts[2];
   } else if (parts.length === 2) {
@@ -111,7 +112,10 @@ async function sendEmailJsOtp(env, toEmail, passcode, timeStr) {
   const templateId = env.EMAILJS_TEMPLATE_ID;
   const publicKey = env.EMAILJS_PUBLIC_KEY;
   const privateKey = env.EMAILJS_PRIVATE_KEY;
-  if (!serviceId || !templateId || !publicKey) return false;
+  if (!serviceId || !templateId || !publicKey) {
+    console.error('EMAILJS_CONFIG_MISSING:', { serviceId: Boolean(serviceId), templateId: Boolean(templateId), publicKey: Boolean(publicKey) });
+    return false;
+  }
   try {
     const payload = {
       service_id: serviceId,
@@ -131,7 +135,12 @@ async function sendEmailJsOtp(env, toEmail, passcode, timeStr) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    return res.ok;
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      console.error('EMAILJS_HTTP_ERROR:', res.status, errText);
+      return false;
+    }
+    return true;
   } catch (err) {
     console.error('EMAILJS_SEND_ERROR:', err && err.message ? err.message : String(err));
     return false;
