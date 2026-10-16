@@ -133,6 +133,7 @@ async function sendEmailJsOtp(env, toEmail, passcode, timeStr) {
     });
     return res.ok;
   } catch (err) {
+    console.error('EMAILJS_SEND_ERROR:', err && err.message ? err.message : String(err));
     return false;
   }
 }
@@ -156,7 +157,8 @@ async function runNeonSql(databaseUrl, sql, params = []) {
   clearTimeout(timeoutId);
 
   if (!res.ok) {
-    throw new Error('Database query failed');
+    const errBody = await res.text().catch(() => '');
+    throw new Error(`Database query failed (${res.status}): ${errBody.slice(0, 200)}`);
   }
 
   const data = await res.json();
@@ -190,12 +192,14 @@ async function ensureTables(databaseUrl) {
     "CREATE TABLE IF NOT EXISTS email_verifications (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id) ON DELETE CASCADE, email VARCHAR(255) NOT NULL, code_hash VARCHAR(255) NOT NULL, expires_at TIMESTAMP WITH TIME ZONE NOT NULL, attempts INT DEFAULT 0, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)",
     "CREATE INDEX IF NOT EXISTS idx_email_verif_email ON email_verifications(email)"
   ];
-  try {
-    for (const stmt of statements) {
+  for (const stmt of statements) {
+    try {
       await runNeonSql(databaseUrl, stmt);
+    } catch (err) {
+      console.error('SCHEMA_MIGRATION_ERROR:', err && err.message ? err.message : String(err));
     }
-    schemaInitialized = true;
-  } catch (err) {}
+  }
+  schemaInitialized = true;
 }
 
 async function checkPersistentRateLimit(databaseUrl, key, maxRequests = 10, windowMs = 60000) {
@@ -1153,24 +1157,30 @@ export async function onRequest(context) {
           [newUser.id, tokenHash, expiresAt]
         );
 
-        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const codeHash = await sha256Hex(otpCode);
-        const expDate = new Date(Date.now() + 15 * 60 * 1000);
-        const otpExpiresAt = expDate.toISOString();
-        const timeStr = expDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        let otpSent = false;
+        try {
+          const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+          const codeHash = await sha256Hex(otpCode);
+          const expDate = new Date(Date.now() + 15 * 60 * 1000);
+          const otpExpiresAt = expDate.toISOString();
+          const timeStr = expDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        await runNeonSql(
-          env.DATABASE_URL,
-          'INSERT INTO email_verifications (user_id, email, code_hash, expires_at) VALUES ($1, $2, $3, $4)',
-          [newUser.id, email, codeHash, otpExpiresAt]
-        );
+          await runNeonSql(
+            env.DATABASE_URL,
+            'INSERT INTO email_verifications (user_id, email, code_hash, expires_at) VALUES ($1, $2, $3, $4)',
+            [newUser.id, email, codeHash, otpExpiresAt]
+          );
 
-        sendEmailJsOtp(env, email, otpCode, timeStr).catch(() => {});
+          otpSent = await sendEmailJsOtp(env, email, otpCode, timeStr);
+        } catch (otpErr) {
+          console.error('REGISTER_OTP_ERROR:', otpErr && otpErr.message ? otpErr.message : String(otpErr));
+        }
 
         return new Response(JSON.stringify({
           success: true,
           user: newUser,
-          requires_verification: true,
+          requires_verification: otpSent,
+          otp_failed: !otpSent,
           email: email
         }), {
           status: 201,
@@ -1180,6 +1190,7 @@ export async function onRequest(context) {
           }
         });
       } catch (err) {
+        console.error('REGISTER_ERROR:', err && err.message ? err.message : String(err));
         return new Response(JSON.stringify({ error: 'Registration error' }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' }
@@ -1239,6 +1250,7 @@ export async function onRequest(context) {
           }
         });
       } catch (err) {
+        console.error('LOGIN_ERROR:', err && err.message ? err.message : String(err));
         return new Response(JSON.stringify({ error: 'Login error' }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' }

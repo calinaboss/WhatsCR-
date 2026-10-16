@@ -271,6 +271,21 @@
           return;
         }
 
+        if (currentMode === 'register' && data.otp_failed) {
+          showAlert('Account created! We could not send the verification email right now. You can verify later from your profile.', true);
+          setTimeout(() => {
+            const redirectUrl = new URLSearchParams(window.location.search).get('next');
+            if (redirectUrl) {
+              window.location.href = redirectUrl;
+            } else {
+              window.location.href = 'thank-you.html?type=register';
+            }
+          }, 2500);
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+          return;
+        }
+
         showAlert(currentMode === 'login' ? 'Login successful! Redirecting...' : 'Account created! Redirecting...', true);
         setTimeout(() => {
           const redirectUrl = new URLSearchParams(window.location.search).get('next');
