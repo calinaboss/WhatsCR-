@@ -30,11 +30,17 @@
     const profileEmailBadgeWrap = document.getElementById('profile-email-badge-wrap');
     const profileVerifyBanner = document.getElementById('profile-verify-banner');
     const profileBtnSendCode = document.getElementById('profile-btn-send-code');
-    const profileVerifyBox = document.getElementById('profile-verify-box');
-    const profileVerifyForm = document.getElementById('profile-verify-form');
-    const profileVerifyCode = document.getElementById('profile-verify-code');
-    const profileVerifySubmitBtn = document.getElementById('profile-verify-submit-btn');
-    const profileVerifyCancelBtn = document.getElementById('profile-verify-cancel-btn');
+
+    const otpModalBackdrop = document.getElementById('otp-modal-backdrop');
+    const otpModalCloseBtn = document.getElementById('otp-modal-close-btn');
+    const otpModalEmailDisplay = document.getElementById('otp-modal-email-display');
+    const otpModalAlert = document.getElementById('otp-modal-alert');
+    const otpModalForm = document.getElementById('otp-modal-form');
+    const otpModalCodeInput = document.getElementById('otp-modal-code-input');
+    const otpModalSubmitBtn = document.getElementById('otp-modal-submit-btn');
+    const otpModalSubmitText = document.getElementById('otp-modal-submit-text');
+    const otpModalResendBtn = document.getElementById('otp-modal-resend-btn');
+    const otpModalCancelBtn = document.getElementById('otp-modal-cancel-btn');
 
     let pendingVerifyEmail = '';
 
@@ -144,7 +150,6 @@
         if (user.email_verified) {
           profileEmailBadgeWrap.innerHTML = '<span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.76rem; font-weight: 700; color: #16a34a; background: #dcfce7; padding: 2px 10px; border-radius: 9999px;"><i class="fa-solid fa-circle-check"></i> Email Verified</span>';
           if (profileVerifyBanner) profileVerifyBanner.style.display = 'none';
-          if (profileVerifyBox) profileVerifyBox.style.display = 'none';
         } else {
           profileEmailBadgeWrap.innerHTML = '<span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.76rem; font-weight: 700; color: #d97706; background: #fef3c7; padding: 2px 10px; border-radius: 9999px;"><i class="fa-solid fa-triangle-exclamation"></i> Not Verified</span>';
           if (profileVerifyBanner) profileVerifyBanner.style.display = 'flex';
@@ -560,6 +565,63 @@
       });
     }
 
+    function showOtpModalAlert(msg, isSuccess = false) {
+      if (!otpModalAlert) return;
+      otpModalAlert.textContent = msg;
+      otpModalAlert.style.display = 'block';
+      if (isSuccess) {
+        otpModalAlert.style.background = '#ecfdf5';
+        otpModalAlert.style.color = '#065f46';
+        otpModalAlert.style.border = '1px solid #a7f3d0';
+      } else {
+        otpModalAlert.style.background = '#fef2f2';
+        otpModalAlert.style.color = '#991b1b';
+        otpModalAlert.style.border = '1px solid #fecaca';
+      }
+    }
+
+    function openOtpModal(email) {
+      if (!otpModalBackdrop) return;
+      pendingVerifyEmail = email || (currentUser ? currentUser.email : '');
+      if (otpModalEmailDisplay) otpModalEmailDisplay.textContent = pendingVerifyEmail;
+      if (otpModalAlert) otpModalAlert.style.display = 'none';
+      if (otpModalCodeInput) {
+        otpModalCodeInput.value = '';
+        otpModalCodeInput.style.borderColor = 'var(--border)';
+      }
+      otpModalBackdrop.style.display = 'flex';
+      setTimeout(() => {
+        if (otpModalCodeInput) otpModalCodeInput.focus();
+      }, 100);
+    }
+
+    function closeOtpModal() {
+      if (!otpModalBackdrop) return;
+      otpModalBackdrop.style.display = 'none';
+    }
+
+    if (otpModalCloseBtn) {
+      otpModalCloseBtn.addEventListener('click', closeOtpModal);
+    }
+
+    if (otpModalCancelBtn) {
+      otpModalCancelBtn.addEventListener('click', closeOtpModal);
+    }
+
+    if (otpModalBackdrop) {
+      otpModalBackdrop.addEventListener('click', (e) => {
+        if (e.target === otpModalBackdrop) {
+          closeOtpModal();
+        }
+      });
+    }
+
+    if (otpModalCodeInput) {
+      otpModalCodeInput.addEventListener('input', () => {
+        otpModalCodeInput.value = otpModalCodeInput.value.replace(/\D/g, '').slice(0, 6);
+      });
+    }
+
     if (profileBtnSendCode) {
       profileBtnSendCode.addEventListener('click', async () => {
         profileBtnSendCode.disabled = true;
@@ -568,11 +630,7 @@
           const res = await fetch('/api/auth?action=send_verification', { method: 'POST' });
           const data = await res.json();
           if (res.ok) {
-            showProfileAlert('Verification code sent to your email!', true);
-            profileVerifyBanner.style.display = 'none';
-            profileVerifyBox.style.display = 'block';
-            profileVerifyCode.value = '';
-            profileVerifyCode.focus();
+            openOtpModal(currentUser ? currentUser.email : '');
           } else {
             showProfileAlert(data.error || 'Failed to send verification code.');
           }
@@ -585,47 +643,82 @@
       });
     }
 
-    if (profileVerifyCancelBtn) {
-      profileVerifyCancelBtn.addEventListener('click', () => {
-        profileVerifyBox.style.display = 'none';
-        if (currentUser && !currentUser.email_verified) {
-          profileVerifyBanner.style.display = 'flex';
+    if (otpModalResendBtn) {
+      otpModalResendBtn.addEventListener('click', async () => {
+        otpModalResendBtn.disabled = true;
+        otpModalResendBtn.textContent = 'Sending...';
+        try {
+          const res = await fetch('/api/auth?action=send_verification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: pendingVerifyEmail })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            showOtpModalAlert('New verification code sent! Check your email.', true);
+          } else {
+            showOtpModalAlert(data.error || 'Failed to resend code.');
+          }
+        } catch (e) {
+          showOtpModalAlert('Failed to resend code.');
+        } finally {
+          setTimeout(() => {
+            otpModalResendBtn.disabled = false;
+            otpModalResendBtn.textContent = 'Resend Code';
+          }, 3000);
         }
       });
     }
 
-    if (profileVerifyForm) {
-      profileVerifyForm.addEventListener('submit', async (e) => {
+    if (otpModalForm) {
+      otpModalForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const code = profileVerifyCode.value.trim().replace(/\D/g, '');
+        const code = (otpModalCodeInput.value || '').trim().replace(/\D/g, '');
         if (code.length !== 6) {
-          showProfileAlert('Please enter the 6-digit code.');
+          showOtpModalAlert('Please enter the 6-digit code.');
+          if (otpModalCodeInput) otpModalCodeInput.focus();
           return;
         }
 
-        profileVerifySubmitBtn.disabled = true;
+        otpModalSubmitBtn.disabled = true;
+        otpModalSubmitBtn.style.opacity = '0.7';
+        otpModalSubmitText.textContent = 'Verifying...';
+
         try {
           const res = await fetch('/api/auth?action=verify_email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code })
+            body: JSON.stringify({ email: pendingVerifyEmail, code })
           });
           const data = await res.json();
           if (!res.ok) {
-            showProfileAlert(data.error || 'Invalid code.');
-            profileVerifySubmitBtn.disabled = false;
+            showOtpModalAlert(data.error || 'Invalid code. Please try again.');
+            otpModalSubmitBtn.disabled = false;
+            otpModalSubmitBtn.style.opacity = '1';
+            otpModalSubmitText.textContent = 'Confirm & Verify';
             return;
           }
 
-          showProfileAlert('Email verified successfully!', true);
-          profileVerifyBox.style.display = 'none';
+          showOtpModalAlert('Email verified successfully!', true);
           if (currentUser) {
             currentUser.email_verified = true;
             displayProfile(currentUser);
           }
+          setTimeout(() => {
+            closeOtpModal();
+            otpModalSubmitBtn.disabled = false;
+            otpModalSubmitBtn.style.opacity = '1';
+            otpModalSubmitText.textContent = 'Confirm & Verify';
+            const redirectUrl = new URLSearchParams(window.location.search).get('next');
+            if (redirectUrl) {
+              window.location.href = redirectUrl;
+            }
+          }, 1200);
         } catch (err) {
-          showProfileAlert('Network error. Please try again.');
-          profileVerifySubmitBtn.disabled = false;
+          showOtpModalAlert('Network error. Please try again.');
+          otpModalSubmitBtn.disabled = false;
+          otpModalSubmitBtn.style.opacity = '1';
+          otpModalSubmitText.textContent = 'Confirm & Verify';
         }
       });
     }
