@@ -106,6 +106,24 @@ export async function onRequest(context) {
     }
   }
 
+  if (request.method === 'GET' && action === 'all') {
+    try {
+      const rows = await runNeonSql(
+        env.DATABASE_URL,
+        "SELECT id, title, artist, genre, duration, audio_url, is_loop, license_type, user_id, status, COALESCE(likes_count, 0) as likes_count FROM tracks ORDER BY id DESC LIMIT 200"
+      );
+      return new Response(JSON.stringify({ tracks: rows }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: 'Failed to fetch tracks' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
   if (request.method === 'POST' && action === 'approve') {
     let body;
     try {
@@ -118,7 +136,7 @@ export async function onRequest(context) {
     }
 
     const trackId = parseInt(body.id, 10);
-    if (!trackId || isNaN(trackId)) {
+    if (!trackId || isNaN(trackId) || trackId <= 0) {
       return new Response(JSON.stringify({ error: 'Valid track ID required' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
@@ -149,7 +167,7 @@ export async function onRequest(context) {
     }
   }
 
-  if (request.method === 'POST' && action === 'reject') {
+  if (request.method === 'POST' && (action === 'delete' || action === 'reject')) {
     let body;
     try {
       body = await request.json();
@@ -161,7 +179,7 @@ export async function onRequest(context) {
     }
 
     const trackId = parseInt(body.id, 10);
-    if (!trackId || isNaN(trackId)) {
+    if (!trackId || isNaN(trackId) || trackId <= 0) {
       return new Response(JSON.stringify({ error: 'Valid track ID required' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
@@ -200,7 +218,7 @@ export async function onRequest(context) {
 
       await runNeonSql(env.DATABASE_URL, 'DELETE FROM tracks WHERE id = $1', [trackId]);
 
-      return new Response(JSON.stringify({ success: true, message: 'Track rejected and removed.' }), {
+      return new Response(JSON.stringify({ success: true, message: 'Track deleted successfully.' }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });

@@ -66,6 +66,40 @@ fileInput.addEventListener('change', () => {
   }
 });
 
+let previewAudio = null;
+let previewObjectUrl = null;
+
+const previewBox = document.getElementById('audio-preview-box');
+const previewPlayBtn = document.getElementById('preview-play-btn');
+const previewPlayIcon = document.getElementById('preview-play-icon');
+const previewFilename = document.getElementById('preview-filename');
+const previewTimeDisplay = document.getElementById('preview-time-display');
+const previewSizeDisplay = document.getElementById('preview-size-display');
+const previewProgressWrap = document.getElementById('preview-progress-wrap');
+const previewProgressBar = document.getElementById('preview-progress-bar');
+const previewRemoveBtn = document.getElementById('preview-remove-btn');
+
+function formatSeconds(sec) {
+  if (isNaN(sec) || !isFinite(sec)) return '0:00';
+  const total = Math.max(0, Math.floor(sec));
+  const m = Math.floor(total / 60);
+  const s = (total % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+function stopPreviewAudio() {
+  if (previewAudio) {
+    previewAudio.pause();
+    previewAudio.currentTime = 0;
+  }
+  if (previewPlayIcon) {
+    previewPlayIcon.className = 'fa-solid fa-play';
+  }
+  if (previewProgressBar) {
+    previewProgressBar.style.width = '0%';
+  }
+}
+
 function handleFileSelection(file) {
   if (file.size > 15 * 1024 * 1024) {
     showAlert('File size exceeds the 15 MB limit.');
@@ -76,23 +110,99 @@ function handleFileSelection(file) {
   dropText.textContent = `${file.name}`;
   dropSub.textContent = `Size: ${sizeMb} MB - Analyzing audio duration...`;
 
-  const audioObj = new Audio();
-  const objectUrl = URL.createObjectURL(file);
-  audioObj.src = objectUrl;
+  if (previewObjectUrl) {
+    URL.revokeObjectURL(previewObjectUrl);
+    previewObjectUrl = null;
+  }
+
+  stopPreviewAudio();
+
+  previewObjectUrl = URL.createObjectURL(file);
+  previewAudio = new Audio(previewObjectUrl);
+
+  if (previewFilename) previewFilename.textContent = file.name;
+  if (previewSizeDisplay) previewSizeDisplay.textContent = `${sizeMb} MB`;
+  if (previewTimeDisplay) previewTimeDisplay.textContent = '0:00 / 0:00';
+  if (previewBox) previewBox.style.display = 'flex';
 
   function updateDuration() {
-    if (!isNaN(audioObj.duration) && isFinite(audioObj.duration)) {
-      const totalSec = Math.max(1, Math.round(audioObj.duration));
-      const mins = Math.floor(totalSec / 60);
-      const secs = (totalSec % 60).toString().padStart(2, '0');
-      detectedDuration = `${mins}:${secs}`;
+    if (!isNaN(previewAudio.duration) && isFinite(previewAudio.duration)) {
+      const totalSec = Math.max(1, Math.round(previewAudio.duration));
+      detectedDuration = formatSeconds(totalSec);
       dropSub.textContent = `Size: ${sizeMb} MB \u2022 Duration: ${detectedDuration}`;
+      if (previewTimeDisplay) {
+        previewTimeDisplay.textContent = `${formatSeconds(previewAudio.currentTime)} / ${detectedDuration}`;
+      }
     }
   }
 
-  audioObj.addEventListener('loadedmetadata', updateDuration);
-  audioObj.addEventListener('canplaythrough', updateDuration);
+  previewAudio.addEventListener('loadedmetadata', updateDuration);
+  previewAudio.addEventListener('canplaythrough', updateDuration);
   setTimeout(updateDuration, 800);
+
+  previewAudio.addEventListener('timeupdate', () => {
+    if (!previewAudio || isNaN(previewAudio.duration) || previewAudio.duration === 0) return;
+    const progress = (previewAudio.currentTime / previewAudio.duration) * 100;
+    if (previewProgressBar) previewProgressBar.style.width = `${progress}%`;
+    if (previewTimeDisplay) {
+      previewTimeDisplay.textContent = `${formatSeconds(previewAudio.currentTime)} / ${formatSeconds(previewAudio.duration)}`;
+    }
+  });
+
+  previewAudio.addEventListener('ended', () => {
+    if (previewPlayIcon) previewPlayIcon.className = 'fa-solid fa-play';
+    if (previewProgressBar) previewProgressBar.style.width = '0%';
+    if (previewTimeDisplay) {
+      previewTimeDisplay.textContent = `0:00 / ${detectedDuration}`;
+    }
+  });
+
+  previewAudio.addEventListener('error', () => {
+    showAlert('Unable to decode audio preview. Please make sure the audio file is valid.');
+    if (previewPlayIcon) previewPlayIcon.className = 'fa-solid fa-play';
+  });
+}
+
+if (previewPlayBtn) {
+  previewPlayBtn.addEventListener('click', () => {
+    if (!previewAudio) return;
+    if (previewAudio.paused) {
+      previewAudio.play().then(() => {
+        if (previewPlayIcon) previewPlayIcon.className = 'fa-solid fa-pause';
+      }).catch(() => {
+        if (previewPlayIcon) previewPlayIcon.className = 'fa-solid fa-play';
+      });
+    } else {
+      previewAudio.pause();
+      if (previewPlayIcon) previewPlayIcon.className = 'fa-solid fa-play';
+    }
+  });
+}
+
+if (previewProgressWrap) {
+  previewProgressWrap.addEventListener('click', (e) => {
+    if (!previewAudio || isNaN(previewAudio.duration) || previewAudio.duration === 0) return;
+    const rect = previewProgressWrap.getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    const clampedPos = Math.max(0, Math.min(1, pos));
+    previewAudio.currentTime = clampedPos * previewAudio.duration;
+  });
+}
+
+if (previewRemoveBtn) {
+  previewRemoveBtn.addEventListener('click', () => {
+    stopPreviewAudio();
+    if (previewObjectUrl) {
+      URL.revokeObjectURL(previewObjectUrl);
+      previewObjectUrl = null;
+    }
+    selectedFile = null;
+    detectedDuration = '0:01';
+    fileInput.value = '';
+    dropText.textContent = 'Click or drag & drop an MP3 audio file';
+    dropSub.textContent = 'Max file size: 15 MB. Supported formats: .mp3, .wav, .ogg';
+    if (previewBox) previewBox.style.display = 'none';
+  });
 }
 
 function showAlert(msg, isSuccess = false) {

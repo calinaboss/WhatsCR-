@@ -51,13 +51,24 @@
     </div>
 
     <div id="admin-dashboard" style="display: none;">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
         <div>
-          <h1 style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">Track Review Queue</h1>
-          <p style="color: var(--text-muted); font-size: 0.9rem;">Review incoming music submissions before making them publicly searchable.</p>
+          <h1 style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">Track Management</h1>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Review pending tracks or manage and remove published music from the platform.</p>
         </div>
-        <button id="refresh-btn" class="btn" style="background: var(--bg-muted); border: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; padding: 8px 16px; border-radius: var(--radius-full); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-          <i class="fa-solid fa-rotate-right"></i> Refresh
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="refresh-btn" class="btn" style="background: var(--bg-muted); border: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; padding: 8px 16px; border-radius: var(--radius-full); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+        <button id="tab-pending" class="admin-tab active" style="background: var(--primary); color: #ffffff; border: none; border-radius: var(--radius-full); padding: 7px 18px; font-size: 0.86rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+          <i class="fa-solid fa-clock"></i> Pending Review (<span id="pending-count">0</span>)
+        </button>
+        <button id="tab-published" class="admin-tab" style="background: transparent; color: var(--text-muted); border: 1px solid var(--border); border-radius: var(--radius-full); padding: 7px 18px; font-size: 0.86rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+          <i class="fa-solid fa-music"></i> Published Tracks (<span id="published-count">0</span>)
         </button>
       </div>
 
