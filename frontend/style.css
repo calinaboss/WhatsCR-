@@ -1565,12 +1565,13 @@ button {
 .wiki-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(15, 23, 42, 0.65);
   z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  will-change: opacity;
 }
 
 .wiki-modal-content {
@@ -1580,10 +1581,18 @@ button {
   width: 100%;
   max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
   border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  animation: modalFadeIn 0.16s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.98); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
 }
 
 .wiki-modal-header {

@@ -266,13 +266,29 @@
       font-weight: 700;
       background: #f1f5f9;
       color: var(--text-muted);
-      padding: 2px 7px;
+      padding: 3px 8px;
       border-radius: var(--radius-full);
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .comm-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.7);
+      display: inline-block;
       flex-shrink: 0;
     }
     .room-item.active .room-item-badge {
       background: #c5f2f9;
       color: var(--primary-dark);
+    }
+    .room-item.active .comm-status-dot {
+      background: #0ea5e9;
+      box-shadow: 0 0 6px rgba(14, 165, 233, 0.7);
     }
     .room-item-desc {
       font-size: 0.8rem;
@@ -691,26 +707,28 @@
     .comm-modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15,23,42,0.6);
-      backdrop-filter: blur(4px);
+      background: rgba(15, 23, 42, 0.65);
       z-index: 999;
       display: none;
       align-items: center;
       justify-content: center;
       padding: 20px;
+      will-change: opacity;
     }
     .comm-modal-card {
       background: #ffffff;
       border-radius: 20px;
       width: 100%;
       max-width: 480px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
       overflow: hidden;
-      animation: modalFadeIn 0.2s ease;
+      transform: translateZ(0);
+      will-change: transform, opacity;
+      animation: modalFadeIn 0.16s ease-out;
     }
     @keyframes modalFadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
+      from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.98); }
+      to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
     }
     .comm-modal-head {
       padding: 18px 22px;
@@ -968,7 +986,7 @@
               </button>
               <div class="chat-header-info">
                 <div class="chat-header-title" id="chat-title">Chat Room</div>
-                <div class="chat-header-sub" id="chat-subtitle">Created by @creator</div>
+                <div class="chat-header-sub" id="chat-subtitle"><span class="comm-status-dot"></span> Active Community</div>
               </div>
             </div>
             <div class="chat-header-actions" id="chat-room-actions"></div>

@@ -220,19 +220,25 @@ export async function onRequest(context) {
       if (q) {
         rows = await runNeonSql(
           env.DATABASE_URL,
-          `SELECT id, title, description, creator_name, creator_id, message_count, created_at, last_message_at
-           FROM forum_rooms
-           WHERE title ILIKE '%' || $1 || '%' OR description ILIKE '%' || $1 || '%'
-           ORDER BY last_message_at DESC
+          `SELECT r.id, r.title, r.description, r.creator_name, r.creator_id,
+           (SELECT COUNT(*) FROM forum_messages m WHERE m.room_id = r.id) as message_count,
+           (SELECT GREATEST(1, COUNT(DISTINCT m2.sender_name)) FROM forum_messages m2 WHERE m2.room_id = r.id AND m2.created_at > NOW() - INTERVAL '24 hours') as active_users,
+           r.created_at, r.last_message_at
+           FROM forum_rooms r
+           WHERE r.title ILIKE '%' || $1 || '%' OR r.description ILIKE '%' || $1 || '%'
+           ORDER BY r.last_message_at DESC
            LIMIT 50`,
           [q]
         );
       } else {
         rows = await runNeonSql(
           env.DATABASE_URL,
-          `SELECT id, title, description, creator_name, creator_id, message_count, created_at, last_message_at
-           FROM forum_rooms
-           ORDER BY last_message_at DESC
+          `SELECT r.id, r.title, r.description, r.creator_name, r.creator_id,
+           (SELECT COUNT(*) FROM forum_messages m WHERE m.room_id = r.id) as message_count,
+           (SELECT GREATEST(1, COUNT(DISTINCT m2.sender_name)) FROM forum_messages m2 WHERE m2.room_id = r.id AND m2.created_at > NOW() - INTERVAL '24 hours') as active_users,
+           r.created_at, r.last_message_at
+           FROM forum_rooms r
+           ORDER BY r.last_message_at DESC
            LIMIT 50`
         );
       }
@@ -249,9 +255,12 @@ export async function onRequest(context) {
     try {
       const rows = await runNeonSql(
         env.DATABASE_URL,
-        `SELECT id, title, description, creator_name, creator_id, message_count, created_at, last_message_at
-         FROM forum_rooms
-         WHERE id = $1
+        `SELECT r.id, r.title, r.description, r.creator_name, r.creator_id,
+         (SELECT COUNT(*) FROM forum_messages m WHERE m.room_id = r.id) as message_count,
+         (SELECT GREATEST(1, COUNT(DISTINCT m2.sender_name)) FROM forum_messages m2 WHERE m2.room_id = r.id AND m2.created_at > NOW() - INTERVAL '24 hours') as active_users,
+         r.created_at, r.last_message_at
+         FROM forum_rooms r
+         WHERE r.id = $1
          LIMIT 1`,
         [roomId]
       );

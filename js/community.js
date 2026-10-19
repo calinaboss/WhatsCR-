@@ -264,7 +264,7 @@
 
     roomsList.innerHTML = rooms.map(r => {
       const isActive = currentRoomId === r.id;
-      const count = parseInt(r.message_count, 10) || 0;
+      const activeCount = parseInt(r.active_users, 10) || 1;
       const timeStr = formatRelativeTime(r.last_message_at || r.created_at);
 
       return `
@@ -275,7 +275,7 @@
           <div class="room-item-body">
             <div class="room-item-head">
               <span class="room-item-title">${escapeHtml(r.title)}</span>
-              <span class="room-item-badge">${count} msg</span>
+              <span class="room-item-badge"><span class="comm-status-dot"></span><i class="fa-solid fa-user" style="font-size: 0.65rem;"></i><span>${activeCount} online</span></span>
             </div>
             ${r.description ? `<div class="room-item-desc">${escapeHtml(r.description)}</div>` : ''}
             <div class="room-item-footer">
@@ -349,8 +349,8 @@
     if (!room) return;
     if (chatTitle) chatTitle.textContent = room.title;
     if (chatSubtitle) {
-      const count = parseInt(room.message_count, 10) || 0;
-      chatSubtitle.textContent = `Created by ${room.creator_name} \u2022 ${count} messages`;
+      const activeCount = parseInt(room.active_users, 10) || 1;
+      chatSubtitle.innerHTML = `Created by ${escapeHtml(room.creator_name)} &bull; <span class="comm-status-dot" style="margin-left: 4px;"></span> <i class="fa-solid fa-user" style="font-size: 0.72rem; margin: 0 2px;"></i> ${activeCount} active online`;
     }
 
     if (chatRoomActions) {
