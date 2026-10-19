@@ -222,7 +222,7 @@ export async function onRequest(context) {
           env.DATABASE_URL,
           `SELECT r.id, r.title, r.description, r.creator_name, r.creator_id,
            (SELECT COUNT(*) FROM forum_messages m WHERE m.room_id = r.id) as message_count,
-           (SELECT GREATEST(1, COUNT(DISTINCT m2.sender_name)) FROM forum_messages m2 WHERE m2.room_id = r.id AND m2.created_at > NOW() - INTERVAL '24 hours') as active_users,
+           (SELECT COUNT(DISTINCT m2.sender_name) FROM forum_messages m2 WHERE m2.room_id = r.id) as people_count,
            r.created_at, r.last_message_at
            FROM forum_rooms r
            WHERE r.title ILIKE '%' || $1 || '%' OR r.description ILIKE '%' || $1 || '%'
@@ -235,7 +235,7 @@ export async function onRequest(context) {
           env.DATABASE_URL,
           `SELECT r.id, r.title, r.description, r.creator_name, r.creator_id,
            (SELECT COUNT(*) FROM forum_messages m WHERE m.room_id = r.id) as message_count,
-           (SELECT GREATEST(1, COUNT(DISTINCT m2.sender_name)) FROM forum_messages m2 WHERE m2.room_id = r.id AND m2.created_at > NOW() - INTERVAL '24 hours') as active_users,
+           (SELECT COUNT(DISTINCT m2.sender_name) FROM forum_messages m2 WHERE m2.room_id = r.id) as people_count,
            r.created_at, r.last_message_at
            FROM forum_rooms r
            ORDER BY r.last_message_at DESC
@@ -257,7 +257,7 @@ export async function onRequest(context) {
         env.DATABASE_URL,
         `SELECT r.id, r.title, r.description, r.creator_name, r.creator_id,
          (SELECT COUNT(*) FROM forum_messages m WHERE m.room_id = r.id) as message_count,
-         (SELECT GREATEST(1, COUNT(DISTINCT m2.sender_name)) FROM forum_messages m2 WHERE m2.room_id = r.id AND m2.created_at > NOW() - INTERVAL '24 hours') as active_users,
+         (SELECT COUNT(DISTINCT m2.sender_name) FROM forum_messages m2 WHERE m2.room_id = r.id) as people_count,
          r.created_at, r.last_message_at
          FROM forum_rooms r
          WHERE r.id = $1

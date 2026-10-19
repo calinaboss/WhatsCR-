@@ -82,14 +82,30 @@
     .comm-user-avatar {
       width: 26px;
       height: 26px;
+      min-width: 26px;
+      min-height: 26px;
       border-radius: 50%;
       background: var(--primary);
       color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-size: 0.78rem;
       font-weight: 700;
+      line-height: 1 !important;
+      text-align: center;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      transform: none !important;
+      font-style: normal !important;
+      font-family: inherit;
+      user-select: none;
+    }
+    .comm-user-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
     }
     .community-wrapper {
       max-width: 1360px;
@@ -262,7 +278,7 @@
       text-overflow: ellipsis;
     }
     .room-item-badge {
-      font-size: 0.72rem;
+      font-size: 0.74rem;
       font-weight: 700;
       background: #f1f5f9;
       color: var(--text-muted);
@@ -273,22 +289,9 @@
       align-items: center;
       gap: 5px;
     }
-    .comm-status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 6px rgba(34, 197, 94, 0.7);
-      display: inline-block;
-      flex-shrink: 0;
-    }
     .room-item.active .room-item-badge {
       background: #c5f2f9;
       color: var(--primary-dark);
-    }
-    .room-item.active .comm-status-dot {
-      background: #0ea5e9;
-      box-shadow: 0 0 6px rgba(14, 165, 233, 0.7);
     }
     .room-item-desc {
       font-size: 0.8rem;
@@ -872,11 +875,12 @@
       .comm-user-pill {
         padding: 4px 8px;
         font-size: 0.76rem;
-        gap: 5px;
+        gap: 6px;
         max-width: 135px;
         white-space: nowrap;
       }
-      .comm-user-pill span {
+      .comm-user-pill .comm-user-name,
+      .comm-user-pill > span:not(.comm-user-avatar) {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -884,9 +888,18 @@
         display: inline-block;
       }
       .comm-user-avatar {
-        width: 22px;
-        height: 22px;
-        font-size: 0.7rem;
+        width: 24px !important;
+        height: 24px !important;
+        min-width: 24px !important;
+        min-height: 24px !important;
+        font-size: 0.75rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1 !important;
+        flex-shrink: 0 !important;
+        transform: none !important;
+        font-style: normal !important;
       }
       .community-wrapper {
         padding: 0 10px;
@@ -986,7 +999,7 @@
               </button>
               <div class="chat-header-info">
                 <div class="chat-header-title" id="chat-title">Chat Room</div>
-                <div class="chat-header-sub" id="chat-subtitle"><span class="comm-status-dot"></span> Active Community</div>
+                <div class="chat-header-sub" id="chat-subtitle">Community Chat</div>
               </div>
             </div>
             <div class="chat-header-actions" id="chat-room-actions"></div>

@@ -103,7 +103,7 @@
       commUserBadge.innerHTML = `
         <a href="profile.html?u=${encodeURIComponent(currentUser.username)}" class="comm-user-pill" title="View profile">
           <span class="comm-user-avatar">${escapeHtml(initial)}</span>
-          <span>@${escapeHtml(currentUser.username)}</span>
+          <span class="comm-user-name">@${escapeHtml(currentUser.username)}</span>
         </a>
       `;
     } else {
@@ -111,7 +111,7 @@
         <div style="display: flex; align-items: center; gap: 6px;">
           <div class="comm-user-pill guest" id="btn-change-guest-pill" title="Click to change your guest nickname">
             <i class="fa-solid fa-user-secret"></i>
-            <span>${escapeHtml(guestName)}</span>
+            <span class="comm-user-name">${escapeHtml(guestName)}</span>
             <i class="fa-solid fa-pen" style="font-size: 0.68rem; opacity: 0.7;"></i>
           </div>
           <a href="login.html?next=community.html" class="nav-link" style="font-size: 0.8rem; font-weight: 700; color: var(--primary);">Log In</a>
@@ -264,7 +264,7 @@
 
     roomsList.innerHTML = rooms.map(r => {
       const isActive = currentRoomId === r.id;
-      const activeCount = parseInt(r.active_users, 10) || 1;
+      const peopleCount = parseInt(r.people_count !== undefined ? r.people_count : (r.active_users || 0), 10) || 0;
       const timeStr = formatRelativeTime(r.last_message_at || r.created_at);
 
       return `
@@ -275,7 +275,7 @@
           <div class="room-item-body">
             <div class="room-item-head">
               <span class="room-item-title">${escapeHtml(r.title)}</span>
-              <span class="room-item-badge"><span class="comm-status-dot"></span><i class="fa-solid fa-user" style="font-size: 0.65rem;"></i><span>${activeCount} online</span></span>
+              <span class="room-item-badge"><i class="fa-solid fa-user" style="font-size: 0.68rem;"></i> ${peopleCount}</span>
             </div>
             ${r.description ? `<div class="room-item-desc">${escapeHtml(r.description)}</div>` : ''}
             <div class="room-item-footer">
@@ -349,8 +349,8 @@
     if (!room) return;
     if (chatTitle) chatTitle.textContent = room.title;
     if (chatSubtitle) {
-      const activeCount = parseInt(room.active_users, 10) || 1;
-      chatSubtitle.innerHTML = `Created by ${escapeHtml(room.creator_name)} &bull; <span class="comm-status-dot" style="margin-left: 4px;"></span> <i class="fa-solid fa-user" style="font-size: 0.72rem; margin: 0 2px;"></i> ${activeCount} active online`;
+      const peopleCount = parseInt(room.people_count !== undefined ? room.people_count : (room.active_users || 0), 10) || 0;
+      chatSubtitle.innerHTML = `Created by ${escapeHtml(room.creator_name)} &bull; <i class="fa-solid fa-user" style="font-size: 0.72rem; margin: 0 2px;"></i> ${peopleCount}`;
     }
 
     if (chatRoomActions) {
