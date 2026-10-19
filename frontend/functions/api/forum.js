@@ -93,6 +93,28 @@ async function ensureForumTables(databaseUrl) {
       console.error('FORUM_SCHEMA_ERROR:', err && err.message ? err.message : String(err));
     }
   }
+
+  try {
+    const countRows = await runNeonSql(databaseUrl, 'SELECT COUNT(*) as count FROM forum_rooms');
+    const totalRooms = countRows && countRows[0] ? parseInt(countRows[0].count, 10) : 0;
+    if (totalRooms === 0) {
+      const defaultRooms = [
+        ['General & Feedback', 'Spazio aperto per discutere di produzioni musicali, sound design e condividere idee.', 'WhatsCR Official'],
+        ['Game Audio & Loops', 'Discussioni su loop senza copyright, campioni sonori ed effetti per videogiochi.', 'WhatsCR Official'],
+        ['Creators & Collaborations', 'Incontra altri creator, organizza collaborazioni e scambia consigli sui progetti.', 'WhatsCR Official']
+      ];
+      for (const [title, desc, creator] of defaultRooms) {
+        await runNeonSql(
+          databaseUrl,
+          'INSERT INTO forum_rooms (title, description, creator_name, message_count) VALUES ($1, $2, $3, 0)',
+          [title, desc, creator]
+        );
+      }
+    }
+  } catch (seedErr) {
+    console.error('FORUM_SEED_ERROR:', seedErr && seedErr.message ? seedErr.message : String(seedErr));
+  }
+
   forumSchemaInitialized = true;
 }
 
@@ -347,11 +369,6 @@ export async function onRequest(context) {
   }
 
   if (request.method === 'POST' && action === 'send_message') {
-    const msgRate = await checkPersistentRateLimit(env.DATABASE_URL, `forum_msg_${ip}`, 30, 60000);
-    if (!msgRate) {
-      return jsonResponse({ error: 'Slow down! Please wait a moment before sending another message.' }, 429);
-    }
-
     let body;
     try {
       body = await request.json();
@@ -384,6 +401,12 @@ export async function onRequest(context) {
       senderName = await sanitizeGuestName(body.guest_name, env.DATABASE_URL);
       isGuest = true;
       storedGuestId = clientGuestId || null;
+    }
+
+    const senderCooldownKey = sessionUser ? `forum_cd_user_${sessionUser.id}` : `forum_cd_guest_${ip}_${storedGuestId || 'anon'}`;
+    const cooldownAllowed = await checkPersistentRateLimit(env.DATABASE_URL, senderCooldownKey, 1, 3000);
+    if (!cooldownAllowed) {
+      return jsonResponse({ error: 'Rallenta un attimo! Aspetta 3 secondi prima di inviare un altro messaggio.', cooldown: 3 }, 429);
     }
 
     let replyToSender = null;

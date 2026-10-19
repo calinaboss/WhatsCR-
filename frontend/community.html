@@ -119,15 +119,15 @@
     .comm-layout {
       display: grid;
       grid-template-columns: 360px 1fr;
-      gap: 18px;
+      gap: 0;
       background: #ffffff;
       border: 1px solid var(--border);
       border-radius: 18px;
       overflow: hidden;
       box-shadow: 0 4px 16px rgba(15,23,42,0.04);
-      min-height: 680px;
-      height: calc(100vh - 180px);
-      max-height: 860px;
+      height: calc(100dvh - 160px);
+      min-height: 520px;
+      max-height: 900px;
     }
     .comm-sidebar {
       border-right: 1px solid var(--border);
@@ -135,6 +135,9 @@
       flex-direction: column;
       background: #ffffff;
       min-width: 0;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
     }
     .comm-sidebar-top {
       padding: 16px;
@@ -292,6 +295,9 @@
       background: #ffffff;
       min-width: 0;
       height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      position: relative;
     }
     .chat-empty-state {
       flex: 1;
@@ -392,8 +398,14 @@
       background: #fee2e2;
     }
     .chat-messages {
-      flex: 1;
-      overflow-y: auto;
+      flex: 1 1 0;
+      min-height: 0;
+      height: 100%;
+      overflow-y: auto !important;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+      touch-action: pan-y;
       padding: 20px;
       background: #fafcfe;
       display: flex;
@@ -948,7 +960,7 @@
           <p>Choose an existing topic from the list or create your own to start chatting.</p>
         </div>
 
-        <div id="active-chat-container" style="display: none; height: 100%; flex-direction: column;">
+        <div id="active-chat-container" style="display: none; height: 100%; min-height: 0; flex: 1 1 0; flex-direction: column; overflow: hidden; position: relative;">
           <div class="chat-header">
             <div class="chat-header-left">
               <button class="btn-chat-back" id="btn-back-to-rooms" aria-label="Back to rooms list">
@@ -979,9 +991,17 @@
             </button>
           </div>
 
+          <div id="chat-spam-alert" style="display: none; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: 0.8rem; font-weight: 600; padding: 7px 14px; margin: 0 16px 4px; border-radius: 8px; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-triangle-exclamation" style="color: #d97706;"></i>
+            <span id="chat-spam-text">Rallenta un attimo! Aspetta prima di inviare un altro messaggio.</span>
+          </div>
+
           <div class="chat-input-bar">
             <div class="chat-guest-info-row">
-              <span id="chat-author-indicator"></span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="chat-author-indicator"></span>
+                <span id="chat-cooldown-badge" style="display: none; font-size: 0.72rem; font-weight: 700; background: #fef3c7; color: #b45309; padding: 2px 7px; border-radius: var(--radius-full);"><i class="fa-solid fa-hourglass-half" style="margin-right: 3px;"></i><span id="chat-cooldown-sec">3s</span></span>
+              </div>
               <span id="char-counter" style="color: #94a3b8;">0/800</span>
             </div>
             <div class="chat-input-row">

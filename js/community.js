@@ -8,6 +8,9 @@
   let lastMessageTimestamp = null;
   let pollIntervalId = null;
   let lastTypingSent = 0;
+  let cooldownEndTime = 0;
+  let cooldownInterval = null;
+  let isUserNearBottom = true;
 
   const commLayout = document.getElementById('comm-layout');
   const roomsList = document.getElementById('rooms-list');
@@ -26,6 +29,10 @@
   const replyBannerSnippet = document.getElementById('reply-banner-snippet');
   const btnCancelReply = document.getElementById('btn-cancel-reply');
   const chatAuthorIndicator = document.getElementById('chat-author-indicator');
+  const chatCooldownBadge = document.getElementById('chat-cooldown-badge');
+  const chatCooldownSec = document.getElementById('chat-cooldown-sec');
+  const chatSpamAlert = document.getElementById('chat-spam-alert');
+  const chatSpamText = document.getElementById('chat-spam-text');
   const charCounter = document.getElementById('char-counter');
   const chatInput = document.getElementById('chat-input');
   const btnSendMessage = document.getElementById('btn-send-message');
@@ -201,7 +208,7 @@
     renderUserHeader();
   }
 
-  async function loadRooms(searchQuery = '') {
+  async function loadRooms(searchQuery = '', autoSelectFirst = false) {
     if (!roomsList) return;
     try {
       let url = '/api/forum?action=rooms';
@@ -211,7 +218,12 @@
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to load rooms');
       const data = await res.json();
-      renderRoomsList(data.rooms || []);
+      const rooms = data.rooms || [];
+      renderRoomsList(rooms);
+
+      if (autoSelectFirst && !currentRoomId && rooms.length > 0 && window.innerWidth > 820) {
+        openRoom(rooms[0].id);
+      }
     } catch (err) {
       roomsList.innerHTML = `<div style="text-align: center; padding: 24px; color: #ef4444; font-size: 0.88rem;">Failed to load chat rooms.</div>`;
     }
@@ -222,7 +234,7 @@
       roomsList.innerHTML = `
         <div style="text-align: center; padding: 32px 16px; color: var(--text-muted); font-size: 0.86rem;">
           <i class="fa-regular fa-comment-dots" style="font-size: 1.8rem; margin-bottom: 8px; color: #cbd5e1; display: block;"></i>
-          No chat rooms found. Be the first to create one!
+          Nessuna stanza trovata. Crea la prima stanza per iniziare!
         </div>
       `;
       return;
@@ -261,6 +273,7 @@
     activeReply = null;
     hideReplyBanner();
     lastMessageTimestamp = null;
+    isUserNearBottom = true;
 
     if (pollIntervalId) {
       clearInterval(pollIntervalId);
@@ -305,7 +318,7 @@
       }
     }, 2400);
 
-    if (chatInput) {
+    if (chatInput && window.innerWidth > 820) {
       chatInput.focus();
     }
   }
@@ -351,7 +364,7 @@
         chatMessagesContainer.innerHTML = `
           <div style="text-align: center; padding: 48px 20px; color: #94a3b8; font-size: 0.9rem;">
             <i class="fa-regular fa-comment-dots" style="font-size: 2.2rem; margin-bottom: 12px; color: #cbd5e1; display: block;"></i>
-            No messages here yet. Say hello and start the conversation!
+            Nessun messaggio in questa stanza. Scrivi un messaggio per primo!
           </div>
         `;
         return;
@@ -376,14 +389,13 @@
       const data = await res.json();
       const newMsgs = data.messages || [];
       if (newMsgs.length > 0) {
-        const wasNearBottom = isChatNearBottom();
         newMsgs.forEach(msg => {
           if (!document.getElementById(`msg-${msg.id}`)) {
             appendMessageElement(msg);
             lastMessageTimestamp = msg.created_at;
           }
         });
-        if (wasNearBottom) {
+        if (isUserNearBottom) {
           scrollChatToBottom();
         }
       }
@@ -541,24 +553,67 @@
     if (chatReplyBanner) chatReplyBanner.style.display = 'none';
   }
 
-  function isChatNearBottom() {
-    if (!chatMessagesContainer) return true;
-    const threshold = 120;
-    const position = chatMessagesContainer.scrollHeight - chatMessagesContainer.scrollTop - chatMessagesContainer.clientHeight;
-    return position < threshold;
+  function checkScrollPosition() {
+    if (!chatMessagesContainer) return;
+    const threshold = 100;
+    const scrollBottom = chatMessagesContainer.scrollHeight - chatMessagesContainer.scrollTop - chatMessagesContainer.clientHeight;
+    isUserNearBottom = scrollBottom <= threshold;
   }
 
   function scrollChatToBottom() {
     if (!chatMessagesContainer) return;
-    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    chatMessagesContainer.scrollTo({
+      top: chatMessagesContainer.scrollHeight,
+      behavior: 'smooth'
+    });
+  }
+
+  function startCooldown(seconds = 3) {
+    cooldownEndTime = Date.now() + seconds * 1000;
+    if (btnSendMessage) btnSendMessage.disabled = true;
+    if (chatCooldownBadge && chatCooldownSec) {
+      chatCooldownSec.textContent = `${seconds}s`;
+      chatCooldownBadge.style.display = 'inline-flex';
+    }
+
+    if (cooldownInterval) clearInterval(cooldownInterval);
+    cooldownInterval = setInterval(() => {
+      const remainingMs = cooldownEndTime - Date.now();
+      if (remainingMs <= 0) {
+        clearInterval(cooldownInterval);
+        cooldownInterval = null;
+        if (btnSendMessage) btnSendMessage.disabled = false;
+        if (chatCooldownBadge) chatCooldownBadge.style.display = 'none';
+        if (chatSpamAlert) chatSpamAlert.style.display = 'none';
+      } else {
+        const sec = Math.ceil(remainingMs / 1000);
+        if (chatCooldownSec) chatCooldownSec.textContent = `${sec}s`;
+      }
+    }, 250);
+  }
+
+  function showSpamNotice(msg = 'Rallenta un attimo! Aspetta 3 secondi prima di inviare un altro messaggio.') {
+    if (!chatSpamAlert || !chatSpamText) return;
+    chatSpamText.textContent = msg;
+    chatSpamAlert.style.display = 'flex';
+    setTimeout(() => {
+      if (chatSpamAlert) chatSpamAlert.style.display = 'none';
+    }, 3200);
   }
 
   async function sendMessage() {
     if (!currentRoomId || !chatInput) return;
+
+    if (Date.now() < cooldownEndTime) {
+      const secLeft = Math.ceil((cooldownEndTime - Date.now()) / 1000);
+      showSpamNotice(`Rallenta un attimo! Aspetta ${secLeft} secondi prima di inviare un altro messaggio.`);
+      return;
+    }
+
     const content = chatInput.value.trim();
     if (!content) return;
 
-    if (btnSendMessage) btnSendMessage.disabled = true;
+    startCooldown(3);
 
     try {
       const payload = {
@@ -579,7 +634,12 @@
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        alert(errData.error || 'Failed to send message');
+        if (res.status === 429) {
+          startCooldown(errData.cooldown || 3);
+          showSpamNotice(errData.error || 'Rallenta un attimo! Aspetta prima di inviare.');
+        } else {
+          alert(errData.error || 'Errore durante l\'invio del messaggio.');
+        }
         return;
       }
 
@@ -594,10 +654,9 @@
       if (charCounter) charCounter.textContent = '0/800';
       hideReplyBanner();
     } catch (err) {
-      alert('Error sending message. Check your connection.');
+      showSpamNotice('Errore di connessione. Riprova tra poco.');
     } finally {
-      if (btnSendMessage) btnSendMessage.disabled = false;
-      if (chatInput) chatInput.focus();
+      if (chatInput && window.innerWidth > 820) chatInput.focus();
     }
   }
 
@@ -619,7 +678,7 @@
 
   async function handleDeleteMessage(msgId) {
     if (!msgId) return;
-    if (!confirm('Are you sure you want to delete this message?')) return;
+    if (!confirm('Sei sicuro di voler eliminare questo messaggio?')) return;
 
     try {
       const res = await fetch('/api/forum?action=delete_message', {
@@ -629,19 +688,19 @@
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.error || 'Could not delete message');
+        alert(err.error || 'Impossibile eliminare il messaggio.');
         return;
       }
       const el = document.getElementById(`msg-${msgId}`);
       if (el) el.remove();
     } catch (e) {
-      alert('Network error while deleting message');
+      alert('Errore di rete durante l\'eliminazione del messaggio.');
     }
   }
 
   async function handleDeleteRoom() {
     if (!currentRoomId) return;
-    if (!confirm('Are you sure you want to delete this chat room and all its messages? This action cannot be undone.')) return;
+    if (!confirm('Sei sicuro di voler eliminare questa chat e tutti i messaggi contenuti?')) return;
 
     try {
       const res = await fetch('/api/forum?action=delete_room', {
@@ -651,7 +710,7 @@
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.error || 'Could not delete room');
+        alert(err.error || 'Impossibile eliminare la stanza.');
         return;
       }
 
@@ -663,9 +722,9 @@
       if (commLayout) commLayout.classList.remove('in-room');
       if (activeChatContainer) activeChatContainer.style.display = 'none';
       if (chatEmptyState) chatEmptyState.style.display = 'flex';
-      loadRooms();
+      loadRooms('', true);
     } catch (e) {
-      alert('Network error while deleting room');
+      alert('Errore di rete durante l\'eliminazione della stanza.');
     }
   }
 
@@ -717,7 +776,7 @@
     if (!guestNicknameInput) return;
     let clean = guestNicknameInput.value.trim().replace(/[^\w\s-]/g, '').slice(0, 24);
     if (clean.length < 2) {
-      alert('Nickname must be between 2 and 24 characters.');
+      alert('Il nickname deve contenere tra 2 e 24 caratteri.');
       return;
     }
     guestName = clean;
@@ -758,6 +817,10 @@
 
     if (btnCancelReply) {
       btnCancelReply.addEventListener('click', hideReplyBanner);
+    }
+
+    if (chatMessagesContainer) {
+      chatMessagesContainer.addEventListener('scroll', checkScrollPosition, { passive: true });
     }
 
     if (chatInput) {
@@ -812,12 +875,14 @@
   async function init() {
     setupEventListeners();
     await checkAuth();
-    await loadRooms();
 
     const params = new URLSearchParams(window.location.search);
     const roomParam = params.get('room');
     if (roomParam) {
+      await loadRooms();
       openRoom(roomParam);
+    } else {
+      await loadRooms('', true);
     }
   }
 
