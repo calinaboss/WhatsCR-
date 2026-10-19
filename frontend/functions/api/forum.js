@@ -68,12 +68,14 @@ async function ensureForumTables(databaseUrl) {
       sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
       sender_role VARCHAR(32) DEFAULT 'user',
       is_guest BOOLEAN DEFAULT false,
+      guest_id VARCHAR(64),
       content VARCHAR(800) NOT NULL,
       reply_to_id UUID,
       reply_to_sender VARCHAR(60),
       reply_to_text VARCHAR(200),
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )`,
+    `ALTER TABLE forum_messages ADD COLUMN IF NOT EXISTS guest_id VARCHAR(64)`,
     `CREATE INDEX IF NOT EXISTS idx_forum_messages_room_created ON forum_messages(room_id, created_at ASC)`,
     `CREATE TABLE IF NOT EXISTS forum_typing (
       room_id UUID NOT NULL,
@@ -129,7 +131,7 @@ async function getSessionUser(request, env) {
     const tokenHash = await sha256Hex(token);
     const rows = await runNeonSql(
       env.DATABASE_URL,
-      'SELECT u.id, u.username, u.email, u.role FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+      'SELECT u.id, u.username, u.email, u.role, u.email_verified FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
       [tokenHash]
     );
     if (rows && rows.length > 0) {
@@ -242,9 +244,39 @@ export async function onRequest(context) {
   }
 
   if (request.method === 'POST' && action === 'create_room') {
-    const createAllowed = await checkPersistentRateLimit(env.DATABASE_URL, `forum_create_${ip}`, 8, 3600000);
-    if (!createAllowed) {
-      return jsonResponse({ error: 'Rate limit exceeded for creating rooms. Please wait.' }, 429);
+    const sessionUser = await getSessionUser(request, env);
+    if (!sessionUser) {
+      return jsonResponse({ error: 'Devi essere loggato con un account verificato per creare una stanza.' }, 401);
+    }
+
+    if (!sessionUser.email_verified && sessionUser.role !== 'admin') {
+      return jsonResponse({ error: 'Account non verificato. Verifica la tua email dal tuo profilo prima di creare stanze.' }, 403);
+    }
+
+    if (sessionUser.role !== 'admin') {
+      const recentRooms = await runNeonSql(
+        env.DATABASE_URL,
+        `SELECT created_at FROM forum_rooms WHERE creator_id = $1 AND created_at > NOW() - INTERVAL '10 hours' ORDER BY created_at DESC LIMIT 1`,
+        [sessionUser.id]
+      );
+      if (recentRooms && recentRooms.length > 0) {
+        const lastCreated = new Date(recentRooms[0].created_at).getTime();
+        const elapsed = Date.now() - lastCreated;
+        const remainingMs = 10 * 3600 * 1000 - elapsed;
+        const remainingHours = Math.floor(remainingMs / 3600000);
+        const remainingMinutes = Math.ceil((remainingMs % 3600000) / 60000);
+        const timeMsg = remainingHours > 0 ? `${remainingHours} ore e ${remainingMinutes} minuti` : `${remainingMinutes} minuti`;
+        return jsonResponse({
+          error: `Limite raggiunto: puoi creare una stanza solo ogni 10 ore. Riprova tra ${timeMsg}.`
+        }, 429);
+      }
+
+      const ipAllowed = await checkPersistentRateLimit(env.DATABASE_URL, `forum_create_room_ip_${ip}`, 1, 36000000);
+      if (!ipAllowed) {
+        return jsonResponse({
+          error: 'Limite raggiunto: e consentito creare solo 1 stanza ogni 10 ore da questa connessione.'
+        }, 429);
+      }
     }
 
     let body;
@@ -258,18 +290,7 @@ export async function onRequest(context) {
     const description = (body.description || '').trim().slice(0, 240);
 
     if (title.length < 3) {
-      return jsonResponse({ error: 'Title must be at least 3 characters long' }, 400);
-    }
-
-    const sessionUser = await getSessionUser(request, env);
-    let creatorName = '';
-    let creatorId = null;
-
-    if (sessionUser) {
-      creatorName = sessionUser.username;
-      creatorId = sessionUser.id;
-    } else {
-      creatorName = await sanitizeGuestName(body.guest_name, env.DATABASE_URL);
+      return jsonResponse({ error: 'Il titolo deve contenere almeno 3 caratteri.' }, 400);
     }
 
     try {
@@ -278,7 +299,7 @@ export async function onRequest(context) {
         `INSERT INTO forum_rooms (title, description, creator_name, creator_id)
          VALUES ($1, $2, $3, $4)
          RETURNING id, title, description, creator_name, creator_id, message_count, created_at, last_message_at`,
-        [title, description, creatorName, creatorId]
+        [title, description, sessionUser.username, sessionUser.id]
       );
       return jsonResponse({ success: true, room: inserted[0] }, 201);
     } catch (err) {
@@ -297,7 +318,7 @@ export async function onRequest(context) {
       if (since && !isNaN(Date.parse(since))) {
         rows = await runNeonSql(
           env.DATABASE_URL,
-          `SELECT id, room_id, sender_name, sender_id, sender_role, is_guest, content, reply_to_id, reply_to_sender, reply_to_text, created_at
+          `SELECT id, room_id, sender_name, sender_id, sender_role, is_guest, guest_id, content, reply_to_id, reply_to_sender, reply_to_text, created_at
            FROM forum_messages
            WHERE room_id = $1 AND created_at > $2
            ORDER BY created_at ASC
@@ -307,7 +328,7 @@ export async function onRequest(context) {
       } else {
         rows = await runNeonSql(
           env.DATABASE_URL,
-          `SELECT id, room_id, sender_name, sender_id, sender_role, is_guest, content, reply_to_id, reply_to_sender, reply_to_text, created_at
+          `SELECT id, room_id, sender_name, sender_id, sender_role, is_guest, guest_id, content, reply_to_id, reply_to_sender, reply_to_text, created_at
            FROM (
              SELECT * FROM forum_messages
              WHERE room_id = $1
@@ -341,6 +362,7 @@ export async function onRequest(context) {
     const roomId = body.room_id;
     const rawContent = (body.content || '').trim().slice(0, 800);
     const replyToId = body.reply_to_id || null;
+    const clientGuestId = (body.guest_id || '').trim().slice(0, 64);
 
     if (!roomId) return jsonResponse({ error: 'Room ID required' }, 400);
     if (!rawContent) return jsonResponse({ error: 'Message content cannot be empty' }, 400);
@@ -350,15 +372,18 @@ export async function onRequest(context) {
     let senderId = null;
     let senderRole = 'user';
     let isGuest = true;
+    let storedGuestId = null;
 
     if (sessionUser) {
       senderName = sessionUser.username;
       senderId = sessionUser.id;
       senderRole = sessionUser.role || 'user';
       isGuest = false;
+      storedGuestId = null;
     } else {
       senderName = await sanitizeGuestName(body.guest_name, env.DATABASE_URL);
       isGuest = true;
+      storedGuestId = clientGuestId || null;
     }
 
     let replyToSender = null;
@@ -381,10 +406,10 @@ export async function onRequest(context) {
     try {
       const inserted = await runNeonSql(
         env.DATABASE_URL,
-        `INSERT INTO forum_messages (room_id, sender_name, sender_id, sender_role, is_guest, content, reply_to_id, reply_to_sender, reply_to_text)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-         RETURNING id, room_id, sender_name, sender_id, sender_role, is_guest, content, reply_to_id, reply_to_sender, reply_to_text, created_at`,
-        [roomId, senderName, senderId, senderRole, isGuest, rawContent, replyToId, replyToSender, replyToText]
+        `INSERT INTO forum_messages (room_id, sender_name, sender_id, sender_role, is_guest, guest_id, content, reply_to_id, reply_to_sender, reply_to_text)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         RETURNING id, room_id, sender_name, sender_id, sender_role, is_guest, guest_id, content, reply_to_id, reply_to_sender, reply_to_text, created_at`,
+        [roomId, senderName, senderId, senderRole, isGuest, storedGuestId, rawContent, replyToId, replyToSender, replyToText]
       );
 
       runNeonSql(

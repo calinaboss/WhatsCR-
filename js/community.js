@@ -1,6 +1,7 @@
 (function() {
   let currentUser = null;
   let guestName = '';
+  let guestId = '';
   let currentRoomId = null;
   let currentRoomData = null;
   let activeReply = null;
@@ -59,13 +60,20 @@
     return 'Guest_' + Math.floor(1000 + Math.random() * 9000);
   }
 
-  function initGuestName() {
-    let saved = localStorage.getItem('whatscr_guest_name');
-    if (!saved || typeof saved !== 'string' || saved.trim().length < 2) {
-      saved = generateRandomGuestName();
-      localStorage.setItem('whatscr_guest_name', saved);
+  function initGuestIdentity() {
+    let savedId = sessionStorage.getItem('whatscr_guest_id');
+    if (!savedId || typeof savedId !== 'string' || savedId.length < 8) {
+      savedId = 'g_' + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+      sessionStorage.setItem('whatscr_guest_id', savedId);
     }
-    guestName = saved.trim().slice(0, 24);
+    guestId = savedId;
+
+    let savedName = sessionStorage.getItem('whatscr_guest_name');
+    if (!savedName || typeof savedName !== 'string' || savedName.trim().length < 2) {
+      savedName = generateRandomGuestName();
+      sessionStorage.setItem('whatscr_guest_name', savedName);
+    }
+    guestName = savedName.trim().slice(0, 24);
   }
 
   function getSenderName() {
@@ -87,13 +95,13 @@
       `;
     } else {
       commUserBadge.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
           <div class="comm-user-pill guest" id="btn-change-guest-pill" title="Click to change your guest nickname">
             <i class="fa-solid fa-user-secret"></i>
             <span>${escapeHtml(guestName)}</span>
-            <i class="fa-solid fa-pen" style="font-size: 0.72rem; opacity: 0.7;"></i>
+            <i class="fa-solid fa-pen" style="font-size: 0.68rem; opacity: 0.7;"></i>
           </div>
-          <a href="login.html?next=community.html" class="nav-link" style="font-size: 0.85rem; font-weight: 700; color: var(--primary);">Log In</a>
+          <a href="login.html?next=community.html" class="nav-link" style="font-size: 0.8rem; font-weight: 700; color: var(--primary);">Log In</a>
         </div>
       `;
       const pill = document.getElementById('btn-change-guest-pill');
@@ -132,6 +140,18 @@
   }
 
   function openCreateRoomModal() {
+    if (!currentUser) {
+      alert('Devi aver effettuato l\'accesso con un account verificato per creare una stanza.');
+      window.location.href = 'login.html?next=community.html';
+      return;
+    }
+
+    if (!currentUser.email_verified && currentUser.role !== 'admin') {
+      alert('Il tuo account non e verificato. Verifica la tua email dal tuo profilo prima di poter creare una stanza.');
+      window.location.href = 'profile.html';
+      return;
+    }
+
     if (newRoomTitle) newRoomTitle.value = '';
     if (newRoomDesc) newRoomDesc.value = '';
     if (createRoomModal) {
@@ -177,7 +197,7 @@
     } catch (e) {
       currentUser = null;
     }
-    initGuestName();
+    initGuestIdentity();
     renderUserHeader();
   }
 
@@ -399,8 +419,17 @@
   function appendMessageElement(msg) {
     if (!chatMessagesContainer) return;
 
-    const myName = getSenderName();
-    const isOwn = (currentUser && msg.sender_id && currentUser.id === msg.sender_id) || (!currentUser && msg.is_guest && msg.sender_name === myName);
+    let isOwn = false;
+    if (currentUser && currentUser.id && msg.sender_id) {
+      isOwn = String(currentUser.id) === String(msg.sender_id);
+    } else if (msg.is_guest) {
+      if (msg.guest_id && guestId) {
+        isOwn = msg.guest_id === guestId;
+      } else {
+        isOwn = !currentUser && msg.sender_name === guestName;
+      }
+    }
+
     const canDelete = (currentUser && currentUser.role === 'admin') || (currentUser && msg.sender_id && currentUser.id === msg.sender_id);
 
     const safeId = escapeHtml(msg.id);
@@ -412,17 +441,19 @@
     group.id = `msg-${safeId}`;
 
     let senderHtml = '';
-    if (!msg.is_guest) {
-      senderHtml = `<a href="profile.html?u=${encodeURIComponent(msg.sender_name)}" class="msg-sender-name">@${safeSender}</a>`;
-    } else {
-      senderHtml = `<span class="msg-sender-name" style="cursor: default;">${safeSender} <span class="msg-guest-tag">Guest</span></span>`;
-    }
+    if (!isOwn) {
+      if (!msg.is_guest) {
+        senderHtml = `<a href="profile.html?u=${encodeURIComponent(msg.sender_name)}" class="msg-sender-name">@${safeSender}</a>`;
+      } else {
+        senderHtml = `<span class="msg-sender-name" style="cursor: default;">${safeSender} <span class="msg-guest-tag">Guest</span></span>`;
+      }
 
-    if (currentRoomData && msg.sender_name === currentRoomData.creator_name) {
-      senderHtml += ` <span class="msg-creator-tag">Host</span>`;
-    }
-    if (msg.sender_role === 'admin') {
-      senderHtml += ` <span class="msg-admin-tag">Admin</span>`;
+      if (currentRoomData && msg.sender_name === currentRoomData.creator_name) {
+        senderHtml += ` <span class="msg-creator-tag">Host</span>`;
+      }
+      if (msg.sender_role === 'admin') {
+        senderHtml += ` <span class="msg-admin-tag">Admin</span>`;
+      }
     }
 
     let quoteHtml = '';
@@ -437,7 +468,7 @@
 
     group.innerHTML = `
       <div class="msg-bubble">
-        <div class="msg-sender-row">
+        <div class="msg-sender-row" style="${isOwn ? 'justify-content: flex-end;' : ''}">
           <div>${senderHtml}</div>
           <div class="msg-actions">
             <button class="msg-btn-action btn-reply-msg" data-msg-id="${safeId}" data-sender="${safeSender}" title="Reply WhatsApp-style">
@@ -533,7 +564,8 @@
       const payload = {
         room_id: currentRoomId,
         content: content,
-        guest_name: guestName
+        guest_name: guestName,
+        guest_id: guestId
       };
       if (activeReply && activeReply.id) {
         payload.reply_to_id = activeReply.id;
@@ -644,7 +676,7 @@
     const desc = newRoomDesc ? newRoomDesc.value.trim() : '';
 
     if (title.length < 3) {
-      alert('Room title must be at least 3 characters long');
+      alert('Il titolo deve contenere almeno 3 caratteri.');
       return;
     }
 
@@ -657,14 +689,13 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title,
-          description: desc,
-          guest_name: guestName
+          description: desc
         })
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.error || 'Failed to create room');
+        alert(err.error || 'Errore nella creazione della stanza.');
         return;
       }
 
@@ -675,7 +706,7 @@
         openRoom(data.room.id);
       }
     } catch (e) {
-      alert('Network error creating room');
+      alert('Errore di connessione durante la creazione della stanza.');
     } finally {
       if (submitBtn) submitBtn.disabled = false;
     }
@@ -690,6 +721,7 @@
       return;
     }
     guestName = clean;
+    sessionStorage.setItem('whatscr_guest_name', guestName);
     localStorage.setItem('whatscr_guest_name', guestName);
     renderUserHeader();
     closeGuestModal();

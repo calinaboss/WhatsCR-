@@ -2142,6 +2142,39 @@ button {
   color: #dc2626;
 }
 
+.nav-community-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-main);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.nav-community-btn:hover {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+@media (min-width: 769px) {
+  .right-nav .nav-community-btn {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .right-nav .nav-community-btn {
+    display: inline-flex !important;
+    padding: 5px 8px;
+    font-size: 0.8rem;
+  }
+}
+
+
 
 
 
