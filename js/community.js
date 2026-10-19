@@ -46,6 +46,12 @@
   const btnCloseCreateRoom = document.getElementById('btn-close-create-room');
   const btnCancelCreateRoom = document.getElementById('btn-cancel-create-room');
 
+  const verifiedRequiredModal = document.getElementById('verified-required-modal');
+  const verifiedModalTitle = document.getElementById('verified-modal-title');
+  const verifiedModalDesc = document.getElementById('verified-modal-desc');
+  const btnVerifiedPrimaryAction = document.getElementById('btn-verified-primary-action');
+  const btnCloseVerifiedModal = document.getElementById('btn-close-verified-modal');
+
   const guestNameModal = document.getElementById('guest-name-modal');
   const guestNameForm = document.getElementById('guest-name-form');
   const guestNicknameInput = document.getElementById('guest-nickname-input');
@@ -146,16 +152,32 @@
     if (guestNameModal) guestNameModal.style.display = 'none';
   }
 
+  function closeVerifiedModal() {
+    if (verifiedRequiredModal) verifiedRequiredModal.style.display = 'none';
+  }
+
   function openCreateRoomModal() {
     if (!currentUser) {
-      alert('Devi aver effettuato l\'accesso con un account verificato per creare una stanza.');
-      window.location.href = 'login.html?next=community.html';
+      if (verifiedModalTitle) verifiedModalTitle.textContent = 'Verified Account Required';
+      if (verifiedModalDesc) verifiedModalDesc.textContent = 'To keep discussions safe and spam-free, creating new chat rooms requires an account. You can register for free in seconds or continue chatting in existing rooms as a guest!';
+      if (btnVerifiedPrimaryAction) {
+        btnVerifiedPrimaryAction.textContent = 'Create Free Account / Log In';
+        btnVerifiedPrimaryAction.href = 'login.html?tab=register&next=community.html';
+      }
+      if (btnCloseVerifiedModal) btnCloseVerifiedModal.textContent = 'Continue as Guest';
+      if (verifiedRequiredModal) verifiedRequiredModal.style.display = 'flex';
       return;
     }
 
     if (!currentUser.email_verified && currentUser.role !== 'admin') {
-      alert('Il tuo account non e verificato. Verifica la tua email dal tuo profilo prima di poter creare una stanza.');
-      window.location.href = 'profile.html';
+      if (verifiedModalTitle) verifiedModalTitle.textContent = 'Email Verification Required';
+      if (verifiedModalDesc) verifiedModalDesc.textContent = 'Please verify your email address to unlock room creation (security limit: 1 room every 10 hours). You can request or enter your code in your profile.';
+      if (btnVerifiedPrimaryAction) {
+        btnVerifiedPrimaryAction.textContent = 'Verify Email in Profile';
+        btnVerifiedPrimaryAction.href = 'profile.html';
+      }
+      if (btnCloseVerifiedModal) btnCloseVerifiedModal.textContent = 'Close and Continue';
+      if (verifiedRequiredModal) verifiedRequiredModal.style.display = 'flex';
       return;
     }
 
@@ -234,7 +256,7 @@
       roomsList.innerHTML = `
         <div style="text-align: center; padding: 32px 16px; color: var(--text-muted); font-size: 0.86rem;">
           <i class="fa-regular fa-comment-dots" style="font-size: 1.8rem; margin-bottom: 8px; color: #cbd5e1; display: block;"></i>
-          Nessuna stanza trovata. Crea la prima stanza per iniziare!
+          No chat rooms found. Be the first to create one!
         </div>
       `;
       return;
@@ -364,7 +386,7 @@
         chatMessagesContainer.innerHTML = `
           <div style="text-align: center; padding: 48px 20px; color: #94a3b8; font-size: 0.9rem;">
             <i class="fa-regular fa-comment-dots" style="font-size: 2.2rem; margin-bottom: 12px; color: #cbd5e1; display: block;"></i>
-            Nessun messaggio in questa stanza. Scrivi un messaggio per primo!
+            No messages in this room yet. Say hello and start the conversation!
           </div>
         `;
         return;
@@ -414,13 +436,13 @@
       if (typingList.length === 0) {
         chatTypingBar.style.display = 'none';
       } else if (typingList.length === 1) {
-        chatTypingText.textContent = `${typingList[0]} sta scrivendo...`;
+        chatTypingText.textContent = `${typingList[0]} is typing...`;
         chatTypingBar.style.display = 'flex';
       } else if (typingList.length === 2) {
-        chatTypingText.textContent = `${typingList[0]} e ${typingList[1]} stanno scrivendo...`;
+        chatTypingText.textContent = `${typingList[0]} and ${typingList[1]} are typing...`;
         chatTypingBar.style.display = 'flex';
       } else {
-        chatTypingText.textContent = `${typingList[0]}, ${typingList[1]} e altri stanno scrivendo...`;
+        chatTypingText.textContent = `${typingList[0]}, ${typingList[1]} and others are typing...`;
         chatTypingBar.style.display = 'flex';
       }
     } catch (e) {
@@ -592,7 +614,7 @@
     }, 250);
   }
 
-  function showSpamNotice(msg = 'Rallenta un attimo! Aspetta 3 secondi prima di inviare un altro messaggio.') {
+  function showSpamNotice(msg = 'Slow down! Please wait 3 seconds before sending another message.') {
     if (!chatSpamAlert || !chatSpamText) return;
     chatSpamText.textContent = msg;
     chatSpamAlert.style.display = 'flex';
@@ -606,7 +628,7 @@
 
     if (Date.now() < cooldownEndTime) {
       const secLeft = Math.ceil((cooldownEndTime - Date.now()) / 1000);
-      showSpamNotice(`Rallenta un attimo! Aspetta ${secLeft} secondi prima di inviare un altro messaggio.`);
+      showSpamNotice(`Slow down! Please wait ${secLeft} seconds before sending another message.`);
       return;
     }
 
@@ -636,9 +658,9 @@
         const errData = await res.json().catch(() => ({}));
         if (res.status === 429) {
           startCooldown(errData.cooldown || 3);
-          showSpamNotice(errData.error || 'Rallenta un attimo! Aspetta prima di inviare.');
+          showSpamNotice(errData.error || 'Slow down! Please wait before sending another message.');
         } else {
-          alert(errData.error || 'Errore durante l\'invio del messaggio.');
+          alert(errData.error || 'Failed to send message.');
         }
         return;
       }
@@ -654,7 +676,7 @@
       if (charCounter) charCounter.textContent = '0/800';
       hideReplyBanner();
     } catch (err) {
-      showSpamNotice('Errore di connessione. Riprova tra poco.');
+      showSpamNotice('Connection error. Please try again in a moment.');
     } finally {
       if (chatInput && window.innerWidth > 820) chatInput.focus();
     }
@@ -678,7 +700,7 @@
 
   async function handleDeleteMessage(msgId) {
     if (!msgId) return;
-    if (!confirm('Sei sicuro di voler eliminare questo messaggio?')) return;
+    if (!confirm('Are you sure you want to delete this message?')) return;
 
     try {
       const res = await fetch('/api/forum?action=delete_message', {
@@ -688,19 +710,19 @@
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.error || 'Impossibile eliminare il messaggio.');
+        alert(err.error || 'Could not delete message.');
         return;
       }
       const el = document.getElementById(`msg-${msgId}`);
       if (el) el.remove();
     } catch (e) {
-      alert('Errore di rete durante l\'eliminazione del messaggio.');
+      alert('Network error while deleting message.');
     }
   }
 
   async function handleDeleteRoom() {
     if (!currentRoomId) return;
-    if (!confirm('Sei sicuro di voler eliminare questa chat e tutti i messaggi contenuti?')) return;
+    if (!confirm('Are you sure you want to delete this chat room and all its messages? This action cannot be undone.')) return;
 
     try {
       const res = await fetch('/api/forum?action=delete_room', {
@@ -710,7 +732,7 @@
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.error || 'Impossibile eliminare la stanza.');
+        alert(err.error || 'Could not delete room.');
         return;
       }
 
@@ -724,7 +746,7 @@
       if (chatEmptyState) chatEmptyState.style.display = 'flex';
       loadRooms('', true);
     } catch (e) {
-      alert('Errore di rete durante l\'eliminazione della stanza.');
+      alert('Network error while deleting room.');
     }
   }
 
@@ -735,7 +757,7 @@
     const desc = newRoomDesc ? newRoomDesc.value.trim() : '';
 
     if (title.length < 3) {
-      alert('Il titolo deve contenere almeno 3 caratteri.');
+      alert('Room title must be at least 3 characters long.');
       return;
     }
 
@@ -754,7 +776,7 @@
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.error || 'Errore nella creazione della stanza.');
+        alert(err.error || 'Failed to create room.');
         return;
       }
 
@@ -765,7 +787,7 @@
         openRoom(data.room.id);
       }
     } catch (e) {
-      alert('Errore di connessione durante la creazione della stanza.');
+      alert('Network error while creating room.');
     } finally {
       if (submitBtn) submitBtn.disabled = false;
     }
@@ -776,7 +798,7 @@
     if (!guestNicknameInput) return;
     let clean = guestNicknameInput.value.trim().replace(/[^\w\s-]/g, '').slice(0, 24);
     if (clean.length < 2) {
-      alert('Il nickname deve contenere tra 2 e 24 caratteri.');
+      alert('Nickname must be between 2 and 24 characters.');
       return;
     }
     guestName = clean;
@@ -798,6 +820,10 @@
     }
     if (createRoomForm) {
       createRoomForm.addEventListener('submit', handleCreateRoomSubmit);
+    }
+
+    if (btnCloseVerifiedModal) {
+      btnCloseVerifiedModal.addEventListener('click', closeVerifiedModal);
     }
 
     if (btnCloseGuestModal) {

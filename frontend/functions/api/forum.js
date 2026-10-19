@@ -99,9 +99,9 @@ async function ensureForumTables(databaseUrl) {
     const totalRooms = countRows && countRows[0] ? parseInt(countRows[0].count, 10) : 0;
     if (totalRooms === 0) {
       const defaultRooms = [
-        ['General & Feedback', 'Spazio aperto per discutere di produzioni musicali, sound design e condividere idee.', 'WhatsCR Official'],
-        ['Game Audio & Loops', 'Discussioni su loop senza copyright, campioni sonori ed effetti per videogiochi.', 'WhatsCR Official'],
-        ['Creators & Collaborations', 'Incontra altri creator, organizza collaborazioni e scambia consigli sui progetti.', 'WhatsCR Official']
+        ['General & Feedback', 'Open space to discuss music production, sound design, and creative ideas.', 'WhatsCR Official'],
+        ['Game Audio & Loops', 'Discussions on copyright-free loops, chiptune, SFX, and game engine audio.', 'WhatsCR Official'],
+        ['Creators & Collaborations', 'Meet fellow creators, share upcoming tracks, and collaborate on audio projects.', 'WhatsCR Official']
       ];
       for (const [title, desc, creator] of defaultRooms) {
         await runNeonSql(
@@ -268,11 +268,11 @@ export async function onRequest(context) {
   if (request.method === 'POST' && action === 'create_room') {
     const sessionUser = await getSessionUser(request, env);
     if (!sessionUser) {
-      return jsonResponse({ error: 'Devi essere loggato con un account verificato per creare una stanza.' }, 401);
+      return jsonResponse({ error: 'You must be logged in with a verified account to create a chat room.' }, 401);
     }
 
     if (!sessionUser.email_verified && sessionUser.role !== 'admin') {
-      return jsonResponse({ error: 'Account non verificato. Verifica la tua email dal tuo profilo prima di creare stanze.' }, 403);
+      return jsonResponse({ error: 'Unverified account. Please verify your email in your profile before creating chat rooms.' }, 403);
     }
 
     if (sessionUser.role !== 'admin') {
@@ -287,16 +287,16 @@ export async function onRequest(context) {
         const remainingMs = 10 * 3600 * 1000 - elapsed;
         const remainingHours = Math.floor(remainingMs / 3600000);
         const remainingMinutes = Math.ceil((remainingMs % 3600000) / 60000);
-        const timeMsg = remainingHours > 0 ? `${remainingHours} ore e ${remainingMinutes} minuti` : `${remainingMinutes} minuti`;
+        const timeMsg = remainingHours > 0 ? `${remainingHours}h ${remainingMinutes}m` : `${remainingMinutes} minutes`;
         return jsonResponse({
-          error: `Limite raggiunto: puoi creare una stanza solo ogni 10 ore. Riprova tra ${timeMsg}.`
+          error: `Limit reached: You can create only one room every 10 hours. Please wait another ${timeMsg}.`
         }, 429);
       }
 
       const ipAllowed = await checkPersistentRateLimit(env.DATABASE_URL, `forum_create_room_ip_${ip}`, 1, 36000000);
       if (!ipAllowed) {
         return jsonResponse({
-          error: 'Limite raggiunto: e consentito creare solo 1 stanza ogni 10 ore da questa connessione.'
+          error: 'Limit reached: Only 1 room can be created from this connection every 10 hours.'
         }, 429);
       }
     }
@@ -312,7 +312,7 @@ export async function onRequest(context) {
     const description = (body.description || '').trim().slice(0, 240);
 
     if (title.length < 3) {
-      return jsonResponse({ error: 'Il titolo deve contenere almeno 3 caratteri.' }, 400);
+      return jsonResponse({ error: 'Title must be at least 3 characters long.' }, 400);
     }
 
     try {
@@ -406,7 +406,7 @@ export async function onRequest(context) {
     const senderCooldownKey = sessionUser ? `forum_cd_user_${sessionUser.id}` : `forum_cd_guest_${ip}_${storedGuestId || 'anon'}`;
     const cooldownAllowed = await checkPersistentRateLimit(env.DATABASE_URL, senderCooldownKey, 1, 3000);
     if (!cooldownAllowed) {
-      return jsonResponse({ error: 'Rallenta un attimo! Aspetta 3 secondi prima di inviare un altro messaggio.', cooldown: 3 }, 429);
+      return jsonResponse({ error: 'Slow down! Please wait 3 seconds before sending another message.', cooldown: 3 }, 429);
     }
 
     let replyToSender = null;
