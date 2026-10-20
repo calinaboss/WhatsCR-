@@ -362,7 +362,7 @@
           if (profilePublicLink) {
             profilePublicLink.href = `profile.html?u=${encodeURIComponent(data.user.username)}`;
           }
-          if (usernameCooldownText) {
+          if (data.username_changed && usernameCooldownText) {
             usernameCooldownText.textContent = 'Username updated recently. Next change available in 24 hours.';
             usernameCooldownText.style.color = '#d97706';
           }

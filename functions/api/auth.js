@@ -673,13 +673,14 @@ export async function onRequest(context) {
           [rawBio, userId]
         );
       } else {
-        return new Response(JSON.stringify({ success: true, user: user }), {
+        return new Response(JSON.stringify({ success: true, user: user, username_changed: false }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
       }
 
-      return new Response(JSON.stringify({ success: true, user: updated[0] }), {
+      const isUsernameChanged = Boolean(cleanUsername && cleanUsername !== (user.username || '').toLowerCase());
+      return new Response(JSON.stringify({ success: true, user: updated[0], username_changed: isUsernameChanged }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });
