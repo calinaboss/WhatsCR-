@@ -77,6 +77,7 @@ async function ensureForumTables(databaseUrl) {
     )`,
     `ALTER TABLE forum_messages ADD COLUMN IF NOT EXISTS guest_id VARCHAR(64)`,
     `ALTER TABLE forum_rooms ADD COLUMN IF NOT EXISTS category VARCHAR(40) DEFAULT 'General'`,
+    `UPDATE forum_rooms SET category = 'General' WHERE category IS NULL`,
     `CREATE INDEX IF NOT EXISTS idx_forum_rooms_category ON forum_rooms(category)`,
     `CREATE INDEX IF NOT EXISTS idx_forum_messages_room_created ON forum_messages(room_id, created_at ASC)`,
     `CREATE TABLE IF NOT EXISTS forum_typing (
@@ -231,7 +232,7 @@ export async function onRequest(context) {
            (SELECT COUNT(DISTINCT m2.sender_name) FROM forum_messages m2 WHERE m2.room_id = r.id) as people_count,
            r.created_at, r.last_message_at
            FROM forum_rooms r
-           WHERE r.category = $1 AND (r.title ILIKE '%' || $2 || '%' OR r.description ILIKE '%' || $2 || '%')
+           WHERE COALESCE(r.category, 'General') = $1 AND (r.title ILIKE '%' || $2 || '%' OR r.description ILIKE '%' || $2 || '%')
            ORDER BY r.last_message_at DESC
            LIMIT 50`,
           [validCategory, q]
@@ -244,7 +245,7 @@ export async function onRequest(context) {
            (SELECT COUNT(DISTINCT m2.sender_name) FROM forum_messages m2 WHERE m2.room_id = r.id) as people_count,
            r.created_at, r.last_message_at
            FROM forum_rooms r
-           WHERE r.category = $1
+           WHERE COALESCE(r.category, 'General') = $1
            ORDER BY r.last_message_at DESC
            LIMIT 50`,
           [validCategory]

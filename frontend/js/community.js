@@ -855,8 +855,7 @@
       commCategoryBar.addEventListener('click', (e) => {
         const pill = e.target.closest('.comm-cat-pill');
         if (!pill) return;
-        const cat = pill.getAttribute('data-cat');
-        if (!cat) return;
+        const cat = pill.getAttribute('data-category') || pill.getAttribute('data-cat') || 'all';
         commCategoryBar.querySelectorAll('.comm-cat-pill').forEach(p => p.classList.remove('active'));
         pill.classList.add('active');
         currentCategory = cat;
