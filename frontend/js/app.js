@@ -351,7 +351,7 @@
           rightNav.innerHTML = `
             <a href="community.html" class="nav-link nav-community-btn" title="Community"><i class="fa-solid fa-comments"></i><span>Community</span></a>
             ${isAdmin ? '<a href="admin.html" class="nav-link nav-admin-btn" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-shield-halved"></i><span> Admin</span></a>' : ''}
-            <a href="login.html" class="nav-link nav-user-link" title="My Account"><i class="fa-solid fa-user"></i><span class="nav-user-name">${userName}</span></a>
+            <a href="login.html" class="nav-link nav-user-link" title="My Account">${data.user.avatar_url ? `<img src="${sanitizeUrl(data.user.avatar_url)}" class="nav-avatar-img" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">` : '<i class="fa-solid fa-user"></i>'}<span class="nav-user-name">${userName}</span></a>
             <button id="nav-logout-btn" class="nav-logout-btn">Log out</button>
             <a href="upload.html" class="btn-upload">
               <i class="fa-solid fa-arrow-up-from-bracket"></i>

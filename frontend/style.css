@@ -1736,7 +1736,11 @@ button {
   user-select: none;
 }
 
-.profile-avatar-large img {
+.profile-avatar-large img,
+.creator-card-avatar img,
+.user-list-avatar img,
+.comm-user-avatar img,
+.nav-avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;

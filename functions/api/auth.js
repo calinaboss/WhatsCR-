@@ -147,6 +147,36 @@ async function sendEmailJsOtp(env, toEmail, passcode, timeStr) {
   }
 }
 
+function inspectImageHeader(buffer) {
+  if (!buffer || buffer.byteLength < 16) {
+    return { valid: false, error: 'File is too small or invalid' };
+  }
+  const bytes = new Uint8Array(buffer.slice(0, 32));
+  if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
+    return { valid: true, format: 'jpg', mime: 'image/jpeg' };
+  }
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47 &&
+      bytes[4] === 0x0D && bytes[5] === 0x0A && bytes[6] === 0x1A && bytes[7] === 0x0A) {
+    return { valid: true, format: 'png', mime: 'image/png' };
+  }
+  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+      bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) {
+    return { valid: true, format: 'webp', mime: 'image/webp' };
+  }
+  return { valid: false, error: 'Only JPEG, PNG, or WebP images are allowed.' };
+}
+
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i += 32768) {
+    const chunk = bytes.subarray(i, Math.min(i + 32768, len));
+    binary += String.fromCharCode.apply(null, chunk);
+  }
+  return btoa(binary);
+}
+
 async function runNeonSql(databaseUrl, sql, params = []) {
   const dbUrl = new URL(databaseUrl);
   const endpoint = `https://${dbUrl.host}/sql`;
@@ -198,6 +228,10 @@ async function ensureTables(databaseUrl) {
     "CREATE TABLE IF NOT EXISTS rate_limits (key VARCHAR(255) PRIMARY KEY, count INT NOT NULL DEFAULT 1, reset_at TIMESTAMP WITH TIME ZONE NOT NULL)",
     "CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_at)",
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(255)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS bio VARCHAR(300)",
+    "CREATE TABLE IF NOT EXISTS avatar_files (filename VARCHAR(255) PRIMARY KEY, user_id UUID REFERENCES users(id) ON DELETE CASCADE, mime_type VARCHAR(64) NOT NULL, data BYTEA NOT NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)",
+    "CREATE INDEX IF NOT EXISTS idx_avatar_files_user ON avatar_files(user_id)",
     "CREATE TABLE IF NOT EXISTS email_verifications (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id) ON DELETE CASCADE, email VARCHAR(255) NOT NULL, code_hash VARCHAR(255) NOT NULL, expires_at TIMESTAMP WITH TIME ZONE NOT NULL, attempts INT DEFAULT 0, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)",
     "CREATE INDEX IF NOT EXISTS idx_email_verif_email ON email_verifications(email)"
   ];
@@ -264,7 +298,7 @@ export async function onRequest(context) {
     try {
       const userRows = await runNeonSql(
         env.DATABASE_URL,
-        'SELECT id, username, role, created_at, username_changed_at FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1',
+        'SELECT id, username, role, created_at, username_changed_at, avatar_url, bio FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1',
         [targetUsername]
       );
 
@@ -313,6 +347,8 @@ export async function onRequest(context) {
           user: {
             username: u.username,
             role: u.role,
+            avatar_url: u.avatar_url || null,
+            bio: u.bio || '',
             created_at: u.created_at,
             track_count: count,
             follower_count: followerCount,
@@ -359,7 +395,7 @@ export async function onRequest(context) {
     try {
       const rows = await runNeonSql(
         env.DATABASE_URL,
-        `SELECT u.username, u.role, u.created_at,
+        `SELECT u.username, u.role, u.created_at, u.avatar_url,
           (SELECT COUNT(*) FROM tracks t WHERE t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)) as track_count
         FROM follows f
         JOIN users u ON f.follower_id = u.id
@@ -393,7 +429,7 @@ export async function onRequest(context) {
     try {
       const rows = await runNeonSql(
         env.DATABASE_URL,
-        `SELECT u.username, u.role, u.created_at,
+        `SELECT u.username, u.role, u.created_at, u.avatar_url,
           (SELECT COUNT(*) FROM tracks t WHERE t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)) as track_count
         FROM follows f
         JOIN users u ON f.following_id = u.id
@@ -516,7 +552,7 @@ export async function onRequest(context) {
       const tokenHash = await sha256Hex(token);
       const rows = await runNeonSql(
         env.DATABASE_URL,
-        'SELECT u.id, u.email, u.username, u.role, u.username_changed_at, u.email_verified FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        'SELECT u.id, u.email, u.username, u.role, u.username_changed_at, u.email_verified, u.avatar_url, u.bio FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
         [tokenHash]
       );
       if (rows && rows.length > 0) {
@@ -553,20 +589,15 @@ export async function onRequest(context) {
       });
     }
 
-    let username = (body.username || '').trim().toLowerCase();
-    const cleanUsername = username.replace(/[^a-z0-9_]/g, '');
-    if (!cleanUsername || cleanUsername.length < 3 || cleanUsername.length > 30) {
-      return new Response(JSON.stringify({ error: 'Username must be 3-30 letters, numbers, or underscores.' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    const hasUsername = typeof body.username === 'string' && body.username.trim().length > 0;
+    const hasBio = body.bio !== undefined;
+    const rawBio = hasBio ? String(body.bio).trim().slice(0, 300) : null;
 
     try {
       const tokenHash = await sha256Hex(token);
       const authRows = await runNeonSql(
         env.DATABASE_URL,
-        'SELECT u.id, u.username_changed_at FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        'SELECT u.id, u.username, u.username_changed_at, u.bio, u.avatar_url FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
         [tokenHash]
       );
       if (!authRows || authRows.length === 0) {
@@ -578,48 +609,282 @@ export async function onRequest(context) {
       const user = authRows[0];
       const userId = user.id;
 
-      if (user.username_changed_at) {
-        const lastChanged = new Date(user.username_changed_at).getTime();
-        const diffMs = Date.now() - lastChanged;
-        const cooldownMs = 24 * 60 * 60 * 1000;
-        if (diffMs < cooldownMs) {
-          const remainingMin = Math.ceil((cooldownMs - diffMs) / (60 * 1000));
-          const hours = Math.floor(remainingMin / 60);
-          const mins = remainingMin % 60;
-          const timeText = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-          return new Response(JSON.stringify({
-            error: `You can change your username only once every 24 hours. Please wait another ${timeText}.`
-          }), {
-            status: 429,
+      let cleanUsername = null;
+      if (hasUsername) {
+        const username = body.username.trim().toLowerCase();
+        cleanUsername = username.replace(/[^a-z0-9_]/g, '');
+        if (!cleanUsername || cleanUsername.length < 3 || cleanUsername.length > 30) {
+          return new Response(JSON.stringify({ error: 'Username must be 3-30 letters, numbers, or underscores.' }), {
+            status: 400,
             headers: { 'Content-Type': 'application/json' }
           });
         }
+
+        if (cleanUsername !== (user.username || '').toLowerCase()) {
+          if (user.username_changed_at) {
+            const lastChanged = new Date(user.username_changed_at).getTime();
+            const diffMs = Date.now() - lastChanged;
+            const cooldownMs = 24 * 60 * 60 * 1000;
+            if (diffMs < cooldownMs) {
+              const remainingMin = Math.ceil((cooldownMs - diffMs) / (60 * 1000));
+              const hours = Math.floor(remainingMin / 60);
+              const mins = remainingMin % 60;
+              const timeText = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+              return new Response(JSON.stringify({
+                error: `You can change your username only once every 24 hours. Please wait another ${timeText}.`
+              }), {
+                status: 429,
+                headers: { 'Content-Type': 'application/json' }
+              });
+            }
+          }
+
+          const taken = await runNeonSql(
+            env.DATABASE_URL,
+            'SELECT id FROM users WHERE LOWER(username) = $1 AND id != $2 LIMIT 1',
+            [cleanUsername, userId]
+          );
+          if (taken && taken.length > 0) {
+            return new Response(JSON.stringify({ error: 'This username is already taken. Please choose another.' }), {
+              status: 409,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+        }
       }
 
-      const taken = await runNeonSql(
-        env.DATABASE_URL,
-        'SELECT id FROM users WHERE LOWER(username) = $1 AND id != $2 LIMIT 1',
-        [cleanUsername, userId]
-      );
-      if (taken && taken.length > 0) {
-        return new Response(JSON.stringify({ error: 'This username is already taken. Please choose another.' }), {
-          status: 409,
+      let updated;
+      if (cleanUsername && cleanUsername !== (user.username || '').toLowerCase() && hasBio) {
+        updated = await runNeonSql(
+          env.DATABASE_URL,
+          'UPDATE users SET username = $1, username_changed_at = NOW(), bio = $2 WHERE id = $3 RETURNING id, email, username, role, username_changed_at, email_verified, avatar_url, bio',
+          [cleanUsername, rawBio, userId]
+        );
+      } else if (cleanUsername && cleanUsername !== (user.username || '').toLowerCase()) {
+        updated = await runNeonSql(
+          env.DATABASE_URL,
+          'UPDATE users SET username = $1, username_changed_at = NOW() WHERE id = $2 RETURNING id, email, username, role, username_changed_at, email_verified, avatar_url, bio',
+          [cleanUsername, userId]
+        );
+      } else if (hasBio) {
+        updated = await runNeonSql(
+          env.DATABASE_URL,
+          'UPDATE users SET bio = $1 WHERE id = $2 RETURNING id, email, username, role, username_changed_at, email_verified, avatar_url, bio',
+          [rawBio, userId]
+        );
+      } else {
+        return new Response(JSON.stringify({ success: true, user: user }), {
+          status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
       }
-
-      const updated = await runNeonSql(
-        env.DATABASE_URL,
-        'UPDATE users SET username = $1, username_changed_at = NOW() WHERE id = $2 RETURNING id, email, username, role, username_changed_at, email_verified',
-        [cleanUsername, userId]
-      );
 
       return new Response(JSON.stringify({ success: true, user: updated[0] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });
     } catch (err) {
-      return new Response(JSON.stringify({ error: 'Failed to update username' }), {
+      return new Response(JSON.stringify({ error: 'Failed to update profile' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
+  if (request.method === 'POST' && action === 'upload_avatar') {
+    const cookies = parseCookies(request.headers.get('Cookie'));
+    const token = cookies.whatscr_session;
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    try {
+      const tokenHash = await sha256Hex(token);
+      const sessionRows = await runNeonSql(
+        env.DATABASE_URL,
+        'SELECT u.id, u.username, u.email, u.avatar_url FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        [tokenHash]
+      );
+      if (!sessionRows || sessionRows.length === 0) {
+        return new Response(JSON.stringify({ error: 'Session expired' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      const user = sessionRows[0];
+
+      const rateKey = `avatar_upload_${user.id}`;
+      const allowed = await checkPersistentRateLimit(env.DATABASE_URL, rateKey, 10, 3600000);
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: 'Too many avatar changes. Please wait an hour.' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      let formData;
+      try {
+        formData = await request.formData();
+      } catch (err) {
+        return new Response(JSON.stringify({ error: 'Invalid form data' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const file = formData.get('avatar') || formData.get('file');
+      if (!file || typeof file === 'string' || !file.size) {
+        return new Response(JSON.stringify({ error: 'Please choose an image file to upload.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const maxFileSize = 2 * 1024 * 1024;
+      if (file.size > maxFileSize) {
+        return new Response(JSON.stringify({ error: 'File size exceeds maximum allowed 2 MB.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const buffer = await file.arrayBuffer();
+      const inspection = inspectImageHeader(buffer);
+      if (!inspection.valid) {
+        return new Response(JSON.stringify({ error: inspection.error }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const fileId = crypto.randomUUID();
+      const safeFilename = `${fileId}.${inspection.format}`;
+      const avatarUrl = `/api/avatar/${safeFilename}`;
+
+      if (env.AVATAR_BUCKET) {
+        try {
+          await env.AVATAR_BUCKET.put(safeFilename, buffer, {
+            httpMetadata: {
+              contentType: inspection.mime,
+              cacheControl: 'public, max-age=86400'
+            }
+          });
+        } catch (e) {}
+      } else if (env.AUDIO_BUCKET) {
+        try {
+          await env.AUDIO_BUCKET.put(`avatars/${safeFilename}`, buffer, {
+            httpMetadata: {
+              contentType: inspection.mime,
+              cacheControl: 'public, max-age=86400'
+            }
+          });
+        } catch (e) {}
+      }
+
+      try {
+        const base64Data = arrayBufferToBase64(buffer);
+        await runNeonSql(
+          env.DATABASE_URL,
+          "INSERT INTO avatar_files (filename, user_id, mime_type, data) VALUES ($1, $2, $3, decode($4, 'base64')) ON CONFLICT (filename) DO NOTHING",
+          [safeFilename, user.id, inspection.mime, base64Data]
+        );
+      } catch (storageErr) {
+        return new Response(JSON.stringify({ error: 'Failed to save avatar image' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (user.avatar_url && user.avatar_url.includes('/api/avatar/')) {
+        const oldFilename = user.avatar_url.split('/').pop();
+        if (oldFilename && /^[a-f0-9\-]{36}\.(jpg|png|webp)$/i.test(oldFilename)) {
+          if (env.AVATAR_BUCKET) {
+            env.AVATAR_BUCKET.delete(oldFilename).catch(() => {});
+          } else if (env.AUDIO_BUCKET) {
+            env.AUDIO_BUCKET.delete(`avatars/${oldFilename}`).catch(() => {});
+          }
+          runNeonSql(env.DATABASE_URL, 'DELETE FROM avatar_files WHERE filename = $1', [oldFilename]).catch(() => {});
+        }
+      }
+
+      const updatedUser = await runNeonSql(
+        env.DATABASE_URL,
+        'UPDATE users SET avatar_url = $1 WHERE id = $2 RETURNING id, email, username, role, avatar_url, bio',
+        [avatarUrl, user.id]
+      );
+
+      return new Response(JSON.stringify({
+        success: true,
+        avatar_url: avatarUrl,
+        user: updatedUser[0]
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (uploadErr) {
+      return new Response(JSON.stringify({ error: 'Avatar upload failed' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
+  if (request.method === 'POST' && action === 'delete_avatar') {
+    const cookies = parseCookies(request.headers.get('Cookie'));
+    const token = cookies.whatscr_session;
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    try {
+      const tokenHash = await sha256Hex(token);
+      const sessionRows = await runNeonSql(
+        env.DATABASE_URL,
+        'SELECT u.id, u.avatar_url FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        [tokenHash]
+      );
+      if (!sessionRows || sessionRows.length === 0) {
+        return new Response(JSON.stringify({ error: 'Session expired' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      const user = sessionRows[0];
+
+      if (user.avatar_url && user.avatar_url.includes('/api/avatar/')) {
+        const oldFilename = user.avatar_url.split('/').pop();
+        if (oldFilename && /^[a-f0-9\-]{36}\.(jpg|png|webp)$/i.test(oldFilename)) {
+          if (env.AVATAR_BUCKET) {
+            env.AVATAR_BUCKET.delete(oldFilename).catch(() => {});
+          } else if (env.AUDIO_BUCKET) {
+            env.AUDIO_BUCKET.delete(`avatars/${oldFilename}`).catch(() => {});
+          }
+          runNeonSql(env.DATABASE_URL, 'DELETE FROM avatar_files WHERE filename = $1', [oldFilename]).catch(() => {});
+        }
+      }
+
+      const updatedUser = await runNeonSql(
+        env.DATABASE_URL,
+        'UPDATE users SET avatar_url = NULL WHERE id = $1 RETURNING id, email, username, role, avatar_url, bio',
+        [user.id]
+      );
+
+      return new Response(JSON.stringify({
+        success: true,
+        avatar_url: null,
+        user: updatedUser[0]
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (delErr) {
+      return new Response(JSON.stringify({ error: 'Failed to delete avatar' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });

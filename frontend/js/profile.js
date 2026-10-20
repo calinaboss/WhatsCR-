@@ -67,6 +67,21 @@
           const profileData = await profileRes.json();
           if (profileData && profileData.user) {
             const u = profileData.user;
+            if (u.avatar_url) {
+              creatorAvatar.innerHTML = `<img src="${sanitizeUrl(u.avatar_url)}" alt="${escapeHtml(displayUser)}" onerror="this.onerror=null; this.parentElement.textContent='${escapeHtml((displayUser[0] || 'C').toUpperCase())}';">`;
+            } else {
+              creatorAvatar.textContent = (displayUser[0] || 'C').toUpperCase();
+            }
+            const creatorBio = document.getElementById('creator-bio');
+            if (creatorBio) {
+              if (u.bio && u.bio.trim()) {
+                creatorBio.textContent = u.bio.trim();
+                creatorBio.style.display = 'block';
+              } else {
+                creatorBio.textContent = '';
+                creatorBio.style.display = 'none';
+              }
+            }
             creatorBadge.textContent = 'Creator';
             creatorBadge.style.background = '#f1f5f9';
             creatorBadge.style.color = '#64748b';
@@ -378,7 +393,7 @@
         usersModalList.innerHTML = users.map(u => `
           <div class="user-list-item">
             <div class="user-list-left">
-              <div class="user-list-avatar">${escapeHtml((u.username || 'C')[0].toUpperCase())}</div>
+              <div class="user-list-avatar">${u.avatar_url ? `<img src="${sanitizeUrl(u.avatar_url)}" alt="${escapeHtml(u.username)}" onerror="this.onerror=null; this.parentElement.textContent='${escapeHtml((u.username || 'C')[0].toUpperCase())}';">` : escapeHtml((u.username || 'C')[0].toUpperCase())}</div>
               <div class="user-list-meta">
                 <a href="profile.html?u=${encodeURIComponent(u.username)}" class="user-list-name">@${escapeHtml(u.username)}</a>
                 <span class="user-list-sub">${u.track_count || 0} published tracks</span>
@@ -419,7 +434,7 @@
             rightNav.innerHTML = `
               <a href="community.html" class="nav-link nav-community-btn" title="Community"><i class="fa-solid fa-comments"></i><span>Community</span></a>
               ${isAdmin ? '<a href="admin.html" class="nav-link nav-admin-btn" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-shield-halved"></i><span> Admin</span></a>' : ''}
-              <a href="login.html" class="nav-link nav-user-link" title="My Account"><i class="fa-solid fa-user"></i><span class="nav-user-name">${userName}</span></a>
+              <a href="login.html" class="nav-link nav-user-link" title="My Account">${data.user.avatar_url ? `<img src="${sanitizeUrl(data.user.avatar_url)}" class="nav-avatar-img" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">` : '<i class="fa-solid fa-user"></i>'}<span class="nav-user-name">${userName}</span></a>
               <button id="nav-logout-btn" class="nav-logout-btn">Log out</button>
               <a href="upload.html" class="btn-upload">
                 <i class="fa-solid fa-arrow-up-from-bracket"></i>
@@ -527,6 +542,212 @@
         closeWikiModal();
       }
     });
+
+    const editProfileModal = document.getElementById('edit-profile-modal');
+    const editModalClose = document.getElementById('edit-modal-close');
+    const editModalBtnCancel = document.getElementById('edit-modal-btn-cancel');
+    const editProfileForm = document.getElementById('edit-profile-form');
+    const editAvatarPreview = document.getElementById('edit-avatar-preview');
+    const editAvatarInput = document.getElementById('edit-avatar-input');
+    const btnRemoveAvatar = document.getElementById('btn-remove-avatar');
+    const editBioInput = document.getElementById('edit-bio-input');
+    const editBioCounter = document.getElementById('edit-bio-counter');
+    const editUsernameInput = document.getElementById('edit-username-input');
+    const editProfileAlert = document.getElementById('edit-profile-alert');
+    const editModalBtnSave = document.getElementById('edit-modal-btn-save');
+
+    function showEditAlert(msg, isSuccess = false) {
+      if (!editProfileAlert) return;
+      editProfileAlert.textContent = msg;
+      editProfileAlert.style.display = 'block';
+      editProfileAlert.style.background = isSuccess ? '#ecfdf5' : '#fef2f2';
+      editProfileAlert.style.color = isSuccess ? '#047857' : '#b91c1c';
+      editProfileAlert.style.border = isSuccess ? '1px solid #a7f3d0' : '1px solid #fecaca';
+    }
+
+    function updateEditAvatarDisplay(url, name) {
+      if (!editAvatarPreview) return;
+      if (url) {
+        editAvatarPreview.innerHTML = `<img src="${sanitizeUrl(url)}" alt="Avatar" onerror="this.onerror=null; this.parentElement.textContent='${escapeHtml((name[0] || 'C').toUpperCase())}';">`;
+        if (btnRemoveAvatar) btnRemoveAvatar.style.display = 'inline-flex';
+      } else {
+        editAvatarPreview.textContent = (name[0] || 'C').toUpperCase();
+        if (btnRemoveAvatar) btnRemoveAvatar.style.display = 'none';
+      }
+    }
+
+    function openEditModal() {
+      if (!currentUserSession || !editProfileModal) return;
+      if (editProfileAlert) editProfileAlert.style.display = 'none';
+      const handle = currentUserSession.username || '';
+      if (editUsernameInput) editUsernameInput.value = handle;
+      const currentBio = currentUserSession.bio || '';
+      if (editBioInput) {
+        editBioInput.value = currentBio;
+        if (editBioCounter) editBioCounter.textContent = `${currentBio.length}/300`;
+      }
+      updateEditAvatarDisplay(currentUserSession.avatar_url, handle);
+      editProfileModal.style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      if (editProfileModal) editProfileModal.style.display = 'none';
+    }
+
+    if (btnEditProfile) {
+      btnEditProfile.addEventListener('click', openEditModal);
+    }
+    if (editModalClose) {
+      editModalClose.addEventListener('click', closeEditModal);
+    }
+    if (editModalBtnCancel) {
+      editModalBtnCancel.addEventListener('click', closeEditModal);
+    }
+    if (editProfileModal) {
+      editProfileModal.addEventListener('click', (e) => {
+        if (e.target === editProfileModal) closeEditModal();
+      });
+    }
+
+    if (editBioInput && editBioCounter) {
+      editBioInput.addEventListener('input', () => {
+        editBioCounter.textContent = `${editBioInput.value.length}/300`;
+      });
+    }
+
+    if (editAvatarInput) {
+      editAvatarInput.addEventListener('change', async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+          showEditAlert('Image must be under 2 MB.', false);
+          editAvatarInput.value = '';
+          return;
+        }
+
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+          showEditAlert('Only JPG, PNG or WebP images are allowed.', false);
+          editAvatarInput.value = '';
+          return;
+        }
+
+        const tempUrl = URL.createObjectURL(file);
+        updateEditAvatarDisplay(tempUrl, currentUserSession.username || 'C');
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        showEditAlert('Uploading photo...', true);
+        try {
+          const res = await fetch('/api/auth?action=upload_avatar', {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            showEditAlert(data.error || 'Failed to upload photo.', false);
+            updateEditAvatarDisplay(currentUserSession.avatar_url, currentUserSession.username || 'C');
+            return;
+          }
+
+          currentUserSession.avatar_url = data.avatar_url;
+          updateEditAvatarDisplay(data.avatar_url, currentUserSession.username || 'C');
+          if (creatorAvatar) {
+            creatorAvatar.innerHTML = `<img src="${sanitizeUrl(data.avatar_url)}" alt="Avatar" onerror="this.onerror=null; this.parentElement.textContent='${escapeHtml(((currentUserSession.username || 'C')[0]).toUpperCase())}';">`;
+          }
+          showEditAlert('Photo updated successfully!', true);
+        } catch (err) {
+          showEditAlert('Network error while uploading photo.', false);
+          updateEditAvatarDisplay(currentUserSession.avatar_url, currentUserSession.username || 'C');
+        } finally {
+          editAvatarInput.value = '';
+        }
+      });
+    }
+
+    if (btnRemoveAvatar) {
+      btnRemoveAvatar.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to remove your profile photo?')) return;
+        showEditAlert('Removing photo...', true);
+        try {
+          const res = await fetch('/api/auth?action=delete_avatar', {
+            method: 'POST'
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            showEditAlert(data.error || 'Failed to remove photo.', false);
+            return;
+          }
+
+          currentUserSession.avatar_url = null;
+          updateEditAvatarDisplay(null, currentUserSession.username || 'C');
+          if (creatorAvatar) {
+            creatorAvatar.textContent = ((currentUserSession.username || 'C')[0]).toUpperCase();
+          }
+          showEditAlert('Photo removed successfully!', true);
+        } catch (err) {
+          showEditAlert('Network error while removing photo.', false);
+        }
+      });
+    }
+
+    if (editProfileForm) {
+      editProfileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newBio = editBioInput ? editBioInput.value.trim() : '';
+        const newUsername = editUsernameInput ? editUsernameInput.value.trim().toLowerCase() : '';
+
+        if (editModalBtnSave) {
+          editModalBtnSave.disabled = true;
+          editModalBtnSave.textContent = 'Saving...';
+        }
+
+        try {
+          const res = await fetch('/api/auth?action=update_profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: newUsername,
+              bio: newBio
+            })
+          });
+
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            showEditAlert(data.error || 'Failed to update profile.', false);
+            return;
+          }
+
+          currentUserSession = data.user;
+          const creatorBio = document.getElementById('creator-bio');
+          if (creatorBio) {
+            if (data.user.bio && data.user.bio.trim()) {
+              creatorBio.textContent = data.user.bio.trim();
+              creatorBio.style.display = 'block';
+            } else {
+              creatorBio.textContent = '';
+              creatorBio.style.display = 'none';
+            }
+          }
+
+          const currentTarget = (targetUsername.startsWith('@') ? targetUsername.slice(1) : targetUsername).toLowerCase();
+          if (data.user.username && data.user.username.toLowerCase() !== currentTarget) {
+            window.location.href = `profile.html?u=${encodeURIComponent(data.user.username)}`;
+          } else {
+            closeEditModal();
+          }
+        } catch (err) {
+          showEditAlert('Network error while saving profile.', false);
+        } finally {
+          if (editModalBtnSave) {
+            editModalBtnSave.disabled = false;
+            editModalBtnSave.textContent = 'Save Changes';
+          }
+        }
+      });
+    }
 
     checkHeaderAuth();
     loadProfile();

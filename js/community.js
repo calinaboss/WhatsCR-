@@ -105,7 +105,7 @@
       const initial = (currentUser.username[0] || 'U').toUpperCase();
       commUserBadge.innerHTML = `
         <a href="profile.html?u=${encodeURIComponent(currentUser.username)}" class="comm-user-pill" title="View profile">
-          <span class="comm-user-avatar">${escapeHtml(initial)}</span>
+          <span class="comm-user-avatar">${currentUser.avatar_url ? `<img src="${escapeHtml(currentUser.avatar_url)}" alt="Avatar" onerror="this.onerror=null; this.parentElement.textContent='${escapeHtml(initial)}';">` : escapeHtml(initial)}</span>
           <span class="comm-user-name">@${escapeHtml(currentUser.username)}</span>
         </a>
       `;

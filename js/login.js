@@ -156,6 +156,26 @@
         }
       }
 
+      const avatarDisplay = document.getElementById('profile-avatar-display');
+      const btnRemoveAvatar = document.getElementById('login-btn-remove-avatar');
+      const bioInput = document.getElementById('profile-bio-input');
+      const bioCounter = document.getElementById('profile-bio-counter');
+
+      if (avatarDisplay) {
+        if (user.avatar_url) {
+          avatarDisplay.innerHTML = `<img src="${user.avatar_url}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+          if (btnRemoveAvatar) btnRemoveAvatar.style.display = 'inline-flex';
+        } else {
+          avatarDisplay.innerHTML = `<i class="fa-solid fa-user"></i>`;
+          if (btnRemoveAvatar) btnRemoveAvatar.style.display = 'none';
+        }
+      }
+
+      if (bioInput) {
+        bioInput.value = user.bio || '';
+        if (bioCounter) bioCounter.textContent = `${(user.bio || '').length}/300`;
+      }
+
       if (profilePublicLink) {
         profilePublicLink.href = `profile.html?u=${encodeURIComponent(handle)}`;
       }
@@ -316,6 +336,9 @@
       profileAlert.style.display = 'none';
 
       const newUsername = profileUsernameInput.value.trim().toLowerCase();
+      const bioInput = document.getElementById('profile-bio-input');
+      const newBio = bioInput ? bioInput.value.trim() : '';
+
       if (!newUsername || newUsername.length < 3) {
         showProfileAlert('Username must be at least 3 characters.');
         return;
@@ -329,11 +352,11 @@
         const res = await fetch('/api/auth?action=update_profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: newUsername })
+          body: JSON.stringify({ username: newUsername, bio: newBio })
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          showProfileAlert('Username updated successfully!', true);
+          showProfileAlert('Profile updated successfully!', true);
           currentUser = data.user;
           profileDisplayName.textContent = `@${data.user.username}`;
           if (profilePublicLink) {
@@ -344,10 +367,10 @@
             usernameCooldownText.style.color = '#d97706';
           }
         } else {
-          showProfileAlert(data.error || 'Failed to update username.');
+          showProfileAlert(data.error || 'Failed to update profile.');
         }
       } catch (err) {
-        showProfileAlert('Network error while updating username.');
+        showProfileAlert('Network error while updating profile.');
       } finally {
         saveBtn.disabled = false;
         saveBtn.style.opacity = '1';
@@ -731,3 +754,88 @@
         window.location.reload();
       }
     });
+
+
+    const loginAvatarInput = document.getElementById('login-avatar-input');
+    const loginBtnRemoveAvatar = document.getElementById('login-btn-remove-avatar');
+    const profileBioInput = document.getElementById('profile-bio-input');
+    const profileBioCounter = document.getElementById('profile-bio-counter');
+
+    if (profileBioInput && profileBioCounter) {
+      profileBioInput.addEventListener('input', () => {
+        profileBioCounter.textContent = `${profileBioInput.value.length}/300`;
+      });
+    }
+
+    if (loginAvatarInput) {
+      loginAvatarInput.addEventListener('change', async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+          showProfileAlert('Image must be under 2 MB.');
+          loginAvatarInput.value = '';
+          return;
+        }
+
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+          showProfileAlert('Only JPG, PNG or WebP images are allowed.');
+          loginAvatarInput.value = '';
+          return;
+        }
+
+        showProfileAlert('Uploading photo...', true);
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        try {
+          const res = await fetch('/api/auth?action=upload_avatar', {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            showProfileAlert(data.error || 'Failed to upload photo.');
+            return;
+          }
+
+          if (currentUser) currentUser.avatar_url = data.avatar_url;
+          const avatarDisplay = document.getElementById('profile-avatar-display');
+          if (avatarDisplay) {
+            avatarDisplay.innerHTML = `<img src="${data.avatar_url}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+          }
+          if (loginBtnRemoveAvatar) loginBtnRemoveAvatar.style.display = 'inline-flex';
+          showProfileAlert('Photo updated successfully!', true);
+        } catch (err) {
+          showProfileAlert('Network error while uploading photo.');
+        } finally {
+          loginAvatarInput.value = '';
+        }
+      });
+    }
+
+    if (loginBtnRemoveAvatar) {
+      loginBtnRemoveAvatar.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to remove your profile photo?')) return;
+        showProfileAlert('Removing photo...', true);
+        try {
+          const res = await fetch('/api/auth?action=delete_avatar', { method: 'POST' });
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            showProfileAlert(data.error || 'Failed to remove photo.');
+            return;
+          }
+
+          if (currentUser) currentUser.avatar_url = null;
+          const avatarDisplay = document.getElementById('profile-avatar-display');
+          if (avatarDisplay) {
+            avatarDisplay.innerHTML = `<i class="fa-solid fa-user"></i>`;
+          }
+          loginBtnRemoveAvatar.style.display = 'none';
+          showProfileAlert('Photo removed successfully!', true);
+        } catch (err) {
+          showProfileAlert('Network error while removing photo.');
+        }
+      });
+    }
