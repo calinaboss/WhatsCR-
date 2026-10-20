@@ -477,50 +477,50 @@ export async function onRequest(context) {
         params.push(`%${q.toLowerCase()}%`);
         if (currentUserId) {
           params.push(currentUserId);
-          sql = `SELECT u.username, u.role, u.created_at,
+          sql = `SELECT u.username, u.role, u.created_at, u.avatar_url,
             COUNT(DISTINCT t.id) as track_count,
             COUNT(DISTINCT f.follower_id) as follower_count
           FROM users u
           LEFT JOIN tracks t ON t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)
           LEFT JOIN follows f ON f.following_id = u.id
           WHERE u.username IS NOT NULL AND LOWER(u.username) LIKE $1 AND u.id != $2
-          GROUP BY u.id, u.username, u.role, u.created_at
+          GROUP BY u.id, u.username, u.role, u.created_at, u.avatar_url
           ORDER BY follower_count DESC, track_count DESC
           LIMIT 30`;
         } else {
-          sql = `SELECT u.username, u.role, u.created_at,
+          sql = `SELECT u.username, u.role, u.created_at, u.avatar_url,
             COUNT(DISTINCT t.id) as track_count,
             COUNT(DISTINCT f.follower_id) as follower_count
           FROM users u
           LEFT JOIN tracks t ON t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)
           LEFT JOIN follows f ON f.following_id = u.id
           WHERE u.username IS NOT NULL AND LOWER(u.username) LIKE $1
-          GROUP BY u.id, u.username, u.role, u.created_at
+          GROUP BY u.id, u.username, u.role, u.created_at, u.avatar_url
           ORDER BY follower_count DESC, track_count DESC
           LIMIT 30`;
         }
       } else {
         if (currentUserId) {
           params.push(currentUserId);
-          sql = `SELECT u.username, u.role, u.created_at,
+          sql = `SELECT u.username, u.role, u.created_at, u.avatar_url,
             COUNT(DISTINCT t.id) as track_count,
             COUNT(DISTINCT f.follower_id) as follower_count
           FROM users u
           LEFT JOIN tracks t ON t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)
           LEFT JOIN follows f ON f.following_id = u.id
           WHERE u.username IS NOT NULL AND u.id != $1
-          GROUP BY u.id, u.username, u.role, u.created_at
+          GROUP BY u.id, u.username, u.role, u.created_at, u.avatar_url
           ORDER BY follower_count DESC, track_count DESC
           LIMIT 30`;
         } else {
-          sql = `SELECT u.username, u.role, u.created_at,
+          sql = `SELECT u.username, u.role, u.created_at, u.avatar_url,
             COUNT(DISTINCT t.id) as track_count,
             COUNT(DISTINCT f.follower_id) as follower_count
           FROM users u
           LEFT JOIN tracks t ON t.user_id = u.id AND (t.status = 'approved' OR t.status IS NULL)
           LEFT JOIN follows f ON f.following_id = u.id
           WHERE u.username IS NOT NULL
-          GROUP BY u.id, u.username, u.role, u.created_at
+          GROUP BY u.id, u.username, u.role, u.created_at, u.avatar_url
           ORDER BY follower_count DESC, track_count DESC
           LIMIT 30`;
         }

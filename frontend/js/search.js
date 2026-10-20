@@ -384,7 +384,7 @@
         return `
           <article class="creator-card">
             <div class="creator-card-header">
-              <div class="creator-card-avatar">${escapeHtml(initial)}</div>
+              <div class="creator-card-avatar">${u.avatar_url ? `<img src="${sanitizeUrl(u.avatar_url)}" alt="${escapeHtml(u.username)}" onerror="this.onerror=null; this.parentElement.textContent='${escapeHtml(initial)}';">` : escapeHtml(initial)}</div>
               <div class="creator-card-info">
                 <a href="profile.html?u=${encodeURIComponent(u.username)}" class="creator-card-name">@${escapeHtml(u.username)}</a>
                 <span style="font-size: 0.74rem; font-weight: 700; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 9999px; display: inline-block; width: fit-content;">Creator</span>
