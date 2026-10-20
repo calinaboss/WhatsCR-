@@ -591,7 +591,7 @@ export async function onRequest(context) {
 
     const hasUsername = typeof body.username === 'string' && body.username.trim().length > 0;
     const hasBio = body.bio !== undefined;
-    const rawBio = hasBio ? String(body.bio).trim().slice(0, 300) : null;
+    const rawBio = hasBio ? String(body.bio).trim().slice(0, 100) : null;
 
     try {
       const tokenHash = await sha256Hex(token);
@@ -743,9 +743,9 @@ export async function onRequest(context) {
         });
       }
 
-      const maxFileSize = 2 * 1024 * 1024;
+      const maxFileSize = 500 * 1024;
       if (file.size > maxFileSize) {
-        return new Response(JSON.stringify({ error: 'File size exceeds maximum allowed 2 MB.' }), {
+        return new Response(JSON.stringify({ error: 'File size exceeds maximum allowed 500 KB.' }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' }
         });

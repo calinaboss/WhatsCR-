@@ -173,7 +173,7 @@
 
       if (bioInput) {
         bioInput.value = user.bio || '';
-        if (bioCounter) bioCounter.textContent = `${(user.bio || '').length}/300`;
+        if (bioCounter) bioCounter.textContent = `${(user.bio || '').length}/100`;
       }
 
       if (profilePublicLink) {
@@ -763,7 +763,57 @@
 
     if (profileBioInput && profileBioCounter) {
       profileBioInput.addEventListener('input', () => {
-        profileBioCounter.textContent = `${profileBioInput.value.length}/300`;
+        profileBioCounter.textContent = `${profileBioInput.value.length}/100`;
+      });
+    }
+
+    function compressAvatar(file, maxDimension = 400, quality = 0.82) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onerror = () => resolve(file);
+        reader.onload = () => {
+          const img = new Image();
+          img.onerror = () => resolve(file);
+          img.onload = () => {
+            try {
+              const width = img.width;
+              const height = img.height;
+              const minSide = Math.min(width, height);
+              const srcX = (width - minSide) / 2;
+              const srcY = (height - minSide) / 2;
+              const targetSize = Math.min(minSide, maxDimension);
+
+              const canvas = document.createElement('canvas');
+              canvas.width = targetSize;
+              canvas.height = targetSize;
+
+              const ctx = canvas.getContext('2d');
+              ctx.imageSmoothingEnabled = true;
+              ctx.imageSmoothingQuality = 'high';
+              ctx.drawImage(img, srcX, srcY, minSide, minSide, 0, 0, targetSize, targetSize);
+
+              canvas.toBlob((blob) => {
+                if (blob && blob.size <= 500 * 1024) {
+                  resolve(new File([blob], 'avatar.webp', { type: 'image/webp' }));
+                } else if (blob) {
+                  canvas.toBlob((jpgBlob) => {
+                    if (jpgBlob) {
+                      resolve(new File([jpgBlob], 'avatar.jpg', { type: 'image/jpeg' }));
+                    } else {
+                      resolve(file);
+                    }
+                  }, 'image/jpeg', 0.80);
+                } else {
+                  resolve(file);
+                }
+              }, 'image/webp', quality);
+            } catch (err) {
+              resolve(file);
+            }
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
       });
     }
 
@@ -772,8 +822,8 @@
         const file = e.target.files && e.target.files[0];
         if (!file) return;
 
-        if (file.size > 2 * 1024 * 1024) {
-          showProfileAlert('Image must be under 2 MB.');
+        if (file.size > 10 * 1024 * 1024) {
+          showProfileAlert('Image must be under 10 MB.');
           loginAvatarInput.value = '';
           return;
         }
@@ -785,9 +835,13 @@
           return;
         }
 
-        showProfileAlert('Uploading photo...', true);
+        showProfileAlert('Optimizing photo...', true);
+        const optimizedFile = await compressAvatar(file, 400, 0.82);
+
         const formData = new FormData();
-        formData.append('avatar', file);
+        formData.append('avatar', optimizedFile);
+
+        showProfileAlert('Uploading photo...', true);
 
         try {
           const res = await fetch('/api/auth?action=upload_avatar', {
