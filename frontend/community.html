@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -215,6 +215,57 @@
     .comm-search-input:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(0,151,178,0.12);
+    }
+    .comm-category-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 10px 0 2px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .comm-category-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .comm-cat-pill {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: 5px 11px;
+      white-space: nowrap;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      font-family: inherit;
+    }
+    .comm-cat-pill:hover {
+      background: #e2e8f0;
+      color: var(--text-main);
+    }
+    .comm-cat-pill.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 2px 6px rgba(0, 151, 178, 0.25);
+    }
+    .room-category-tag {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+      background: #e0f2fe;
+      color: #0369a1;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      flex-shrink: 0;
     }
     .comm-rooms-list {
       flex: 1;
@@ -976,6 +1027,15 @@
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" class="comm-search-input" id="search-rooms-input" placeholder="Search topics or creators...">
           </div>
+          <div class="comm-category-bar" id="comm-category-bar">
+            <button type="button" class="comm-cat-pill active" data-category="all"><i class="fa-solid fa-layer-group"></i> All</button>
+            <button type="button" class="comm-cat-pill" data-category="Audio & Music"><i class="fa-solid fa-headphones"></i> Audio & Music</button>
+            <button type="button" class="comm-cat-pill" data-category="Sound Effects & SFX"><i class="fa-solid fa-bolt"></i> SFX</button>
+            <button type="button" class="comm-cat-pill" data-category="Game Dev Audio"><i class="fa-solid fa-gamepad"></i> Game Audio</button>
+            <button type="button" class="comm-cat-pill" data-category="Feedback & Review"><i class="fa-solid fa-comment-dots"></i> Feedback</button>
+            <button type="button" class="comm-cat-pill" data-category="Collaborations"><i class="fa-solid fa-handshake"></i> Collabs</button>
+            <button type="button" class="comm-cat-pill" data-category="General"><i class="fa-solid fa-comments"></i> General</button>
+          </div>
         </div>
         <div class="comm-rooms-list" id="rooms-list">
           <div style="text-align: center; padding: 24px; color: #94a3b8; font-size: 0.88rem;">Loading chat rooms...</div>
@@ -1062,6 +1122,17 @@
           <div class="comm-field-group">
             <label for="new-room-title">Room Title *</label>
             <input type="text" id="new-room-title" class="comm-field-input" placeholder="e.g. Chiptune sound design tips" maxlength="100" required autocomplete="off">
+          </div>
+          <div class="comm-field-group">
+            <label for="new-room-category">Section / Topic *</label>
+            <select id="new-room-category" class="comm-field-input" style="cursor: pointer;" required>
+              <option value="Audio & Music">Audio & Music (Beats, instruments, loops)</option>
+              <option value="Sound Effects & SFX">Sound Effects & SFX (Foley, gaming sounds)</option>
+              <option value="Game Dev Audio">Game Dev Audio (Engines, implementation)</option>
+              <option value="Feedback & Review">Feedback & Review (Track review, mixing tips)</option>
+              <option value="Collaborations">Collaborations (Meet creators & team up)</option>
+              <option value="General" selected>General (Discussions & creative talk)</option>
+            </select>
           </div>
           <div class="comm-field-group">
             <label for="new-room-desc">Description (Optional)</label>

@@ -7,8 +7,11 @@ const tabPending = document.getElementById('tab-pending');
 const tabPublished = document.getElementById('tab-published');
 const pendingCount = document.getElementById('pending-count');
 const publishedCount = document.getElementById('published-count');
+const adminSearchInput = document.getElementById('admin-search-input');
+const adminSearchClear = document.getElementById('admin-search-clear');
 
 let currentTab = 'pending';
+let searchQuery = '';
 let currentAudio = null;
 let currentlyPlayingBtn = null;
 
@@ -32,7 +35,7 @@ function setTab(tab) {
     tabPublished.style.background = 'transparent';
     tabPublished.style.color = 'var(--text-muted)';
     tabPublished.style.borderColor = 'var(--border)';
-    loadPendingTracks();
+    loadPendingTracks(searchQuery);
   } else {
     tabPublished.style.background = 'var(--primary)';
     tabPublished.style.color = '#ffffff';
@@ -40,7 +43,7 @@ function setTab(tab) {
     tabPending.style.background = 'transparent';
     tabPending.style.color = 'var(--text-muted)';
     tabPending.style.borderColor = 'var(--border)';
-    loadPublishedTracks();
+    loadPublishedTracks(searchQuery);
   }
 }
 
@@ -53,7 +56,7 @@ async function checkAuth() {
     const data = await res.json();
     if (data && data.user && data.user.role === 'admin') {
       adminDashboard.style.display = 'block';
-      loadPendingTracks();
+      loadPendingTracks(searchQuery);
       updateCounts();
     } else {
       authGuard.style.display = 'block';
@@ -81,7 +84,7 @@ async function updateCounts() {
   } catch (e) {}
 }
 
-async function loadPendingTracks() {
+async function loadPendingTracks(query = '') {
   pendingList.innerHTML = `
     <div style="text-align: center; padding: 40px; color: var(--text-muted);">
       <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; color: var(--primary);"></i>
@@ -95,13 +98,37 @@ async function loadPendingTracks() {
   }
 
   try {
-    const res = await fetch('/api/admin?action=pending');
+    const url = `/api/admin?action=pending${query ? '&q=' + encodeURIComponent(query) : ''}`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Unauthorized or server error');
     const data = await res.json();
     const tracks = data.tracks || [];
-    if (pendingCount) pendingCount.textContent = tracks.length;
+    if (!query && pendingCount) pendingCount.textContent = tracks.length;
 
     if (tracks.length === 0) {
+      if (query) {
+        pendingList.innerHTML = `
+          <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 16px; padding: 48px 24px; text-align: center;">
+            <div style="width: 52px; height: 52px; border-radius: 50%; background: #fef2f2; color: #dc2626; display: inline-flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 12px;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">No matching pending tracks</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">No pending tracks found matching "${escapeHtml(query)}".</p>
+            <button id="btn-clear-pending-search" style="background: var(--primary); color: #ffffff; border: none; border-radius: var(--radius-full); padding: 7px 18px; font-size: 0.84rem; font-weight: 700; cursor: pointer;">Clear Search</button>
+          </div>
+        `;
+        const clr = document.getElementById('btn-clear-pending-search');
+        if (clr) {
+          clr.addEventListener('click', () => {
+            if (adminSearchInput) adminSearchInput.value = '';
+            if (adminSearchClear) adminSearchClear.style.display = 'none';
+            searchQuery = '';
+            loadPendingTracks('');
+          });
+        }
+        return;
+      }
+
       pendingList.innerHTML = `
         <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 16px; padding: 48px 24px; text-align: center;">
           <div style="width: 52px; height: 52px; border-radius: 50%; background: #f0fdf4; color: #16a34a; display: inline-flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 12px;">
@@ -172,7 +199,7 @@ async function loadPendingTracks() {
   }
 }
 
-async function loadPublishedTracks() {
+async function loadPublishedTracks(query = '') {
   pendingList.innerHTML = `
     <div style="text-align: center; padding: 40px; color: var(--text-muted);">
       <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; color: var(--primary);"></i>
@@ -186,13 +213,37 @@ async function loadPublishedTracks() {
   }
 
   try {
-    const res = await fetch('/api/admin?action=all');
+    const url = `/api/admin?action=all${query ? '&q=' + encodeURIComponent(query) : ''}`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Unauthorized or server error');
     const data = await res.json();
     const tracks = (data.tracks || []).filter(t => t.status === 'approved' || !t.status);
-    if (publishedCount) publishedCount.textContent = tracks.length;
+    if (!query && publishedCount) publishedCount.textContent = tracks.length;
 
     if (tracks.length === 0) {
+      if (query) {
+        pendingList.innerHTML = `
+          <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 16px; padding: 48px 24px; text-align: center;">
+            <div style="width: 52px; height: 52px; border-radius: 50%; background: #fef2f2; color: #dc2626; display: inline-flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 12px;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">No matching published tracks</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">No active tracks found matching "${escapeHtml(query)}".</p>
+            <button id="btn-clear-pub-search" style="background: var(--primary); color: #ffffff; border: none; border-radius: var(--radius-full); padding: 7px 18px; font-size: 0.84rem; font-weight: 700; cursor: pointer;">Clear Search</button>
+          </div>
+        `;
+        const clr = document.getElementById('btn-clear-pub-search');
+        if (clr) {
+          clr.addEventListener('click', () => {
+            if (adminSearchInput) adminSearchInput.value = '';
+            if (adminSearchClear) adminSearchClear.style.display = 'none';
+            searchQuery = '';
+            loadPublishedTracks('');
+          });
+        }
+        return;
+      }
+
       pendingList.innerHTML = `
         <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 16px; padding: 48px 24px; text-align: center;">
           <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">No published tracks found</h3>
@@ -361,8 +412,8 @@ function attachCardHandlers() {
           if (row) row.remove();
           updateCounts();
           if (pendingList.children.length === 0) {
-            if (currentTab === 'pending') loadPendingTracks();
-            else loadPublishedTracks();
+            if (currentTab === 'pending') loadPendingTracks(searchQuery);
+            else loadPublishedTracks(searchQuery);
           }
         } else {
           showAlert(data.error || 'Failed to delete track.', true);
@@ -378,9 +429,35 @@ function attachCardHandlers() {
   });
 }
 
+let searchTimeout = null;
+if (adminSearchInput) {
+  adminSearchInput.addEventListener('input', () => {
+    searchQuery = adminSearchInput.value.trim();
+    if (adminSearchClear) {
+      adminSearchClear.style.display = searchQuery ? 'block' : 'none';
+    }
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      if (currentTab === 'pending') loadPendingTracks(searchQuery);
+      else loadPublishedTracks(searchQuery);
+    }, 250);
+  });
+}
+
+if (adminSearchClear) {
+  adminSearchClear.addEventListener('click', () => {
+    adminSearchInput.value = '';
+    searchQuery = '';
+    adminSearchClear.style.display = 'none';
+    if (currentTab === 'pending') loadPendingTracks('');
+    else loadPublishedTracks('');
+    adminSearchInput.focus();
+  });
+}
+
 refreshBtn.addEventListener('click', () => {
-  if (currentTab === 'pending') loadPendingTracks();
-  else loadPublishedTracks();
+  if (currentTab === 'pending') loadPendingTracks(searchQuery);
+  else loadPublishedTracks(searchQuery);
   updateCounts();
 });
 

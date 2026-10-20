@@ -87,13 +87,27 @@ export async function onRequest(context) {
 
   const url = new URL(request.url);
   const action = url.searchParams.get('action');
+  const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
 
   if (request.method === 'GET' && action === 'pending') {
     try {
-      const rows = await runNeonSql(
-        env.DATABASE_URL,
-        "SELECT id, title, artist, genre, duration, audio_url, is_loop, license_type, user_id, status FROM tracks WHERE status = 'pending' ORDER BY id DESC LIMIT 100"
-      );
+      let rows;
+      if (q) {
+        rows = await runNeonSql(
+          env.DATABASE_URL,
+          `SELECT id, title, artist, genre, duration, audio_url, is_loop, license_type, user_id, status
+           FROM tracks
+           WHERE status = 'pending'
+             AND (title ILIKE '%' || $1 || '%' OR artist ILIKE '%' || $1 || '%' OR genre ILIKE '%' || $1 || '%' OR CAST(id AS TEXT) = $1)
+           ORDER BY id DESC LIMIT 100`,
+          [q]
+        );
+      } else {
+        rows = await runNeonSql(
+          env.DATABASE_URL,
+          "SELECT id, title, artist, genre, duration, audio_url, is_loop, license_type, user_id, status FROM tracks WHERE status = 'pending' ORDER BY id DESC LIMIT 100"
+        );
+      }
       return new Response(JSON.stringify({ tracks: rows }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
@@ -108,10 +122,22 @@ export async function onRequest(context) {
 
   if (request.method === 'GET' && action === 'all') {
     try {
-      const rows = await runNeonSql(
-        env.DATABASE_URL,
-        "SELECT id, title, artist, genre, duration, audio_url, is_loop, license_type, user_id, status, COALESCE(likes_count, 0) as likes_count FROM tracks ORDER BY id DESC LIMIT 200"
-      );
+      let rows;
+      if (q) {
+        rows = await runNeonSql(
+          env.DATABASE_URL,
+          `SELECT id, title, artist, genre, duration, audio_url, is_loop, license_type, user_id, status, COALESCE(likes_count, 0) as likes_count
+           FROM tracks
+           WHERE (title ILIKE '%' || $1 || '%' OR artist ILIKE '%' || $1 || '%' OR genre ILIKE '%' || $1 || '%' OR CAST(id AS TEXT) = $1)
+           ORDER BY id DESC LIMIT 200`,
+          [q]
+        );
+      } else {
+        rows = await runNeonSql(
+          env.DATABASE_URL,
+          "SELECT id, title, artist, genre, duration, audio_url, is_loop, license_type, user_id, status, COALESCE(likes_count, 0) as likes_count FROM tracks ORDER BY id DESC LIMIT 200"
+        );
+      }
       return new Response(JSON.stringify({ tracks: rows }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }

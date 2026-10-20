@@ -76,6 +76,8 @@ async function ensureForumTables(databaseUrl) {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )`,
     `ALTER TABLE forum_messages ADD COLUMN IF NOT EXISTS guest_id VARCHAR(64)`,
+    `ALTER TABLE forum_rooms ADD COLUMN IF NOT EXISTS category VARCHAR(40) DEFAULT 'General'`,
+    `CREATE INDEX IF NOT EXISTS idx_forum_rooms_category ON forum_rooms(category)`,
     `CREATE INDEX IF NOT EXISTS idx_forum_messages_room_created ON forum_messages(room_id, created_at ASC)`,
     `CREATE TABLE IF NOT EXISTS forum_typing (
       room_id UUID NOT NULL,
@@ -216,11 +218,41 @@ export async function onRequest(context) {
   if (request.method === 'GET' && action === 'rooms') {
     try {
       const q = (url.searchParams.get('q') || '').trim().slice(0, 60);
+      const catParam = (url.searchParams.get('category') || '').trim().slice(0, 40);
+      const ALLOWED_CATEGORIES = ['Audio & Music', 'Sound Effects & SFX', 'Game Dev Audio', 'Feedback & Review', 'Collaborations', 'General'];
+      const validCategory = ALLOWED_CATEGORIES.includes(catParam) ? catParam : null;
+
       let rows;
-      if (q) {
+      if (q && validCategory) {
         rows = await runNeonSql(
           env.DATABASE_URL,
-          `SELECT r.id, r.title, r.description, r.creator_name, r.creator_id,
+          `SELECT r.id, r.title, r.description, COALESCE(r.category, 'General') as category, r.creator_name, r.creator_id,
+           (SELECT COUNT(*) FROM forum_messages m WHERE m.room_id = r.id) as message_count,
+           (SELECT COUNT(DISTINCT m2.sender_name) FROM forum_messages m2 WHERE m2.room_id = r.id) as people_count,
+           r.created_at, r.last_message_at
+           FROM forum_rooms r
+           WHERE r.category = $1 AND (r.title ILIKE '%' || $2 || '%' OR r.description ILIKE '%' || $2 || '%')
+           ORDER BY r.last_message_at DESC
+           LIMIT 50`,
+          [validCategory, q]
+        );
+      } else if (validCategory) {
+        rows = await runNeonSql(
+          env.DATABASE_URL,
+          `SELECT r.id, r.title, r.description, COALESCE(r.category, 'General') as category, r.creator_name, r.creator_id,
+           (SELECT COUNT(*) FROM forum_messages m WHERE m.room_id = r.id) as message_count,
+           (SELECT COUNT(DISTINCT m2.sender_name) FROM forum_messages m2 WHERE m2.room_id = r.id) as people_count,
+           r.created_at, r.last_message_at
+           FROM forum_rooms r
+           WHERE r.category = $1
+           ORDER BY r.last_message_at DESC
+           LIMIT 50`,
+          [validCategory]
+        );
+      } else if (q) {
+        rows = await runNeonSql(
+          env.DATABASE_URL,
+          `SELECT r.id, r.title, r.description, COALESCE(r.category, 'General') as category, r.creator_name, r.creator_id,
            (SELECT COUNT(*) FROM forum_messages m WHERE m.room_id = r.id) as message_count,
            (SELECT COUNT(DISTINCT m2.sender_name) FROM forum_messages m2 WHERE m2.room_id = r.id) as people_count,
            r.created_at, r.last_message_at
@@ -233,7 +265,7 @@ export async function onRequest(context) {
       } else {
         rows = await runNeonSql(
           env.DATABASE_URL,
-          `SELECT r.id, r.title, r.description, r.creator_name, r.creator_id,
+          `SELECT r.id, r.title, r.description, COALESCE(r.category, 'General') as category, r.creator_name, r.creator_id,
            (SELECT COUNT(*) FROM forum_messages m WHERE m.room_id = r.id) as message_count,
            (SELECT COUNT(DISTINCT m2.sender_name) FROM forum_messages m2 WHERE m2.room_id = r.id) as people_count,
            r.created_at, r.last_message_at
@@ -255,7 +287,7 @@ export async function onRequest(context) {
     try {
       const rows = await runNeonSql(
         env.DATABASE_URL,
-        `SELECT r.id, r.title, r.description, r.creator_name, r.creator_id,
+        `SELECT r.id, r.title, r.description, COALESCE(r.category, 'General') as category, r.creator_name, r.creator_id,
          (SELECT COUNT(*) FROM forum_messages m WHERE m.room_id = r.id) as message_count,
          (SELECT COUNT(DISTINCT m2.sender_name) FROM forum_messages m2 WHERE m2.room_id = r.id) as people_count,
          r.created_at, r.last_message_at
@@ -319,6 +351,9 @@ export async function onRequest(context) {
 
     const title = (body.title || '').trim().replace(/[\r\n\t]/g, ' ').slice(0, 100);
     const description = (body.description || '').trim().slice(0, 240);
+    const ALLOWED_CATEGORIES = ['Audio & Music', 'Sound Effects & SFX', 'Game Dev Audio', 'Feedback & Review', 'Collaborations', 'General'];
+    const rawCategory = (body.category || '').trim();
+    const category = ALLOWED_CATEGORIES.includes(rawCategory) ? rawCategory : 'General';
 
     if (title.length < 3) {
       return jsonResponse({ error: 'Title must be at least 3 characters long.' }, 400);
@@ -327,10 +362,10 @@ export async function onRequest(context) {
     try {
       const inserted = await runNeonSql(
         env.DATABASE_URL,
-        `INSERT INTO forum_rooms (title, description, creator_name, creator_id)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id, title, description, creator_name, creator_id, message_count, created_at, last_message_at`,
-        [title, description, sessionUser.username, sessionUser.id]
+        `INSERT INTO forum_rooms (title, description, category, creator_name, creator_id)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id, title, description, category, creator_name, creator_id, message_count, created_at, last_message_at`,
+        [title, description, category, sessionUser.username, sessionUser.id]
       );
       return jsonResponse({ success: true, room: inserted[0] }, 201);
     } catch (err) {

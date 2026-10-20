@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -69,6 +69,14 @@
         </button>
         <button id="tab-published" class="admin-tab" style="background: transparent; color: var(--text-muted); border: 1px solid var(--border); border-radius: var(--radius-full); padding: 7px 18px; font-size: 0.86rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
           <i class="fa-solid fa-music"></i> Published Tracks (<span id="published-count">0</span>)
+        </button>
+      </div>
+
+      <div class="admin-search-wrap" style="position: relative; margin-bottom: 20px;">
+        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem; pointer-events: none;"></i>
+        <input type="text" id="admin-search-input" placeholder="Search audio tracks by title, artist, genre, ID to delete or manage..." autocomplete="off" style="width: 100%; padding: 12px 42px 12px 42px; border-radius: var(--radius-full); border: 1px solid var(--border); background: #ffffff; font-size: 0.9rem; color: var(--text-main); outline: none; transition: all 0.2s ease; box-shadow: var(--shadow-sm);">
+        <button id="admin-search-clear" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; display: none; font-size: 0.9rem; padding: 4px;" title="Clear search">
+          <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 

@@ -4,6 +4,7 @@
   let guestId = '';
   let currentRoomId = null;
   let currentRoomData = null;
+  let currentCategory = 'all';
   let activeReply = null;
   let lastMessageTimestamp = null;
   let pollIntervalId = null;
@@ -38,10 +39,12 @@
   const btnSendMessage = document.getElementById('btn-send-message');
   const btnBackToRooms = document.getElementById('btn-back-to-rooms');
   const commUserBadge = document.getElementById('comm-user-badge');
+  const commCategoryBar = document.getElementById('comm-category-bar');
 
   const createRoomModal = document.getElementById('create-room-modal');
   const createRoomForm = document.getElementById('create-room-form');
   const newRoomTitle = document.getElementById('new-room-title');
+  const newRoomCategory = document.getElementById('new-room-category');
   const newRoomDesc = document.getElementById('new-room-desc');
   const btnCloseCreateRoom = document.getElementById('btn-close-create-room');
   const btnCancelCreateRoom = document.getElementById('btn-cancel-create-room');
@@ -237,6 +240,9 @@
       if (searchQuery) {
         url += `&q=${encodeURIComponent(searchQuery)}`;
       }
+      if (currentCategory && currentCategory !== 'all') {
+        url += `&category=${encodeURIComponent(currentCategory)}`;
+      }
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to load rooms');
       const data = await res.json();
@@ -279,6 +285,8 @@
             </div>
             ${r.description ? `<div class="room-item-desc">${escapeHtml(r.description)}</div>` : ''}
             <div class="room-item-footer">
+              <span class="room-category-tag"><i class="fa-solid fa-tag" style="font-size: 0.6rem;"></i> ${escapeHtml(r.category || 'General')}</span>
+              <span>&bull;</span>
               <span>by ${escapeHtml(r.creator_name)}</span>
               <span>&bull;</span>
               <span>${escapeHtml(timeStr)}</span>
@@ -350,7 +358,7 @@
     if (chatTitle) chatTitle.textContent = room.title;
     if (chatSubtitle) {
       const peopleCount = parseInt(room.people_count !== undefined ? room.people_count : (room.active_users || 0), 10) || 0;
-      chatSubtitle.innerHTML = `Created by ${escapeHtml(room.creator_name)} &bull; <i class="fa-solid fa-user" style="font-size: 0.72rem; margin: 0 2px;"></i> ${peopleCount}`;
+      chatSubtitle.innerHTML = `<span class="room-category-tag"><i class="fa-solid fa-tag" style="font-size: 0.6rem;"></i> ${escapeHtml(room.category || 'General')}</span> &bull; Created by ${escapeHtml(room.creator_name)} &bull; <i class="fa-solid fa-user" style="font-size: 0.72rem; margin: 0 2px;"></i> ${peopleCount}`;
     }
 
     if (chatRoomActions) {
@@ -755,6 +763,7 @@
     if (!newRoomTitle) return;
     const title = newRoomTitle.value.trim();
     const desc = newRoomDesc ? newRoomDesc.value.trim() : '';
+    const category = newRoomCategory ? newRoomCategory.value : 'General';
 
     if (title.length < 3) {
       alert('Room title must be at least 3 characters long.');
@@ -770,7 +779,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title,
-          description: desc
+          description: desc,
+          category: category
         })
       });
 
@@ -839,6 +849,19 @@
     }
     if (guestNameForm) {
       guestNameForm.addEventListener('submit', handleSaveGuestName);
+    }
+
+    if (commCategoryBar) {
+      commCategoryBar.addEventListener('click', (e) => {
+        const pill = e.target.closest('.comm-cat-pill');
+        if (!pill) return;
+        const cat = pill.getAttribute('data-cat');
+        if (!cat) return;
+        commCategoryBar.querySelectorAll('.comm-cat-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        currentCategory = cat;
+        loadRooms(searchRoomsInput ? searchRoomsInput.value.trim() : '');
+      });
     }
 
     if (btnCancelReply) {
