@@ -33,7 +33,7 @@
   </header>
 
   <main class="legal-main" style="display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 160px); padding: 40px 16px;">
-    <div style="max-width: 440px; width: 100%; margin: 0 auto;">
+    <div id="login-main-container" style="max-width: 440px; width: 100%; margin: 0 auto; transition: max-width 0.25s ease;">
 
       <div id="auth-box" style="background: #ffffff; border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px; box-shadow: var(--shadow-md);">
         
@@ -119,97 +119,132 @@
 
       </div>
 
-      <div id="profile-box" style="display: none; background: #ffffff; border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px; box-shadow: var(--shadow-md);">
+      <div id="profile-box" style="display: none; background: #ffffff; border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow-sm); overflow: hidden;">
         
-        <div style="text-align: center; margin-bottom: 24px;">
-          <div id="profile-avatar-display" style="width: 68px; height: 68px; min-width: 68px; min-height: 68px; max-width: 68px; max-height: 68px; flex-shrink: 0; aspect-ratio: 1 / 1; border-radius: 50%; background: #e0f2fe; color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 10px; overflow: hidden;">
-            <i class="fa-solid fa-user"></i>
+        <div id="profile-banner-header" class="settings-header-banner" data-theme="ocean">
+          <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
+            <div id="profile-avatar-display" style="width: 76px; height: 76px; min-width: 76px; min-height: 76px; border-radius: 50%; background: #ffffff; color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; border: 3px solid rgba(255, 255, 255, 0.4); box-shadow: 0 4px 14px rgba(0,0,0,0.18); overflow: hidden;">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <h2 id="profile-display-name" style="font-size: 1.45rem; font-weight: 800; color: #ffffff; margin: 0;">My Account</h2>
+                <div id="profile-email-badge-wrap"></div>
+              </div>
+              <p id="profile-display-email" style="font-size: 0.86rem; color: rgba(255, 255, 255, 0.85); margin: 4px 0 0;"></p>
+            </div>
           </div>
-          <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 14px;">
-            <label for="login-avatar-input" style="background: #f0f9ff; border: 1px solid #bae6fd; color: #0284c7; padding: 4px 12px; border-radius: var(--radius-full); font-size: 0.76rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <label for="login-avatar-input" style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(6px); border: 1px solid rgba(255, 255, 255, 0.35); color: #ffffff; padding: 7px 16px; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
               <i class="fa-solid fa-camera"></i> Change Photo
             </label>
             <input type="file" id="login-avatar-input" accept="image/jpeg,image/png,image/webp" style="display: none;">
-            <button type="button" id="login-btn-remove-avatar" style="display: none; background: #fef2f2; border: 1px solid #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: var(--radius-full); font-size: 0.76rem; font-weight: 700; cursor: pointer;" title="Remove Photo">
-              <i class="fa-solid fa-trash-can"></i>
+            <button type="button" id="login-btn-remove-avatar" style="display: none; background: rgba(239, 68, 68, 0.85); border: 1px solid rgba(255, 255, 255, 0.3); color: #ffffff; padding: 7px 14px; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 700; cursor: pointer;" title="Remove Photo">
+              <i class="fa-solid fa-trash-can"></i> Remove
+            </button>
+            <a id="profile-public-link" href="#" class="btn" style="background: #ffffff; color: var(--text-main); padding: 7px 16px; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm);">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> View Profile
+            </a>
+            <button id="profile-logout-btn" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.2); color: #ffffff; padding: 7px 16px; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 700; cursor: pointer;">
+              Log out
             </button>
           </div>
-          <h2 id="profile-display-name" style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">My Account</h2>
-          <p id="profile-display-email" style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 4px;"></p>
-          <div id="profile-email-badge-wrap" style="margin-bottom: 8px;"></div>
         </div>
 
-        <div id="profile-verify-banner" style="display: none; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-          <div>
-            <span style="font-size: 0.82rem; font-weight: 700; color: #b45309; display: block;"><i class="fa-solid fa-triangle-exclamation"></i> Email not verified</span>
-            <span style="font-size: 0.74rem; color: #78350f;">Verify your email to secure your account.</span>
-          </div>
-          <button type="button" id="profile-btn-send-code" style="background: #f59e0b; color: #ffffff; border: none; padding: 6px 14px; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 700; cursor: pointer; white-space: nowrap;">Send Code</button>
-        </div>
-
-
-        <div id="profile-alert" style="display: none; padding: 12px 14px; border-radius: 10px; font-size: 0.86rem; margin-bottom: 18px; line-height: 1.4;"></div>
-
-        <form id="profile-form" style="margin-bottom: 24px;">
-          <div style="margin-bottom: 16px;">
-            <label for="profile-username-input" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Customize Username</label>
-            <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; background: #fafcfe;">
-              <span style="color: var(--text-light); font-weight: 700; margin-right: 6px; font-size: 0.9rem;">@</span>
-              <input type="text" id="profile-username-input" required maxlength="30" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.94rem; font-family: inherit; color: var(--text-main);">
+        <div style="padding: 24px 28px;">
+          <div id="profile-verify-banner" style="display: none; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; text-align: left; align-items: center; justify-content: space-between; gap: 10px;">
+            <div>
+              <span style="font-size: 0.84rem; font-weight: 700; color: #b45309; display: block;"><i class="fa-solid fa-triangle-exclamation"></i> Email not verified</span>
+              <span style="font-size: 0.76rem; color: #78350f;">Verify your email to secure your account.</span>
             </div>
-            <span style="font-size: 0.76rem; color: var(--text-muted); margin-top: 4px; display: block;">This will be displayed as the artist on your published tracks.</span>
-            <div id="username-cooldown-note" style="font-size: 0.78rem; color: #64748b; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
-              <i class="fa-solid fa-clock-rotate-left"></i>
-              <span id="username-cooldown-text">Username can be updated once every 24 hours.</span>
+            <button type="button" id="profile-btn-send-code" style="background: #f59e0b; color: #ffffff; border: none; padding: 6px 14px; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 700; cursor: pointer; white-space: nowrap;">Send Code</button>
+          </div>
+
+          <div id="profile-alert" style="display: none; padding: 12px 14px; border-radius: 10px; font-size: 0.86rem; margin-bottom: 20px; line-height: 1.4;"></div>
+
+          <form id="profile-form">
+            <div class="settings-grid" style="padding: 0; border: none; box-shadow: none;">
+              
+              <div class="settings-card">
+                <div class="settings-card-title"><i class="fa-solid fa-user-pen" style="color: var(--primary);"></i> Profile Identity</div>
+                <div style="margin-bottom: 16px;">
+                  <label for="profile-username-input" style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Username</label>
+                  <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: #ffffff;">
+                    <span style="color: var(--text-light); font-weight: 700; margin-right: 6px; font-size: 0.9rem;">@</span>
+                    <input type="text" id="profile-username-input" required maxlength="30" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.9rem; font-family: inherit; color: var(--text-main);">
+                  </div>
+                  <span style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px; display: block;">Displayed on your published tracks and profile.</span>
+                  <div id="username-cooldown-note" style="font-size: 0.76rem; color: #64748b; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span id="username-cooldown-text">Username can be updated once every 24 hours.</span>
+                  </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                  <label for="profile-bio-input" style="display: flex; justify-content: space-between; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">
+                    <span>Bio</span>
+                    <span id="profile-bio-counter" style="font-size: 0.74rem; color: var(--text-muted); font-weight: 500;">0/100</span>
+                  </label>
+                  <textarea id="profile-bio-input" maxlength="100" rows="3" placeholder="Tell other creators about yourself..." style="width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 0.88rem; font-family: inherit; color: var(--text-main); resize: vertical; outline: none; background: #ffffff;"></textarea>
+                </div>
+
+                <div>
+                  <label style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Banner Color Theme</label>
+                  <div class="palette-swatches-grid-compact" id="profile-banner-swatches">
+                    <button type="button" class="palette-swatch active" data-theme="ocean" title="Ocean Teal" aria-label="Ocean Teal" style="background: linear-gradient(135deg, #0b1e28 0%, #164e63 45%, #0e7490 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="midnight" title="Dark Slate" aria-label="Dark Slate" style="background: linear-gradient(135deg, #090d16 0%, #1e293b 50%, #334155 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="cosmic" title="Cosmic Indigo" aria-label="Cosmic Indigo" style="background: linear-gradient(135deg, #150a26 0%, #3b1d60 50%, #6366f1 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="sunset" title="Sunset Coral" aria-label="Sunset Coral" style="background: linear-gradient(135deg, #240b0b 0%, #6b2118 50%, #ea580c 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="emerald" title="Emerald Forest" aria-label="Emerald Forest" style="background: linear-gradient(135deg, #041f16 0%, #064e3b 50%, #059669 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="rose" title="Cyber Rose" aria-label="Cyber Rose" style="background: linear-gradient(135deg, #260819 0%, #701a4b 50%, #e11d48 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="aurora" title="Northern Aurora" aria-label="Northern Aurora" style="background: linear-gradient(135deg, #042426 0%, #0d9488 50%, #38bdf8 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="carbon" title="Carbon Gold" aria-label="Carbon Gold" style="background: linear-gradient(135deg, #141416 0%, #27272a 50%, #d97706 100%);"></button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <div class="settings-card-title"><i class="fa-solid fa-share-nodes" style="color: var(--primary);"></i> Social & Portfolio Links</div>
+                <div class="edit-social-fields">
+                  <div class="edit-social-item" style="background: #ffffff;">
+                    <span class="edit-social-icon"><i class="fa-solid fa-globe"></i></span>
+                    <input type="url" id="profile-link-website" placeholder="Website / Portfolio URL" maxlength="150" class="edit-social-input">
+                  </div>
+                  <div class="edit-social-item" style="background: #ffffff;">
+                    <span class="edit-social-icon"><i class="fa-brands fa-instagram"></i></span>
+                    <input type="text" id="profile-link-instagram" placeholder="Instagram (URL or @username)" maxlength="150" class="edit-social-input">
+                  </div>
+                  <div class="edit-social-item" style="background: #ffffff;">
+                    <span class="edit-social-icon"><i class="fa-brands fa-youtube"></i></span>
+                    <input type="text" id="profile-link-youtube" placeholder="YouTube channel URL" maxlength="150" class="edit-social-input">
+                  </div>
+                  <div class="edit-social-item" style="background: #ffffff;">
+                    <span class="edit-social-icon"><i class="fa-brands fa-spotify"></i></span>
+                    <input type="text" id="profile-link-spotify" placeholder="Spotify artist URL" maxlength="150" class="edit-social-input">
+                  </div>
+                  <div class="edit-social-item" style="background: #ffffff;">
+                    <span class="edit-social-icon"><i class="fa-brands fa-soundcloud"></i></span>
+                    <input type="text" id="profile-link-soundcloud" placeholder="SoundCloud profile URL" maxlength="150" class="edit-social-input">
+                  </div>
+                  <div class="edit-social-item" style="background: #ffffff;">
+                    <span class="edit-social-icon"><i class="fa-brands fa-x-twitter"></i></span>
+                    <input type="text" id="profile-link-twitter" placeholder="X / Twitter (URL or @username)" maxlength="150" class="edit-social-input">
+                  </div>
+                  <div class="edit-social-item" style="background: #ffffff;">
+                    <span class="edit-social-icon"><i class="fa-brands fa-discord"></i></span>
+                    <input type="text" id="profile-link-discord" placeholder="Discord server or invite URL" maxlength="150" class="edit-social-input">
+                  </div>
+                </div>
+              </div>
+
             </div>
-          </div>
 
-          <div style="margin-bottom: 16px;">
-            <label for="profile-bio-input" style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">
-              <span>Bio</span>
-              <span id="profile-bio-counter" style="font-size: 0.74rem; color: var(--text-muted); font-weight: 500;">0/100</span>
-            </label>
-            <textarea id="profile-bio-input" maxlength="100" rows="2" placeholder="Tell other creators about yourself..." style="width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font-size: 0.88rem; font-family: inherit; color: var(--text-main); resize: vertical; outline: none; background: #fafcfe;"></textarea>
-          </div>
-
-          <div style="margin-bottom: 18px;">
-            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Social & Links</label>
-            <div class="edit-social-fields">
-              <div class="edit-social-item">
-                <span class="edit-social-icon"><i class="fa-solid fa-globe"></i></span>
-                <input type="url" id="profile-link-website" placeholder="Website / Portfolio URL" maxlength="150" class="edit-social-input">
-              </div>
-              <div class="edit-social-item">
-                <span class="edit-social-icon"><i class="fa-brands fa-instagram"></i></span>
-                <input type="text" id="profile-link-instagram" placeholder="Instagram (URL or @username)" maxlength="150" class="edit-social-input">
-              </div>
-              <div class="edit-social-item">
-                <span class="edit-social-icon"><i class="fa-brands fa-youtube"></i></span>
-                <input type="text" id="profile-link-youtube" placeholder="YouTube channel URL" maxlength="150" class="edit-social-input">
-              </div>
-              <div class="edit-social-item">
-                <span class="edit-social-icon"><i class="fa-brands fa-spotify"></i></span>
-                <input type="text" id="profile-link-spotify" placeholder="Spotify artist URL" maxlength="150" class="edit-social-input">
-              </div>
-              <div class="edit-social-item">
-                <span class="edit-social-icon"><i class="fa-brands fa-soundcloud"></i></span>
-                <input type="text" id="profile-link-soundcloud" placeholder="SoundCloud profile URL" maxlength="150" class="edit-social-input">
-              </div>
-              <div class="edit-social-item">
-                <span class="edit-social-icon"><i class="fa-brands fa-x-twitter"></i></span>
-                <input type="text" id="profile-link-twitter" placeholder="X / Twitter (URL or @username)" maxlength="150" class="edit-social-input">
-              </div>
-              <div class="edit-social-item">
-                <span class="edit-social-icon"><i class="fa-brands fa-discord"></i></span>
-                <input type="text" id="profile-link-discord" placeholder="Discord server or invite URL" maxlength="150" class="edit-social-input">
-              </div>
+            <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+              <button type="submit" id="save-profile-btn" style="background: var(--primary); color: #ffffff; border: none; padding: 11px 32px; border-radius: var(--radius-full); font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease;">
+                Save Profile
+              </button>
             </div>
-          </div>
-
-          <button type="submit" id="save-profile-btn" style="width: 100%; background: var(--primary); color: #ffffff; border: none; padding: 10px; border-radius: var(--radius-full); font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease;">
-            Save Profile
-          </button>
-        </form>
+          </form>
 
         <div style="border-top: 1px solid var(--border-light); padding-top: 20px; margin-bottom: 24px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">

@@ -71,6 +71,8 @@
 
     function setMode(mode) {
       currentMode = mode;
+      const mainContainer = document.getElementById('login-main-container');
+      if (mainContainer) mainContainer.style.maxWidth = '440px';
       alertBox.style.display = 'none';
       if (verifyBox) verifyBox.style.display = 'none';
       if (authForm) authForm.style.display = 'block';
@@ -140,6 +142,22 @@
       currentUser = user;
       authBox.style.display = 'none';
       profileBox.style.display = 'block';
+
+      const mainContainer = document.getElementById('login-main-container');
+      if (mainContainer) mainContainer.style.maxWidth = '980px';
+      const bannerHeader = document.getElementById('profile-banner-header');
+      const currentTheme = user.banner_color || 'ocean';
+      if (bannerHeader) bannerHeader.setAttribute('data-theme', currentTheme);
+      const swatchesContainer = document.getElementById('profile-banner-swatches');
+      if (swatchesContainer) {
+        swatchesContainer.querySelectorAll('.palette-swatch').forEach(btn => {
+          if (btn.getAttribute('data-theme') === currentTheme) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+      }
 
       const handle = user.username || user.email.split('@')[0];
       profileDisplayName.textContent = `@${handle}`;
@@ -363,17 +381,27 @@
       saveBtn.disabled = true;
       saveBtn.style.opacity = '0.7';
 
+      const activeSwatch = document.querySelector('#profile-banner-swatches .palette-swatch.active');
+      const selectedBannerColor = activeSwatch ? activeSwatch.getAttribute('data-theme') : (currentUser?.banner_color || 'ocean');
+
       try {
         const res = await fetch('/api/auth?action=update_profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: newUsername, bio: newBio, social_links: socialLinks })
+          body: JSON.stringify({
+            username: newUsername,
+            bio: newBio,
+            banner_color: selectedBannerColor,
+            social_links: socialLinks
+          })
         });
         const data = await res.json();
         if (res.ok && data.success) {
           showProfileAlert('Profile updated successfully!', true);
           currentUser = data.user;
           profileDisplayName.textContent = `@${data.user.username}`;
+          const bannerHeader = document.getElementById('profile-banner-header');
+          if (bannerHeader && data.user.banner_color) bannerHeader.setAttribute('data-theme', data.user.banner_color);
           if (profilePublicLink) {
             profilePublicLink.href = `profile.html?u=${encodeURIComponent(data.user.username)}`;
           }
@@ -391,6 +419,19 @@
         saveBtn.style.opacity = '1';
       }
     });
+
+    const profileBannerSwatches = document.getElementById('profile-banner-swatches');
+    if (profileBannerSwatches) {
+      profileBannerSwatches.querySelectorAll('.palette-swatch').forEach(btn => {
+        btn.addEventListener('click', () => {
+          profileBannerSwatches.querySelectorAll('.palette-swatch').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const theme = btn.getAttribute('data-theme');
+          const bannerHeader = document.getElementById('profile-banner-header');
+          if (bannerHeader && theme) bannerHeader.setAttribute('data-theme', theme);
+        });
+      });
+    }
 
     document.querySelectorAll('.btn-toggle-pw').forEach(btn => {
       btn.addEventListener('click', () => {

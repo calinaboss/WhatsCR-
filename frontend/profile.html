@@ -60,13 +60,20 @@
       </nav>
 
       <div class="profile-header-card">
-        <div class="profile-banner">
+        <div class="profile-banner" id="profile-banner">
           <div class="profile-banner-overlay"></div>
+          <button id="btn-edit-banner" class="banner-edit-btn" style="display: none;" title="Customize Banner Palette" aria-label="Change banner theme">
+            <i class="fa-solid fa-palette"></i>
+            <span>Customize Banner</span>
+          </button>
         </div>
         <div class="profile-header-body">
           <div class="profile-top-bar">
             <div class="profile-avatar-wrap">
               <div class="profile-avatar-large" id="creator-avatar">C</div>
+              <button id="btn-edit-avatar-badge" class="avatar-edit-badge" style="display: none;" title="Change Photo" aria-label="Change profile photo">
+                <i class="fa-solid fa-camera"></i>
+              </button>
             </div>
             <div class="profile-actions-toolbar">
               <div class="profile-social-links" id="creator-social-links"></div>
@@ -265,8 +272,66 @@
     </div>
   </div>
 
+  <div id="banner-palette-modal" class="wiki-modal-backdrop" style="display: none;">
+    <div class="wiki-modal-content" style="max-width: 500px;">
+      <div class="wiki-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 34px; height: 34px; border-radius: 10px; background: #e0f2fe; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+            <i class="fa-solid fa-palette"></i>
+          </div>
+          <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin: 0;">Customize Banner</h3>
+        </div>
+        <button id="banner-palette-close" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 8px;" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="wiki-modal-body" style="padding: 20px 24px;">
+        <div id="quick-banner-preview" class="palette-preview-strip" data-theme="ocean">
+          <span style="font-size: 0.8rem; font-weight: 700; color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">Banner Preview</span>
+        </div>
+        <label style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin: 16px 0 10px;">Choose Color Palette</label>
+        <div class="palette-swatches-grid" id="quick-banner-swatches">
+          <button type="button" class="palette-swatch-card active" data-theme="ocean">
+            <span class="swatch-color" style="background: linear-gradient(135deg, #0b1e28 0%, #164e63 45%, #0e7490 100%);"></span>
+            <span class="swatch-name">Ocean Teal</span>
+          </button>
+          <button type="button" class="palette-swatch-card" data-theme="midnight">
+            <span class="swatch-color" style="background: linear-gradient(135deg, #090d16 0%, #1e293b 50%, #334155 100%);"></span>
+            <span class="swatch-name">Dark Slate</span>
+          </button>
+          <button type="button" class="palette-swatch-card" data-theme="cosmic">
+            <span class="swatch-color" style="background: linear-gradient(135deg, #150a26 0%, #3b1d60 50%, #6366f1 100%);"></span>
+            <span class="swatch-name">Cosmic Indigo</span>
+          </button>
+          <button type="button" class="palette-swatch-card" data-theme="sunset">
+            <span class="swatch-color" style="background: linear-gradient(135deg, #240b0b 0%, #6b2118 50%, #ea580c 100%);"></span>
+            <span class="swatch-name">Sunset Coral</span>
+          </button>
+          <button type="button" class="palette-swatch-card" data-theme="emerald">
+            <span class="swatch-color" style="background: linear-gradient(135deg, #041f16 0%, #064e3b 50%, #059669 100%);"></span>
+            <span class="swatch-name">Emerald Forest</span>
+          </button>
+          <button type="button" class="palette-swatch-card" data-theme="rose">
+            <span class="swatch-color" style="background: linear-gradient(135deg, #260819 0%, #701a4b 50%, #e11d48 100%);"></span>
+            <span class="swatch-name">Cyber Rose</span>
+          </button>
+          <button type="button" class="palette-swatch-card" data-theme="aurora">
+            <span class="swatch-color" style="background: linear-gradient(135deg, #042426 0%, #0d9488 50%, #38bdf8 100%);"></span>
+            <span class="swatch-name">Northern Aurora</span>
+          </button>
+          <button type="button" class="palette-swatch-card" data-theme="carbon">
+            <span class="swatch-color" style="background: linear-gradient(135deg, #141416 0%, #27272a 50%, #d97706 100%);"></span>
+            <span class="swatch-name">Carbon Gold</span>
+          </button>
+        </div>
+      </div>
+      <div class="wiki-modal-footer" style="padding: 12px 24px 18px; justify-content: flex-end; gap: 8px;">
+        <button type="button" id="banner-palette-btn-cancel" style="background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-main); padding: 8px 18px; border-radius: var(--radius-full); font-size: 0.84rem; font-weight: 600; cursor: pointer;">Cancel</button>
+        <button type="button" id="banner-palette-btn-save" style="background: var(--primary); border: none; color: #ffffff; padding: 8px 22px; border-radius: var(--radius-full); font-size: 0.84rem; font-weight: 700; cursor: pointer;">Save Banner</button>
+      </div>
+    </div>
+  </div>
+
   <div id="edit-profile-modal" class="wiki-modal-backdrop" style="display: none;">
-    <div class="wiki-modal-content" style="max-width: 480px;">
+    <div class="wiki-modal-content" style="max-width: 760px;">
       <div class="wiki-modal-header">
         <div style="display: flex; align-items: center; gap: 10px;">
           <div style="width: 34px; height: 34px; border-radius: 10px; background: #e0f2fe; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1rem;">
@@ -279,76 +344,99 @@
       <div class="wiki-modal-body" style="padding: 20px 24px;">
         <div id="edit-profile-alert" style="display: none; padding: 10px 14px; border-radius: 10px; font-size: 0.84rem; margin-bottom: 16px;"></div>
 
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 14px; background: #fafcfe; border: 1px solid var(--border); border-radius: 14px;">
-          <div class="profile-avatar-large" id="edit-avatar-preview" style="width: 68px; height: 68px; min-width: 68px; min-height: 68px; font-size: 1.6rem; cursor: pointer;" title="Click to upload new photo">C</div>
-          <div style="flex: 1; min-width: 0;">
-            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
-              <label for="edit-avatar-input" class="btn" style="background: var(--primary); color: #ffffff; padding: 6px 14px; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                <i class="fa-solid fa-camera"></i>
-                <span>Upload Photo</span>
-              </label>
-              <input type="file" id="edit-avatar-input" accept="image/jpeg,image/png,image/webp" style="display: none;">
-              <button type="button" id="btn-remove-avatar" style="display: none; background: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; padding: 6px 12px; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 700; cursor: pointer;">
-                <i class="fa-solid fa-trash-can"></i> Remove
-              </button>
-            </div>
-            <span style="font-size: 0.74rem; color: var(--text-muted); display: block;">JPG, PNG or WebP. Auto-optimized square (Max 500 KB).</span>
-          </div>
-        </div>
-
         <form id="edit-profile-form">
-          <div style="margin-bottom: 16px;">
-            <label for="edit-bio-input" style="display: flex; justify-content: space-between; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">
-              <span>Bio</span>
-              <span id="edit-bio-counter" style="font-size: 0.74rem; color: var(--text-muted); font-weight: 500;">0/100</span>
-            </label>
-            <textarea id="edit-bio-input" maxlength="100" rows="2" placeholder="Tell other creators about your style, projects, or instruments..." style="width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font-size: 0.88rem; font-family: inherit; color: var(--text-main); resize: vertical; outline: none; background: #fafcfe;"></textarea>
-          </div>
+          <div class="edit-modal-grid">
+            <div class="edit-modal-col-left">
+              <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 14px; background: #fafcfe; border: 1px solid var(--border); border-radius: 14px;">
+                <div class="profile-avatar-large" id="edit-avatar-preview" style="width: 68px; height: 68px; min-width: 68px; min-height: 68px; font-size: 1.6rem; cursor: pointer;" title="Click to upload new photo">C</div>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
+                    <label for="edit-avatar-input" class="btn" style="background: var(--primary); color: #ffffff; padding: 6px 14px; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-camera"></i>
+                      <span>Upload Photo</span>
+                    </label>
+                    <input type="file" id="edit-avatar-input" accept="image/jpeg,image/png,image/webp" style="display: none;">
+                    <button type="button" id="btn-remove-avatar" style="display: none; background: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; padding: 6px 12px; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+                      <i class="fa-solid fa-trash-can"></i> Remove
+                    </button>
+                  </div>
+                  <span style="font-size: 0.74rem; color: var(--text-muted); display: block;">JPG, PNG or WebP (Max 500 KB).</span>
+                </div>
+              </div>
 
-          <div style="margin-bottom: 16px;">
-            <label for="edit-username-input" style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Handle (@username)</label>
-            <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; background: #fafcfe;">
-              <span style="color: var(--text-light); font-weight: 700; margin-right: 6px; font-size: 0.88rem;">@</span>
-              <input type="text" id="edit-username-input" maxlength="30" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.88rem; font-family: inherit; color: var(--text-main);">
-            </div>
-            <span id="edit-username-note" style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px; display: block;">Letters, numbers and underscores only (3-30 chars).</span>
-          </div>
-
-          <div style="margin-bottom: 18px;">
-            <label style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Social & Links</label>
-            <div class="edit-social-fields">
-              <div class="edit-social-item">
-                <span class="edit-social-icon"><i class="fa-solid fa-globe"></i></span>
-                <input type="url" id="edit-link-website" placeholder="Website / Portfolio URL" maxlength="150" class="edit-social-input">
-              </div>
-              <div class="edit-social-item">
-                <span class="edit-social-icon"><i class="fa-brands fa-instagram"></i></span>
-                <input type="text" id="edit-link-instagram" placeholder="Instagram (URL or @username)" maxlength="150" class="edit-social-input">
-              </div>
-              <div class="edit-social-item">
-                <span class="edit-social-icon"><i class="fa-brands fa-youtube"></i></span>
-                <input type="text" id="edit-link-youtube" placeholder="YouTube channel URL" maxlength="150" class="edit-social-input">
-              </div>
-              <div class="edit-social-item">
-                <span class="edit-social-icon"><i class="fa-brands fa-spotify"></i></span>
-                <input type="text" id="edit-link-spotify" placeholder="Spotify artist URL" maxlength="150" class="edit-social-input">
-              </div>
-              <div class="edit-social-item">
-                <span class="edit-social-icon"><i class="fa-brands fa-soundcloud"></i></span>
-                <input type="text" id="edit-link-soundcloud" placeholder="SoundCloud profile URL" maxlength="150" class="edit-social-input">
-              </div>
-              <div class="edit-social-item">
-                <span class="edit-social-icon"><i class="fa-brands fa-x-twitter"></i></span>
-                <input type="text" id="edit-link-twitter" placeholder="X / Twitter (URL or @username)" maxlength="150" class="edit-social-input">
-              </div>
-              <div class="edit-social-item">
-                <span class="edit-social-icon"><i class="fa-brands fa-discord"></i></span>
-                <input type="text" id="edit-link-discord" placeholder="Discord server or invite URL" maxlength="150" class="edit-social-input">
+              <div style="margin-bottom: 18px; padding: 14px; background: #fafcfe; border: 1px solid var(--border); border-radius: 14px;">
+                <label style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">Banner Theme</label>
+                <div id="modal-banner-preview" class="palette-preview-strip" data-theme="ocean" style="margin-bottom: 10px;">
+                  <span style="font-size: 0.75rem; font-weight: 700; color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">Current Theme</span>
+                </div>
+                <div class="palette-swatches-grid-compact" id="edit-modal-banner-swatches">
+                  <button type="button" class="palette-swatch active" data-theme="ocean" title="Ocean Teal" aria-label="Ocean Teal" style="background: linear-gradient(135deg, #0b1e28 0%, #164e63 45%, #0e7490 100%);"></button>
+                  <button type="button" class="palette-swatch" data-theme="midnight" title="Dark Slate" aria-label="Dark Slate" style="background: linear-gradient(135deg, #090d16 0%, #1e293b 50%, #334155 100%);"></button>
+                  <button type="button" class="palette-swatch" data-theme="cosmic" title="Cosmic Indigo" aria-label="Cosmic Indigo" style="background: linear-gradient(135deg, #150a26 0%, #3b1d60 50%, #6366f1 100%);"></button>
+                  <button type="button" class="palette-swatch" data-theme="sunset" title="Sunset Coral" aria-label="Sunset Coral" style="background: linear-gradient(135deg, #240b0b 0%, #6b2118 50%, #ea580c 100%);"></button>
+                  <button type="button" class="palette-swatch" data-theme="emerald" title="Emerald Forest" aria-label="Emerald Forest" style="background: linear-gradient(135deg, #041f16 0%, #064e3b 50%, #059669 100%);"></button>
+                  <button type="button" class="palette-swatch" data-theme="rose" title="Cyber Rose" aria-label="Cyber Rose" style="background: linear-gradient(135deg, #260819 0%, #701a4b 50%, #e11d48 100%);"></button>
+                  <button type="button" class="palette-swatch" data-theme="aurora" title="Northern Aurora" aria-label="Northern Aurora" style="background: linear-gradient(135deg, #042426 0%, #0d9488 50%, #38bdf8 100%);"></button>
+                  <button type="button" class="palette-swatch" data-theme="carbon" title="Carbon Gold" aria-label="Carbon Gold" style="background: linear-gradient(135deg, #141416 0%, #27272a 50%, #d97706 100%);"></button>
+                </div>
               </div>
             </div>
+
+            <div class="edit-modal-col-right">
+              <div style="margin-bottom: 14px;">
+                <label for="edit-username-input" style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 5px;">Handle (@username)</label>
+                <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: #fafcfe;">
+                  <span style="color: var(--text-light); font-weight: 700; margin-right: 6px; font-size: 0.88rem;">@</span>
+                  <input type="text" id="edit-username-input" maxlength="30" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.88rem; font-family: inherit; color: var(--text-main);">
+                </div>
+                <span id="edit-username-note" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 3px; display: block;">Letters, numbers and underscores only (3-30 chars).</span>
+              </div>
+
+              <div style="margin-bottom: 14px;">
+                <label for="edit-bio-input" style="display: flex; justify-content: space-between; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 5px;">
+                  <span>Bio</span>
+                  <span id="edit-bio-counter" style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">0/100</span>
+                </label>
+                <textarea id="edit-bio-input" maxlength="100" rows="2" placeholder="Tell other creators about your style, projects, or instruments..." style="width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; font-size: 0.88rem; font-family: inherit; color: var(--text-main); resize: vertical; outline: none; background: #fafcfe;"></textarea>
+              </div>
+
+              <div style="margin-bottom: 10px;">
+                <label style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Social & Links</label>
+                <div class="edit-social-fields">
+                  <div class="edit-social-item">
+                    <span class="edit-social-icon"><i class="fa-solid fa-globe"></i></span>
+                    <input type="url" id="edit-link-website" placeholder="Website / Portfolio URL" maxlength="150" class="edit-social-input">
+                  </div>
+                  <div class="edit-social-item">
+                    <span class="edit-social-icon"><i class="fa-brands fa-instagram"></i></span>
+                    <input type="text" id="edit-link-instagram" placeholder="Instagram (URL or @username)" maxlength="150" class="edit-social-input">
+                  </div>
+                  <div class="edit-social-item">
+                    <span class="edit-social-icon"><i class="fa-brands fa-youtube"></i></span>
+                    <input type="text" id="edit-link-youtube" placeholder="YouTube channel URL" maxlength="150" class="edit-social-input">
+                  </div>
+                  <div class="edit-social-item">
+                    <span class="edit-social-icon"><i class="fa-brands fa-spotify"></i></span>
+                    <input type="text" id="edit-link-spotify" placeholder="Spotify artist URL" maxlength="150" class="edit-social-input">
+                  </div>
+                  <div class="edit-social-item">
+                    <span class="edit-social-icon"><i class="fa-brands fa-soundcloud"></i></span>
+                    <input type="text" id="edit-link-soundcloud" placeholder="SoundCloud profile URL" maxlength="150" class="edit-social-input">
+                  </div>
+                  <div class="edit-social-item">
+                    <span class="edit-social-icon"><i class="fa-brands fa-x-twitter"></i></span>
+                    <input type="text" id="edit-link-twitter" placeholder="X / Twitter (URL or @username)" maxlength="150" class="edit-social-input">
+                  </div>
+                  <div class="edit-social-item">
+                    <span class="edit-social-icon"><i class="fa-brands fa-discord"></i></span>
+                    <input type="text" id="edit-link-discord" placeholder="Discord server or invite URL" maxlength="150" class="edit-social-input">
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="wiki-modal-footer" style="padding: 12px 0 0; justify-content: flex-end; gap: 8px;">
+          <div class="wiki-modal-footer" style="padding: 14px 0 0; justify-content: flex-end; gap: 8px;">
             <button type="button" id="edit-modal-btn-cancel" style="background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-main); padding: 8px 18px; border-radius: var(--radius-full); font-size: 0.84rem; font-weight: 600; cursor: pointer;">Cancel</button>
             <button type="submit" id="edit-modal-btn-save" style="background: var(--primary); border: none; color: #ffffff; padding: 8px 22px; border-radius: var(--radius-full); font-size: 0.84rem; font-weight: 700; cursor: pointer;">Save Changes</button>
           </div>

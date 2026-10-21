@@ -107,6 +107,10 @@
           const profileData = await profileRes.json();
           if (profileData && profileData.user) {
             const u = profileData.user;
+            const profileBanner = document.getElementById('profile-banner');
+            if (profileBanner) {
+              profileBanner.setAttribute('data-theme', u.banner_color || 'ocean');
+            }
             if (u.avatar_url) {
               creatorAvatar.innerHTML = `<img src="${sanitizeUrl(u.avatar_url)}" alt="${escapeHtml(displayUser)}" onerror="this.onerror=null; this.parentElement.textContent='${escapeHtml((displayUser[0] || 'C').toUpperCase())}';">`;
             } else {
@@ -484,11 +488,15 @@
     }
 
     async function checkHeaderAuth() {
+      const btnEditBanner = document.getElementById('btn-edit-banner');
+      const btnEditAvatarBadge = document.getElementById('btn-edit-avatar-badge');
       try {
         const res = await fetch('/api/auth?action=me');
         if (!res.ok) {
           btnFollow.style.display = 'inline-flex';
           btnEditProfile.style.display = 'none';
+          if (btnEditBanner) btnEditBanner.style.display = 'none';
+          if (btnEditAvatarBadge) btnEditAvatarBadge.style.display = 'none';
           return;
         }
         const data = await res.json();
@@ -522,17 +530,25 @@
           if (loggedInHandle.toLowerCase() === currentTarget) {
             btnEditProfile.style.display = 'inline-flex';
             btnFollow.style.display = 'none';
+            if (btnEditBanner) btnEditBanner.style.display = 'inline-flex';
+            if (btnEditAvatarBadge) btnEditAvatarBadge.style.display = 'flex';
           } else {
             btnEditProfile.style.display = 'none';
             btnFollow.style.display = 'inline-flex';
+            if (btnEditBanner) btnEditBanner.style.display = 'none';
+            if (btnEditAvatarBadge) btnEditAvatarBadge.style.display = 'none';
           }
         } else {
           btnFollow.style.display = 'inline-flex';
           btnEditProfile.style.display = 'none';
+          if (btnEditBanner) btnEditBanner.style.display = 'none';
+          if (btnEditAvatarBadge) btnEditAvatarBadge.style.display = 'none';
         }
       } catch (e) {
         btnFollow.style.display = 'inline-flex';
         btnEditProfile.style.display = 'none';
+        if (btnEditBanner) btnEditBanner.style.display = 'none';
+        if (btnEditAvatarBadge) btnEditAvatarBadge.style.display = 'none';
       }
     }
 
@@ -658,6 +674,19 @@
         const el = document.getElementById(`edit-link-${k}`);
         if (el) el.value = links[k] || '';
       });
+      const activeTheme = (currentUserSession && currentUserSession.banner_color) || 'ocean';
+      const modalBannerPreview = document.getElementById('modal-banner-preview');
+      if (modalBannerPreview) modalBannerPreview.setAttribute('data-theme', activeTheme);
+      const editModalSwatches = document.getElementById('edit-modal-banner-swatches');
+      if (editModalSwatches) {
+        editModalSwatches.querySelectorAll('.palette-swatch').forEach(btn => {
+          if (btn.getAttribute('data-theme') === activeTheme) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+      }
       updateEditAvatarDisplay(currentUserSession.avatar_url, handle);
       editProfileModal.style.display = 'flex';
     }
@@ -684,6 +713,116 @@
     if (editBioInput && editBioCounter) {
       editBioInput.addEventListener('input', () => {
         editBioCounter.textContent = `${editBioInput.value.length}/100`;
+      });
+    }
+
+    const editModalSwatches = document.getElementById('edit-modal-banner-swatches');
+    if (editModalSwatches) {
+      editModalSwatches.querySelectorAll('.palette-swatch').forEach(btn => {
+        btn.addEventListener('click', () => {
+          editModalSwatches.querySelectorAll('.palette-swatch').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const theme = btn.getAttribute('data-theme');
+          const modalBannerPreview = document.getElementById('modal-banner-preview');
+          if (modalBannerPreview && theme) modalBannerPreview.setAttribute('data-theme', theme);
+        });
+      });
+    }
+
+    const btnEditAvatarBadge = document.getElementById('btn-edit-avatar-badge');
+    if (btnEditAvatarBadge) {
+      btnEditAvatarBadge.addEventListener('click', () => {
+        if (editAvatarInput) editAvatarInput.click();
+      });
+    }
+
+    const bannerPaletteModal = document.getElementById('banner-palette-modal');
+    const btnEditBanner = document.getElementById('btn-edit-banner');
+    const bannerPaletteClose = document.getElementById('banner-palette-close');
+    const bannerPaletteBtnCancel = document.getElementById('banner-palette-btn-cancel');
+    const bannerPaletteBtnSave = document.getElementById('banner-palette-btn-save');
+    const quickBannerPreview = document.getElementById('quick-banner-preview');
+    const quickBannerSwatches = document.getElementById('quick-banner-swatches');
+    const profileBanner = document.getElementById('profile-banner');
+    let tempBannerColor = 'ocean';
+
+    function openBannerPaletteModal() {
+      if (!bannerPaletteModal) return;
+      tempBannerColor = (currentUserSession && currentUserSession.banner_color) || 'ocean';
+      if (quickBannerPreview) quickBannerPreview.setAttribute('data-theme', tempBannerColor);
+      if (profileBanner) profileBanner.setAttribute('data-theme', tempBannerColor);
+      if (quickBannerSwatches) {
+        quickBannerSwatches.querySelectorAll('.palette-swatch-card').forEach(card => {
+          if (card.getAttribute('data-theme') === tempBannerColor) {
+            card.classList.add('active');
+          } else {
+            card.classList.remove('active');
+          }
+        });
+      }
+      bannerPaletteModal.style.display = 'flex';
+    }
+
+    function closeBannerPaletteModal(revert = false) {
+      if (!bannerPaletteModal) return;
+      bannerPaletteModal.style.display = 'none';
+      if (revert && profileBanner) {
+        const originalTheme = (currentUserSession && currentUserSession.banner_color) || 'ocean';
+        profileBanner.setAttribute('data-theme', originalTheme);
+      }
+    }
+
+    if (btnEditBanner) {
+      btnEditBanner.addEventListener('click', openBannerPaletteModal);
+    }
+    if (bannerPaletteClose) {
+      bannerPaletteClose.addEventListener('click', () => closeBannerPaletteModal(true));
+    }
+    if (bannerPaletteBtnCancel) {
+      bannerPaletteBtnCancel.addEventListener('click', () => closeBannerPaletteModal(true));
+    }
+    if (bannerPaletteModal) {
+      bannerPaletteModal.addEventListener('click', (e) => {
+        if (e.target === bannerPaletteModal) closeBannerPaletteModal(true);
+      });
+    }
+
+    if (quickBannerSwatches) {
+      quickBannerSwatches.querySelectorAll('.palette-swatch-card').forEach(card => {
+        card.addEventListener('click', () => {
+          quickBannerSwatches.querySelectorAll('.palette-swatch-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          tempBannerColor = card.getAttribute('data-theme') || 'ocean';
+          if (quickBannerPreview) quickBannerPreview.setAttribute('data-theme', tempBannerColor);
+          if (profileBanner) profileBanner.setAttribute('data-theme', tempBannerColor);
+        });
+      });
+    }
+
+    if (bannerPaletteBtnSave) {
+      bannerPaletteBtnSave.addEventListener('click', async () => {
+        bannerPaletteBtnSave.disabled = true;
+        bannerPaletteBtnSave.textContent = 'Saving...';
+        try {
+          const res = await fetch('/api/auth?action=update_profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ banner_color: tempBannerColor })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            if (currentUserSession) currentUserSession.banner_color = tempBannerColor;
+            if (profileBanner) profileBanner.setAttribute('data-theme', tempBannerColor);
+            closeBannerPaletteModal(false);
+          } else {
+            alert(data.error || 'Failed to save banner color.');
+          }
+        } catch (err) {
+          alert('Network error while saving banner color.');
+        } finally {
+          bannerPaletteBtnSave.disabled = false;
+          bannerPaletteBtnSave.textContent = 'Save Banner';
+        }
       });
     }
 
@@ -833,6 +972,9 @@
           discord: (document.getElementById('edit-link-discord')?.value || '').trim()
         };
 
+        const activeModalSwatch = document.querySelector('#edit-modal-banner-swatches .palette-swatch.active');
+        const selectedBannerTheme = activeModalSwatch ? activeModalSwatch.getAttribute('data-theme') : ((currentUserSession && currentUserSession.banner_color) || 'ocean');
+
         if (editModalBtnSave) {
           editModalBtnSave.disabled = true;
           editModalBtnSave.textContent = 'Saving...';
@@ -845,6 +987,7 @@
             body: JSON.stringify({
               username: newUsername,
               bio: newBio,
+              banner_color: selectedBannerTheme,
               social_links: socialLinks
             })
           });
@@ -856,6 +999,10 @@
           }
 
           currentUserSession = data.user;
+          const profileBanner = document.getElementById('profile-banner');
+          if (profileBanner && data.user.banner_color) {
+            profileBanner.setAttribute('data-theme', data.user.banner_color);
+          }
           const creatorBio = document.getElementById('creator-bio');
           if (creatorBio) {
             if (data.user.bio && data.user.bio.trim()) {

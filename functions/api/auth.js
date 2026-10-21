@@ -284,7 +284,8 @@ async function ensureTables(databaseUrl) {
     "CREATE INDEX IF NOT EXISTS idx_avatar_files_user ON avatar_files(user_id)",
     "CREATE TABLE IF NOT EXISTS email_verifications (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id) ON DELETE CASCADE, email VARCHAR(255) NOT NULL, code_hash VARCHAR(255) NOT NULL, expires_at TIMESTAMP WITH TIME ZONE NOT NULL, attempts INT DEFAULT 0, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)",
     "CREATE INDEX IF NOT EXISTS idx_email_verif_email ON email_verifications(email)",
-    "ALTER TABLE users ADD COLUMN IF NOT EXISTS social_links TEXT DEFAULT '{}'"
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS social_links TEXT DEFAULT '{}'",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS banner_color VARCHAR(50) DEFAULT 'ocean'"
   ];
   for (const stmt of statements) {
     try {
@@ -349,7 +350,7 @@ export async function onRequest(context) {
     try {
       const userRows = await runNeonSql(
         env.DATABASE_URL,
-        'SELECT id, username, role, created_at, username_changed_at, avatar_url, bio, social_links FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1',
+        'SELECT id, username, role, created_at, username_changed_at, avatar_url, bio, social_links, banner_color FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1',
         [targetUsername]
       );
 
@@ -406,6 +407,7 @@ export async function onRequest(context) {
             avatar_url: u.avatar_url || null,
             bio: u.bio || '',
             social_links: parsedSocial,
+            banner_color: u.banner_color || 'ocean',
             created_at: u.created_at,
             track_count: count,
             follower_count: followerCount,
@@ -609,7 +611,7 @@ export async function onRequest(context) {
       const tokenHash = await sha256Hex(token);
       const rows = await runNeonSql(
         env.DATABASE_URL,
-        'SELECT u.id, u.email, u.username, u.role, u.username_changed_at, u.email_verified, u.avatar_url, u.bio, u.social_links FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        'SELECT u.id, u.email, u.username, u.role, u.username_changed_at, u.email_verified, u.avatar_url, u.bio, u.social_links, u.banner_color FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
         [tokenHash]
       );
       if (rows && rows.length > 0) {
@@ -618,7 +620,7 @@ export async function onRequest(context) {
         try {
           parsedSocial = meUser.social_links ? (typeof meUser.social_links === 'string' ? JSON.parse(meUser.social_links) : meUser.social_links) : {};
         } catch (e) {}
-        return new Response(JSON.stringify({ user: { ...meUser, social_links: parsedSocial } }), {
+        return new Response(JSON.stringify({ user: { ...meUser, social_links: parsedSocial, banner_color: meUser.banner_color || 'ocean' } }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
@@ -655,6 +657,9 @@ export async function onRequest(context) {
     const hasBio = body.bio !== undefined;
     const rawBio = hasBio ? String(body.bio).trim().slice(0, 100) : null;
     const hasSocial = body.social_links !== undefined && body.social_links !== null && typeof body.social_links === 'object';
+    const allowedBannerThemes = ['ocean', 'midnight', 'cosmic', 'sunset', 'emerald', 'rose', 'aurora', 'carbon'];
+    const hasBanner = typeof body.banner_color === 'string' && allowedBannerThemes.includes(body.banner_color.trim().toLowerCase());
+    const cleanBanner = hasBanner ? body.banner_color.trim().toLowerCase() : null;
 
     let cleanSocialLinks = null;
     if (hasSocial) {
@@ -673,7 +678,7 @@ export async function onRequest(context) {
       const tokenHash = await sha256Hex(token);
       const authRows = await runNeonSql(
         env.DATABASE_URL,
-        'SELECT u.id, u.username, u.username_changed_at, u.bio, u.avatar_url, u.social_links FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        'SELECT u.id, u.username, u.username_changed_at, u.bio, u.avatar_url, u.social_links, u.banner_color FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
         [tokenHash]
       );
       if (!authRows || authRows.length === 0) {
@@ -746,11 +751,15 @@ export async function onRequest(context) {
         updates.push(`social_links = $${pIndex++}`);
         params.push(cleanSocialLinks);
       }
+      if (cleanBanner !== null) {
+        updates.push(`banner_color = $${pIndex++}`);
+        params.push(cleanBanner);
+      }
 
       let updated = [user];
       if (updates.length > 0) {
         params.push(userId);
-        const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = $${pIndex} RETURNING id, email, username, role, username_changed_at, email_verified, avatar_url, bio, social_links`;
+        const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = $${pIndex} RETURNING id, email, username, role, username_changed_at, email_verified, avatar_url, bio, social_links, banner_color`;
         updated = await runNeonSql(env.DATABASE_URL, sql, params);
       }
 
@@ -763,7 +772,7 @@ export async function onRequest(context) {
 
       return new Response(JSON.stringify({
         success: true,
-        user: { ...updatedUser, social_links: parsedSocial },
+        user: { ...updatedUser, social_links: parsedSocial, banner_color: updatedUser.banner_color || 'ocean' },
         username_changed: isUsernameChanged
       }), {
         status: 200,
