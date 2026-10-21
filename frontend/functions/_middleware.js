@@ -27,11 +27,15 @@ export async function onRequest(context) {
   newHeaders.set('X-Frame-Options', 'DENY');
   newHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   newHeaders.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  newHeaders.set('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
 
   if (origin && isAllowedOrigin) {
     newHeaders.set('Access-Control-Allow-Origin', origin);
     newHeaders.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     newHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    newHeaders.set('Vary', 'Origin');
+  } else if (!origin) {
+    newHeaders.set('Access-Control-Allow-Origin', 'https://whatscr.pages.dev');
     newHeaders.set('Vary', 'Origin');
   }
 
