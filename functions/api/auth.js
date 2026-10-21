@@ -147,6 +147,29 @@ async function sendEmailJsOtp(env, toEmail, passcode, timeStr) {
   }
 }
 
+function sanitizeSocialLink(platform, rawVal) {
+  if (!rawVal || typeof rawVal !== 'string') return '';
+  let val = rawVal.trim();
+  if (!val || val.length > 150) return '';
+  if (/^(javascript|data|vbscript|file):/i.test(val)) return '';
+  if (platform === 'instagram' && !val.includes('/')) {
+    val = `https://instagram.com/${val.replace(/^@/, '')}`;
+  } else if (platform === 'twitter' && !val.includes('/')) {
+    val = `https://x.com/${val.replace(/^@/, '')}`;
+  } else if (platform === 'github' && !val.includes('/')) {
+    val = `https://github.com/${val.replace(/^@/, '')}`;
+  } else if (!/^https?:[/][/]/i.test(val)) {
+    val = 'https://' + val;
+  }
+  try {
+    const u = new URL(val);
+    if ((u.protocol === 'https:' || u.protocol === 'http:') && u.hostname && u.hostname.includes('.')) {
+      return u.href;
+    }
+  } catch (e) {}
+  return '';
+}
+
 function inspectImageHeader(buffer) {
   if (!buffer || buffer.byteLength < 16) {
     return { valid: false, error: 'File is too small or invalid' };
@@ -233,7 +256,8 @@ async function ensureTables(databaseUrl) {
     "CREATE TABLE IF NOT EXISTS avatar_files (filename VARCHAR(255) PRIMARY KEY, user_id UUID REFERENCES users(id) ON DELETE CASCADE, mime_type VARCHAR(64) NOT NULL, data BYTEA NOT NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)",
     "CREATE INDEX IF NOT EXISTS idx_avatar_files_user ON avatar_files(user_id)",
     "CREATE TABLE IF NOT EXISTS email_verifications (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id) ON DELETE CASCADE, email VARCHAR(255) NOT NULL, code_hash VARCHAR(255) NOT NULL, expires_at TIMESTAMP WITH TIME ZONE NOT NULL, attempts INT DEFAULT 0, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)",
-    "CREATE INDEX IF NOT EXISTS idx_email_verif_email ON email_verifications(email)"
+    "CREATE INDEX IF NOT EXISTS idx_email_verif_email ON email_verifications(email)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS social_links TEXT DEFAULT '{}'"
   ];
   for (const stmt of statements) {
     try {
@@ -298,7 +322,7 @@ export async function onRequest(context) {
     try {
       const userRows = await runNeonSql(
         env.DATABASE_URL,
-        'SELECT id, username, role, created_at, username_changed_at, avatar_url, bio FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1',
+        'SELECT id, username, role, created_at, username_changed_at, avatar_url, bio, social_links FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1',
         [targetUsername]
       );
 
@@ -343,12 +367,18 @@ export async function onRequest(context) {
           } catch (sessionErr) {}
         }
 
+        let parsedSocial = {};
+        try {
+          parsedSocial = u.social_links ? (typeof u.social_links === 'string' ? JSON.parse(u.social_links) : u.social_links) : {};
+        } catch (e) {}
+
         return new Response(JSON.stringify({
           user: {
             username: u.username,
             role: u.role,
             avatar_url: u.avatar_url || null,
             bio: u.bio || '',
+            social_links: parsedSocial,
             created_at: u.created_at,
             track_count: count,
             follower_count: followerCount,
@@ -552,11 +582,16 @@ export async function onRequest(context) {
       const tokenHash = await sha256Hex(token);
       const rows = await runNeonSql(
         env.DATABASE_URL,
-        'SELECT u.id, u.email, u.username, u.role, u.username_changed_at, u.email_verified, u.avatar_url, u.bio FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        'SELECT u.id, u.email, u.username, u.role, u.username_changed_at, u.email_verified, u.avatar_url, u.bio, u.social_links FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
         [tokenHash]
       );
       if (rows && rows.length > 0) {
-        return new Response(JSON.stringify({ user: rows[0] }), {
+        const meUser = rows[0];
+        let parsedSocial = {};
+        try {
+          parsedSocial = meUser.social_links ? (typeof meUser.social_links === 'string' ? JSON.parse(meUser.social_links) : meUser.social_links) : {};
+        } catch (e) {}
+        return new Response(JSON.stringify({ user: { ...meUser, social_links: parsedSocial } }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
@@ -592,12 +627,26 @@ export async function onRequest(context) {
     const hasUsername = typeof body.username === 'string' && body.username.trim().length > 0;
     const hasBio = body.bio !== undefined;
     const rawBio = hasBio ? String(body.bio).trim().slice(0, 100) : null;
+    const hasSocial = body.social_links !== undefined && body.social_links !== null && typeof body.social_links === 'object';
+
+    let cleanSocialLinks = null;
+    if (hasSocial) {
+      const allowed = ['website', 'instagram', 'youtube', 'spotify', 'soundcloud', 'twitter', 'discord', 'github'];
+      const sanitized = {};
+      for (const key of allowed) {
+        if (typeof body.social_links[key] === 'string') {
+          const clean = sanitizeSocialLink(key, body.social_links[key]);
+          if (clean) sanitized[key] = clean;
+        }
+      }
+      cleanSocialLinks = JSON.stringify(sanitized);
+    }
 
     try {
       const tokenHash = await sha256Hex(token);
       const authRows = await runNeonSql(
         env.DATABASE_URL,
-        'SELECT u.id, u.username, u.username_changed_at, u.bio, u.avatar_url FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
+        'SELECT u.id, u.username, u.username_changed_at, u.bio, u.avatar_url, u.social_links FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > NOW() LIMIT 1',
         [tokenHash]
       );
       if (!authRows || authRows.length === 0) {
@@ -653,34 +702,43 @@ export async function onRequest(context) {
         }
       }
 
-      let updated;
-      if (cleanUsername && cleanUsername !== (user.username || '').toLowerCase() && hasBio) {
-        updated = await runNeonSql(
-          env.DATABASE_URL,
-          'UPDATE users SET username = $1, username_changed_at = NOW(), bio = $2 WHERE id = $3 RETURNING id, email, username, role, username_changed_at, email_verified, avatar_url, bio',
-          [cleanUsername, rawBio, userId]
-        );
-      } else if (cleanUsername && cleanUsername !== (user.username || '').toLowerCase()) {
-        updated = await runNeonSql(
-          env.DATABASE_URL,
-          'UPDATE users SET username = $1, username_changed_at = NOW() WHERE id = $2 RETURNING id, email, username, role, username_changed_at, email_verified, avatar_url, bio',
-          [cleanUsername, userId]
-        );
-      } else if (hasBio) {
-        updated = await runNeonSql(
-          env.DATABASE_URL,
-          'UPDATE users SET bio = $1 WHERE id = $2 RETURNING id, email, username, role, username_changed_at, email_verified, avatar_url, bio',
-          [rawBio, userId]
-        );
-      } else {
-        return new Response(JSON.stringify({ success: true, user: user, username_changed: false }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
+      const updates = [];
+      const params = [];
+      let pIndex = 1;
+
+      if (cleanUsername && cleanUsername !== (user.username || '').toLowerCase()) {
+        updates.push(`username = $${pIndex++}`);
+        params.push(cleanUsername);
+        updates.push('username_changed_at = NOW()');
+      }
+      if (hasBio) {
+        updates.push(`bio = $${pIndex++}`);
+        params.push(rawBio);
+      }
+      if (cleanSocialLinks !== null) {
+        updates.push(`social_links = $${pIndex++}`);
+        params.push(cleanSocialLinks);
+      }
+
+      let updated = [user];
+      if (updates.length > 0) {
+        params.push(userId);
+        const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = $${pIndex} RETURNING id, email, username, role, username_changed_at, email_verified, avatar_url, bio, social_links`;
+        updated = await runNeonSql(env.DATABASE_URL, sql, params);
       }
 
       const isUsernameChanged = Boolean(cleanUsername && cleanUsername !== (user.username || '').toLowerCase());
-      return new Response(JSON.stringify({ success: true, user: updated[0], username_changed: isUsernameChanged }), {
+      const updatedUser = updated && updated[0] ? updated[0] : user;
+      let parsedSocial = {};
+      try {
+        parsedSocial = updatedUser.social_links ? (typeof updatedUser.social_links === 'string' ? JSON.parse(updatedUser.social_links) : updatedUser.social_links) : {};
+      } catch (e) {}
+
+      return new Response(JSON.stringify({
+        success: true,
+        user: { ...updatedUser, social_links: parsedSocial },
+        username_changed: isUsernameChanged
+      }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });

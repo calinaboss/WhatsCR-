@@ -176,6 +176,12 @@
         if (bioCounter) bioCounter.textContent = `${(user.bio || '').length}/100`;
       }
 
+      const links = user.social_links || {};
+      ['website', 'instagram', 'youtube', 'spotify', 'soundcloud', 'twitter', 'discord'].forEach(k => {
+        const el = document.getElementById(`profile-link-${k}`);
+        if (el) el.value = links[k] || '';
+      });
+
       if (profilePublicLink) {
         profilePublicLink.href = `profile.html?u=${encodeURIComponent(handle)}`;
       }
@@ -338,6 +344,15 @@
       const newUsername = profileUsernameInput.value.trim().toLowerCase();
       const bioInput = document.getElementById('profile-bio-input');
       const newBio = bioInput ? bioInput.value.trim() : '';
+      const socialLinks = {
+        website: (document.getElementById('profile-link-website')?.value || '').trim(),
+        instagram: (document.getElementById('profile-link-instagram')?.value || '').trim(),
+        youtube: (document.getElementById('profile-link-youtube')?.value || '').trim(),
+        spotify: (document.getElementById('profile-link-spotify')?.value || '').trim(),
+        soundcloud: (document.getElementById('profile-link-soundcloud')?.value || '').trim(),
+        twitter: (document.getElementById('profile-link-twitter')?.value || '').trim(),
+        discord: (document.getElementById('profile-link-discord')?.value || '').trim()
+      };
 
       if (!newUsername || newUsername.length < 3) {
         showProfileAlert('Username must be at least 3 characters.');
@@ -352,7 +367,7 @@
         const res = await fetch('/api/auth?action=update_profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: newUsername, bio: newBio })
+          body: JSON.stringify({ username: newUsername, bio: newBio, social_links: socialLinks })
         });
         const data = await res.json();
         if (res.ok && data.success) {

@@ -59,55 +59,70 @@
         <span id="breadcrumb-username" style="color: var(--text-main); font-weight: 700;">@Creator</span>
       </nav>
 
-      <section class="profile-hero">
-        <div class="profile-identity">
-          <div class="profile-avatar-large" id="creator-avatar">C</div>
-          <div class="profile-details">
-            <h1 id="creator-name">
-              <span id="creator-handle">@Creator</span>
-            </h1>
-            <div class="profile-meta-row">
-              <span id="creator-badge" style="display: inline-block; padding: 2px 10px; font-size: 0.76rem; font-weight: 700; border-radius: var(--radius-full); background: #f1f5f9; color: var(--text-muted);">Creator</span>
-              <span id="creator-joined" style="font-size: 0.82rem; color: var(--text-muted);"><i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>WhatsCR Creator</span>
+      <div class="profile-header-card">
+        <div class="profile-banner">
+          <div class="profile-banner-overlay"></div>
+        </div>
+        <div class="profile-header-body">
+          <div class="profile-top-bar">
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar-large" id="creator-avatar">C</div>
             </div>
-            <p id="creator-bio" class="profile-bio" style="font-size: 0.88rem; color: var(--text-main); margin-top: 8px; line-height: 1.5; max-width: 620px; white-space: pre-line; display: none;"></p>
+            <div class="profile-actions-toolbar">
+              <div class="profile-social-links" id="creator-social-links"></div>
+              <div class="profile-actions-row">
+                <button id="btn-follow" class="btn btn-follow" style="display: none;">
+                  <i class="fa-solid fa-user-plus" id="follow-icon"></i>
+                  <span id="follow-text">Follow</span>
+                </button>
+                <button id="btn-share-profile" class="btn btn-share-profile">
+                  <i class="fa-solid fa-share-nodes"></i>
+                  <span id="share-btn-text">Share</span>
+                </button>
+                <button id="btn-edit-profile" class="btn btn-edit-profile" style="display: none;">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                  <span>Edit Profile</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-identity-info">
+            <div class="profile-name-row">
+              <h1 id="creator-name" class="profile-handle-title">
+                <span id="creator-handle">@Creator</span>
+              </h1>
+              <span id="creator-badge" class="profile-role-badge">Creator</span>
+            </div>
+            <div class="profile-meta-row">
+              <span id="creator-joined"><i class="fa-regular fa-calendar" style="margin-right: 5px;"></i>WhatsCR Creator</span>
+            </div>
+            <p id="creator-bio" class="profile-bio" style="display: none;"></p>
+          </div>
+
+          <div class="profile-stats-bar">
+            <div class="profile-stat-item">
+              <span class="profile-stat-number" id="stat-tracks">0</span>
+              <span class="profile-stat-label">Tracks</span>
+            </div>
+            <div class="profile-stat-sep"></div>
+            <div class="profile-stat-item profile-stat-clickable" id="card-followers" title="Click to view followers">
+              <span class="profile-stat-number" id="stat-followers">0</span>
+              <span class="profile-stat-label">Followers <i class="fa-solid fa-chevron-right stat-chevron"></i></span>
+            </div>
+            <div class="profile-stat-sep"></div>
+            <div class="profile-stat-item profile-stat-clickable" id="card-following" title="Click to view following">
+              <span class="profile-stat-number" id="stat-following">0</span>
+              <span class="profile-stat-label">Following <i class="fa-solid fa-chevron-right stat-chevron"></i></span>
+            </div>
+            <div class="profile-stat-sep"></div>
+            <div class="profile-stat-item">
+              <span class="profile-stat-number" id="stat-duration">0:00</span>
+              <span class="profile-stat-label">Duration</span>
+            </div>
           </div>
         </div>
-
-        <div class="profile-actions-row" style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <button id="btn-follow" class="btn btn-follow" style="display: none;">
-            <i class="fa-solid fa-user-plus" id="follow-icon"></i>
-            <span id="follow-text">Follow</span>
-          </button>
-          <button id="btn-share-profile" class="btn" style="background: #ffffff; border: 1px solid var(--border); color: var(--text-main); padding: 9px 18px; border-radius: var(--radius-full); font-size: 0.86rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
-            <i class="fa-solid fa-share-nodes"></i>
-            <span id="share-btn-text">Share Profile</span>
-          </button>
-          <button id="btn-edit-profile" class="btn" style="display: none; background: var(--primary); color: #ffffff; padding: 9px 18px; border-radius: var(--radius-full); font-size: 0.86rem; font-weight: 700; border: none; cursor: pointer; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0, 151, 178, 0.25);">
-            <i class="fa-solid fa-pen-to-square"></i>
-            <span>Edit Profile</span>
-          </button>
-        </div>
-      </section>
-
-      <section class="profile-stats-grid">
-        <div class="profile-stat-card">
-          <div class="profile-stat-number" id="stat-tracks">0</div>
-          <div class="profile-stat-label">Published Tracks</div>
-        </div>
-        <div class="profile-stat-card" id="card-followers" style="cursor: pointer;" title="Click to view followers">
-          <div class="profile-stat-number" id="stat-followers">0</div>
-          <div class="profile-stat-label">Followers <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem; opacity: 0.6; margin-left: 2px;"></i></div>
-        </div>
-        <div class="profile-stat-card" id="card-following" style="cursor: pointer;" title="Click to view following">
-          <div class="profile-stat-number" id="stat-following">0</div>
-          <div class="profile-stat-label">Following <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem; opacity: 0.6; margin-left: 2px;"></i></div>
-        </div>
-        <div class="profile-stat-card">
-          <div class="profile-stat-number" id="stat-duration">0:00</div>
-          <div class="profile-stat-label">Total Duration</div>
-        </div>
-      </section>
+      </div>
 
       <section>
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
@@ -263,6 +278,40 @@
               <input type="text" id="edit-username-input" maxlength="30" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.88rem; font-family: inherit; color: var(--text-main);">
             </div>
             <span id="edit-username-note" style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px; display: block;">Letters, numbers and underscores only (3-30 chars).</span>
+          </div>
+
+          <div style="margin-bottom: 18px;">
+            <label style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Social & Links</label>
+            <div class="edit-social-fields">
+              <div class="edit-social-item">
+                <span class="edit-social-icon"><i class="fa-solid fa-globe"></i></span>
+                <input type="url" id="edit-link-website" placeholder="Website / Portfolio URL" maxlength="150" class="edit-social-input">
+              </div>
+              <div class="edit-social-item">
+                <span class="edit-social-icon"><i class="fa-brands fa-instagram"></i></span>
+                <input type="text" id="edit-link-instagram" placeholder="Instagram (URL or @username)" maxlength="150" class="edit-social-input">
+              </div>
+              <div class="edit-social-item">
+                <span class="edit-social-icon"><i class="fa-brands fa-youtube"></i></span>
+                <input type="text" id="edit-link-youtube" placeholder="YouTube channel URL" maxlength="150" class="edit-social-input">
+              </div>
+              <div class="edit-social-item">
+                <span class="edit-social-icon"><i class="fa-brands fa-spotify"></i></span>
+                <input type="text" id="edit-link-spotify" placeholder="Spotify artist URL" maxlength="150" class="edit-social-input">
+              </div>
+              <div class="edit-social-item">
+                <span class="edit-social-icon"><i class="fa-brands fa-soundcloud"></i></span>
+                <input type="text" id="edit-link-soundcloud" placeholder="SoundCloud profile URL" maxlength="150" class="edit-social-input">
+              </div>
+              <div class="edit-social-item">
+                <span class="edit-social-icon"><i class="fa-brands fa-x-twitter"></i></span>
+                <input type="text" id="edit-link-twitter" placeholder="X / Twitter (URL or @username)" maxlength="150" class="edit-social-input">
+              </div>
+              <div class="edit-social-item">
+                <span class="edit-social-icon"><i class="fa-brands fa-discord"></i></span>
+                <input type="text" id="edit-link-discord" placeholder="Discord server or invite URL" maxlength="150" class="edit-social-input">
+              </div>
+            </div>
           </div>
 
           <div class="wiki-modal-footer" style="padding: 12px 0 0; justify-content: flex-end; gap: 8px;">

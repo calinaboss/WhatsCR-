@@ -42,10 +42,44 @@
     function sanitizeUrl(url) {
       if (!url || typeof url !== 'string') return '#';
       const clean = url.trim();
-      if (clean.startsWith('audio/') || clean.startsWith('/api/') || clean.startsWith('http://') || clean.startsWith('https://')) {
+      if (/^(javascript|data|vbscript|file):/i.test(clean)) return '#';
+      if (clean.startsWith('audio/') || clean.startsWith('/api/') || /^https?:[/][/]/i.test(clean)) {
         return clean.replace(/"/g, '%22').replace(/'/g, '%27').replace(/</g, '%3C').replace(/>/g, '%3E');
       }
       return '#';
+    }
+
+    function renderSocialLinks(container, links) {
+      if (!container) return;
+      container.innerHTML = '';
+      if (!links || typeof links !== 'object') return;
+      const config = [
+        { key: 'website', icon: 'fa-solid fa-globe', label: 'Website' },
+        { key: 'instagram', icon: 'fa-brands fa-instagram', label: 'Instagram' },
+        { key: 'youtube', icon: 'fa-brands fa-youtube', label: 'YouTube' },
+        { key: 'spotify', icon: 'fa-brands fa-spotify', label: 'Spotify' },
+        { key: 'soundcloud', icon: 'fa-brands fa-soundcloud', label: 'SoundCloud' },
+        { key: 'twitter', icon: 'fa-brands fa-x-twitter', label: 'X (Twitter)' },
+        { key: 'discord', icon: 'fa-brands fa-discord', label: 'Discord' },
+        { key: 'github', icon: 'fa-brands fa-github', label: 'GitHub' }
+      ];
+      config.forEach(item => {
+        const raw = links[item.key];
+        if (raw && typeof raw === 'string' && raw.trim()) {
+          const safe = sanitizeUrl(raw.trim());
+          if (safe && safe !== '#') {
+            const a = document.createElement('a');
+            a.href = safe;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer nofollow';
+            a.className = 'profile-social-btn';
+            a.title = item.label;
+            a.setAttribute('aria-label', item.label);
+            a.innerHTML = `<i class="${item.icon}"></i>`;
+            container.appendChild(a);
+          }
+        }
+      });
     }
 
     async function loadProfile() {
@@ -92,6 +126,7 @@
               const d = new Date(u.created_at);
               creatorJoined.innerHTML = `<i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>Member since ${d.toLocaleString('default', { month: 'short', year: 'numeric' })}`;
             }
+            renderSocialLinks(document.getElementById('creator-social-links'), u.social_links);
           }
         }
       } catch (e) {}
@@ -586,6 +621,11 @@
         editBioInput.value = currentBio;
         if (editBioCounter) editBioCounter.textContent = `${currentBio.length}/100`;
       }
+      const links = currentUserSession.social_links || {};
+      ['website', 'instagram', 'youtube', 'spotify', 'soundcloud', 'twitter', 'discord'].forEach(k => {
+        const el = document.getElementById(`edit-link-${k}`);
+        if (el) el.value = links[k] || '';
+      });
       updateEditAvatarDisplay(currentUserSession.avatar_url, handle);
       editProfileModal.style.display = 'flex';
     }
@@ -751,6 +791,15 @@
         e.preventDefault();
         const newBio = editBioInput ? editBioInput.value.trim() : '';
         const newUsername = editUsernameInput ? editUsernameInput.value.trim().toLowerCase() : '';
+        const socialLinks = {
+          website: (document.getElementById('edit-link-website')?.value || '').trim(),
+          instagram: (document.getElementById('edit-link-instagram')?.value || '').trim(),
+          youtube: (document.getElementById('edit-link-youtube')?.value || '').trim(),
+          spotify: (document.getElementById('edit-link-spotify')?.value || '').trim(),
+          soundcloud: (document.getElementById('edit-link-soundcloud')?.value || '').trim(),
+          twitter: (document.getElementById('edit-link-twitter')?.value || '').trim(),
+          discord: (document.getElementById('edit-link-discord')?.value || '').trim()
+        };
 
         if (editModalBtnSave) {
           editModalBtnSave.disabled = true;
@@ -763,7 +812,8 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               username: newUsername,
-              bio: newBio
+              bio: newBio,
+              social_links: socialLinks
             })
           });
 
@@ -784,6 +834,7 @@
               creatorBio.style.display = 'none';
             }
           }
+          renderSocialLinks(document.getElementById('creator-social-links'), data.user.social_links);
 
           const currentTarget = (targetUsername.startsWith('@') ? targetUsername.slice(1) : targetUsername).toLowerCase();
           if (data.user.username && data.user.username.toLowerCase() !== currentTarget) {
