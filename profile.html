@@ -231,6 +231,40 @@
     </div>
   </div>
 
+  <div id="external-link-modal" class="wiki-modal-backdrop" style="display: none;">
+    <div class="wiki-modal-content" style="max-width: 440px;">
+      <div class="wiki-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 34px; height: 34px; border-radius: 10px; background: #fff7ed; color: #ea580c; display: flex; align-items: center; justify-content: center; font-size: 1.05rem;">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </div>
+          <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin: 0;">External Link</h3>
+        </div>
+        <button id="external-link-close" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 8px;" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="wiki-modal-body" style="padding: 16px 22px;">
+        <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px;">
+          You are leaving WhatsCR to visit an external website:
+        </p>
+        <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 0.86rem; font-weight: 700; color: var(--text-main); word-break: break-all; margin-bottom: 14px;">
+          <i class="fa-solid fa-link" style="color: var(--primary); margin-right: 6px;"></i>
+          <span id="external-link-target-url"></span>
+        </div>
+        <div style="font-size: 0.78rem; color: #b45309; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>Never share your password or sensitive personal data on external sites.</span>
+        </div>
+      </div>
+      <div class="wiki-modal-footer" style="padding: 12px 22px 18px; justify-content: flex-end; gap: 8px;">
+        <button type="button" id="external-link-btn-cancel" style="background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-main); padding: 8px 18px; border-radius: var(--radius-full); font-size: 0.84rem; font-weight: 600; cursor: pointer;">Stay on WhatsCR</button>
+        <a id="external-link-btn-proceed" href="#" target="_blank" rel="noopener noreferrer nofollow" style="background: var(--primary); border: none; color: #ffffff; padding: 8px 22px; border-radius: var(--radius-full); font-size: 0.84rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+          <span>Continue</span>
+          <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.75rem;"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
   <div id="edit-profile-modal" class="wiki-modal-backdrop" style="display: none;">
     <div class="wiki-modal-content" style="max-width: 480px;">
       <div class="wiki-modal-header">

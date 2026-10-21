@@ -163,9 +163,36 @@ function sanitizeSocialLink(platform, rawVal) {
   }
   try {
     const u = new URL(val);
-    if ((u.protocol === 'https:' || u.protocol === 'http:') && u.hostname && u.hostname.includes('.')) {
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return '';
+    const host = u.hostname.toLowerCase();
+    if (!host || !host.includes('.')) return '';
+
+    const platformDomains = {
+      instagram: ['instagram.com'],
+      youtube: ['youtube.com', 'youtu.be'],
+      spotify: ['spotify.com'],
+      soundcloud: ['soundcloud.com'],
+      twitter: ['twitter.com', 'x.com'],
+      discord: ['discord.gg', 'discord.com', 'discordapp.com'],
+      github: ['github.com']
+    };
+
+    if (platformDomains[platform]) {
+      const allowed = platformDomains[platform];
+      const matches = allowed.some(d => host === d || host.endsWith('.' + d));
+      if (!matches) return '';
       return u.href;
     }
+
+    if (platform === 'website') {
+      if (u.protocol !== 'https:') return '';
+      if (/^(\d{1,3}\.){3}\d{1,3}$/.test(host) || host === 'localhost' || host.endsWith('.local') || host.endsWith('.internal')) return '';
+      const dangerousExts = /\.(exe|bat|cmd|sh|msi|scr|vbs|apk|zip|rar|tar|gz|iso|dmg|bin)$/i;
+      if (dangerousExts.test(u.pathname.toLowerCase())) return '';
+      return u.href;
+    }
+
+    return '';
   } catch (e) {}
   return '';
 }

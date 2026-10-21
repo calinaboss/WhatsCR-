@@ -76,6 +76,12 @@
             a.title = item.label;
             a.setAttribute('aria-label', item.label);
             a.innerHTML = `<i class="${item.icon}"></i>`;
+            if (item.key === 'website') {
+              a.addEventListener('click', (e) => {
+                e.preventDefault();
+                openExternalLinkModal(safe);
+              });
+            }
             container.appendChild(a);
           }
         }
@@ -450,6 +456,32 @@
     usersModal.addEventListener('click', (e) => {
       if (e.target === usersModal) usersModal.style.display = 'none';
     });
+
+    const externalLinkModal = document.getElementById('external-link-modal');
+    const externalLinkTargetUrl = document.getElementById('external-link-target-url');
+    const externalLinkClose = document.getElementById('external-link-close');
+    const externalLinkBtnCancel = document.getElementById('external-link-btn-cancel');
+    const externalLinkBtnProceed = document.getElementById('external-link-btn-proceed');
+
+    function openExternalLinkModal(url) {
+      if (!externalLinkModal) return;
+      if (externalLinkTargetUrl) externalLinkTargetUrl.textContent = url;
+      if (externalLinkBtnProceed) externalLinkBtnProceed.href = url;
+      externalLinkModal.style.display = 'flex';
+    }
+
+    function closeExternalLinkModal() {
+      if (externalLinkModal) externalLinkModal.style.display = 'none';
+    }
+
+    if (externalLinkClose) externalLinkClose.addEventListener('click', closeExternalLinkModal);
+    if (externalLinkBtnCancel) externalLinkBtnCancel.addEventListener('click', closeExternalLinkModal);
+    if (externalLinkBtnProceed) externalLinkBtnProceed.addEventListener('click', closeExternalLinkModal);
+    if (externalLinkModal) {
+      externalLinkModal.addEventListener('click', (e) => {
+        if (e.target === externalLinkModal) closeExternalLinkModal();
+      });
+    }
 
     async function checkHeaderAuth() {
       try {
