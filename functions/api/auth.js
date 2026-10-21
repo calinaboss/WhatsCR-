@@ -657,7 +657,7 @@ export async function onRequest(context) {
     const hasBio = body.bio !== undefined;
     const rawBio = hasBio ? String(body.bio).trim().slice(0, 100) : null;
     const hasSocial = body.social_links !== undefined && body.social_links !== null && typeof body.social_links === 'object';
-    const allowedBannerThemes = ['ocean', 'midnight', 'cosmic', 'sunset', 'emerald', 'rose', 'aurora', 'carbon'];
+    const allowedBannerThemes = ['ocean', 'midnight', 'cosmic', 'sunset', 'emerald', 'rose', 'aurora', 'carbon', 'hyper', 'crimson', 'amber', 'synthwave', 'aquamarine', 'obsidian', 'stellar', 'magma'];
     const hasBanner = typeof body.banner_color === 'string' && allowedBannerThemes.includes(body.banner_color.trim().toLowerCase());
     const cleanBanner = hasBanner ? body.banner_color.trim().toLowerCase() : null;
 

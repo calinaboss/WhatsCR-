@@ -66,7 +66,10 @@
           </div>
 
           <div style="margin-bottom: 18px;">
-            <label for="auth-password" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Password</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label for="auth-password" style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin: 0;">Password</label>
+              <button type="button" id="btn-forgot-password" style="background: none; border: none; color: var(--primary); font-size: 0.78rem; font-weight: 700; cursor: pointer; padding: 0;">Forgot password?</button>
+            </div>
             <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; background: #fafcfe;">
               <i class="fa-solid fa-lock" style="color: var(--text-light); margin-right: 10px; font-size: 0.9rem;"></i>
               <input type="password" id="auth-password" required placeholder="At least 8 characters" minlength="8" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.94rem; font-family: inherit; color: var(--text-main);">
@@ -123,8 +126,13 @@
         
         <div id="profile-banner-header" class="settings-header-banner" data-theme="ocean">
           <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
-            <div id="profile-avatar-display" style="width: 76px; height: 76px; min-width: 76px; min-height: 76px; border-radius: 50%; background: #ffffff; color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; border: 3px solid rgba(255, 255, 255, 0.4); box-shadow: 0 4px 14px rgba(0,0,0,0.18); overflow: hidden;">
-              <i class="fa-solid fa-user"></i>
+            <div class="profile-avatar-wrap" style="position: relative; display: inline-block;">
+              <div id="profile-avatar-display" style="width: 76px; height: 76px; min-width: 76px; min-height: 76px; border-radius: 50%; background: #ffffff; color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; border: 3px solid rgba(255, 255, 255, 0.4); box-shadow: 0 4px 14px rgba(0,0,0,0.18); overflow: hidden;">
+                <i class="fa-solid fa-user"></i>
+              </div>
+              <button type="button" id="settings-avatar-edit-badge" class="avatar-edit-badge" title="Change Photo" aria-label="Change profile photo" style="display: flex; position: absolute; bottom: 0; right: 0;">
+                <i class="fa-solid fa-camera"></i>
+              </button>
             </div>
             <div>
               <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -135,6 +143,10 @@
             </div>
           </div>
           <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <button type="button" id="settings-banner-edit-btn" class="banner-edit-btn" title="Customize Banner Palette" aria-label="Change banner theme" style="position: static;">
+              <i class="fa-solid fa-palette"></i>
+              <span>Customize Banner</span>
+            </button>
             <label for="login-avatar-input" style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(6px); border: 1px solid rgba(255, 255, 255, 0.35); color: #ffffff; padding: 7px 16px; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
               <i class="fa-solid fa-camera"></i> Change Photo
             </label>
@@ -165,7 +177,7 @@
           <form id="profile-form">
             <div class="settings-grid" style="padding: 0; border: none; box-shadow: none;">
               
-              <div class="settings-card">
+              <div class="settings-card" id="settings-banner-palette-section">
                 <div class="settings-card-title"><i class="fa-solid fa-user-pen" style="color: var(--primary);"></i> Profile Identity</div>
                 <div style="margin-bottom: 16px;">
                   <label for="profile-username-input" style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Username</label>
@@ -189,7 +201,10 @@
                 </div>
 
                 <div>
-                  <label style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Banner Color Theme</label>
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                    <label style="font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin: 0;">Banner Color Theme</label>
+                    <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: 600;">16 presets</span>
+                  </div>
                   <div class="palette-swatches-grid-compact" id="profile-banner-swatches">
                     <button type="button" class="palette-swatch active" data-theme="ocean" title="Ocean Teal" aria-label="Ocean Teal" style="background: linear-gradient(135deg, #0b1e28 0%, #164e63 45%, #0e7490 100%);"></button>
                     <button type="button" class="palette-swatch" data-theme="midnight" title="Dark Slate" aria-label="Dark Slate" style="background: linear-gradient(135deg, #090d16 0%, #1e293b 50%, #334155 100%);"></button>
@@ -199,6 +214,14 @@
                     <button type="button" class="palette-swatch" data-theme="rose" title="Cyber Rose" aria-label="Cyber Rose" style="background: linear-gradient(135deg, #260819 0%, #701a4b 50%, #e11d48 100%);"></button>
                     <button type="button" class="palette-swatch" data-theme="aurora" title="Northern Aurora" aria-label="Northern Aurora" style="background: linear-gradient(135deg, #042426 0%, #0d9488 50%, #38bdf8 100%);"></button>
                     <button type="button" class="palette-swatch" data-theme="carbon" title="Carbon Gold" aria-label="Carbon Gold" style="background: linear-gradient(135deg, #141416 0%, #27272a 50%, #d97706 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="hyper" title="Hyper Violet" aria-label="Hyper Violet" style="background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 50%, #818cf8 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="crimson" title="Deep Crimson" aria-label="Deep Crimson" style="background: linear-gradient(135deg, #2b080c 0%, #881337 50%, #f43f5e 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="amber" title="Golden Sunburst" aria-label="Golden Sunburst" style="background: linear-gradient(135deg, #261503 0%, #78350f 50%, #f59e0b 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="synthwave" title="Synthwave 80s" aria-label="Synthwave 80s" style="background: linear-gradient(135deg, #18052e 0%, #6d28d9 50%, #ec4899 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="aquamarine" title="Aquamarine Mint" aria-label="Aquamarine Mint" style="background: linear-gradient(135deg, #022623 0%, #0f766e 50%, #14b8a6 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="obsidian" title="Obsidian Minimal" aria-label="Obsidian Minimal" style="background: linear-gradient(135deg, #09090b 0%, #18181b 50%, #27272a 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="stellar" title="Stellar Blue" aria-label="Stellar Blue" style="background: linear-gradient(135deg, #031525 0%, #1e3a8a 50%, #3b82f6 100%);"></button>
+                    <button type="button" class="palette-swatch" data-theme="magma" title="Magma Flame" aria-label="Magma Flame" style="background: linear-gradient(135deg, #230800 0%, #7c2d12 50%, #ea580c 100%);"></button>
                   </div>
                 </div>
               </div>
@@ -246,18 +269,30 @@
             </div>
           </form>
 
-        <div style="border-top: 1px solid var(--border-light); padding-top: 20px; margin-bottom: 24px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <i class="fa-solid fa-key" style="color: var(--primary); font-size: 0.95rem;"></i>
-              <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);">Change Password</span>
+        <div class="settings-security-zone">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 40px; height: 40px; border-radius: 12px; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0;">
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <h3 style="font-size: 1.05rem; font-weight: 800; color: #991b1b; margin: 0;">Account Security & Password</h3>
+                  <span style="background: #fee2e2; color: #b91c1c; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px;">Security Zone</span>
+                </div>
+                <p style="font-size: 0.8rem; color: #7f1d1d; margin: 3px 0 0;">Manage your primary login credentials and password protection.</p>
+              </div>
             </div>
-            <button type="button" id="toggle-pw-section-btn" style="background: none; border: none; color: var(--primary); font-size: 0.82rem; font-weight: 700; cursor: pointer;">
-              <span id="toggle-pw-section-text">Edit</span>
+            <button type="button" id="toggle-pw-section-btn" style="background: #ffffff; border: 1.5px solid #fca5a5; color: #b91c1c; padding: 8px 20px; border-radius: var(--radius-full); font-size: 0.84rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+              <i class="fa-solid fa-lock"></i>
+              <span id="toggle-pw-section-text">Change Password</span>
             </button>
           </div>
 
-          <div id="pw-change-section" style="display: none; background: #fafcfe; border: 1px solid var(--border); border-radius: 14px; padding: 18px 16px;">
+          <div id="pw-change-section" style="display: none; background: #ffffff; border: 1px solid #fca5a5; border-radius: 14px; padding: 20px; margin-top: 16px;">
+            <div style="background: #fef2f2; border-left: 3px solid #dc2626; padding: 8px 12px; border-radius: 0 8px 8px 0; margin-bottom: 16px;">
+              <span style="font-size: 0.8rem; color: #991b1b; font-weight: 600;"><i class="fa-solid fa-circle-exclamation" style="margin-right: 4px;"></i> You will need to enter your current password to authorize a change.</span>
+            </div>
             <form id="change-pw-form">
               <div style="margin-bottom: 14px;">
                 <label for="current-pw-input" style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 5px;">Current Password</label>
@@ -300,8 +335,8 @@
               </div>
 
               <div style="display: flex; gap: 8px;">
-                <button type="submit" id="save-pw-btn" style="flex: 1; background: var(--primary); color: #ffffff; border: none; padding: 9px; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease;">Update Password</button>
-                <button type="button" id="cancel-pw-btn" style="padding: 9px 16px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 600; cursor: pointer;">Cancel</button>
+                <button type="submit" id="save-pw-btn" style="flex: 1; background: #dc2626; color: #ffffff; border: none; padding: 10px; border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);">Update Password</button>
+                <button type="button" id="cancel-pw-btn" style="padding: 10px 18px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 600; cursor: pointer;">Cancel</button>
               </div>
             </form>
           </div>
@@ -354,6 +389,50 @@
         <button type="button" id="otp-modal-resend-btn" style="background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer;">Resend Code</button>
         <span style="color: var(--text-light);">&bull;</span>
         <button type="button" id="otp-modal-cancel-btn" style="background: none; border: none; color: var(--text-muted); font-weight: 600; cursor: pointer;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="forgot-password-modal" class="wiki-modal-backdrop" style="display: none;">
+    <div class="wiki-modal-content" style="max-width: 480px;">
+      <div class="wiki-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+            <i class="fa-solid fa-key"></i>
+          </div>
+          <div>
+            <h3 style="font-size: 1.12rem; font-weight: 800; color: var(--text-main); margin: 0;">Password Recovery</h3>
+            <span style="font-size: 0.75rem; color: #dc2626; font-weight: 700;">Manual Identity Verification</span>
+          </div>
+        </div>
+        <button id="forgot-pw-close" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 8px;" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="wiki-modal-body" style="padding: 22px 24px;">
+        <div style="background: #fffbfa; border: 1px solid #fecaca; border-radius: 12px; padding: 14px 16px; margin-bottom: 18px;">
+          <p style="font-size: 0.86rem; color: #991b1b; font-weight: 600; line-height: 1.5; margin: 0;">
+            For maximum account security, password resets are processed securely by our verification team after confirming ownership.
+          </p>
+        </div>
+        
+        <h4 style="font-size: 0.86rem; font-weight: 800; color: var(--text-main); margin: 0 0 10px;">How to request a reset:</h4>
+        <ol style="margin: 0 0 18px; padding-left: 20px; font-size: 0.84rem; color: var(--text-main); line-height: 1.6;">
+          <li>Send an email directly from your <strong>registered email address</strong> to:
+            <div style="margin: 8px 0; background: #fafcfe; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-weight: 700; color: var(--primary); word-break: break-all;">
+              <i class="fa-solid fa-envelope" style="margin-right: 6px;"></i>
+              <span class="safe-mail" data-u="whatscrorg.verify" data-d="gmail.com">whatscrorg.verify@gmail.com</span>
+            </div>
+          </li>
+          <li>Specify your account username (e.g. <code>@username</code>).</li>
+          <li>Our security staff will verify the request and respond with a temporary secure recovery link <strong>within 2-3 business days</strong>.</li>
+        </ol>
+
+        <a id="btn-mail-reset" href="mailto:whatscrorg.verify@gmail.com?subject=%5BPassword%20Reset%20Request%5D%20-%20WhatsCR&body=Hello%20WhatsCR%20Security%20Team%2C%0A%0AI%20am%20requesting%20a%20password%20reset%20for%20my%20account.%0A%0AUsername%3A%20%40%0ARegistered%20Email%3A%20" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: #dc2626; color: #ffffff; text-decoration: none; padding: 12px 18px; border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 700; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Send Reset Request via Email</span>
+        </a>
+      </div>
+      <div class="wiki-modal-footer" style="padding: 12px 24px 18px; justify-content: flex-end;">
+        <button type="button" id="forgot-pw-btn-cancel" style="background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-main); padding: 8px 18px; border-radius: var(--radius-full); font-size: 0.84rem; font-weight: 600; cursor: pointer;">Close</button>
       </div>
     </div>
   </div>

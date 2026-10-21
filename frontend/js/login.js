@@ -17,6 +17,10 @@
     const alertBox = document.getElementById('auth-alert');
     const passwordHint = document.getElementById('password-hint');
     const formTimeInput = document.getElementById('form_time');
+    const btnForgotPassword = document.getElementById('btn-forgot-password');
+    const forgotPasswordModal = document.getElementById('forgot-password-modal');
+    const forgotPwClose = document.getElementById('forgot-pw-close');
+    const forgotPwBtnCancel = document.getElementById('forgot-pw-btn-cancel');
 
     const verifyBox = document.getElementById('verify-box');
     const verifyEmailDisplay = document.getElementById('verify-email-display');
@@ -79,6 +83,7 @@
       if (tabLogin && tabLogin.parentElement) tabLogin.parentElement.style.display = 'flex';
       if (authLegalNote) authLegalNote.style.display = 'block';
       if (mode === 'login') {
+        if (btnForgotPassword) btnForgotPassword.style.display = 'inline-block';
         tabLogin.style.background = '#ffffff';
         tabLogin.style.color = 'var(--text-main)';
         tabLogin.style.boxShadow = 'var(--shadow-sm)';
@@ -92,6 +97,7 @@
         submitText.textContent = 'Log In to WhatsCR';
         passwordHint.style.display = 'none';
       } else {
+        if (btnForgotPassword) btnForgotPassword.style.display = 'none';
         tabRegister.style.background = '#ffffff';
         tabRegister.style.color = 'var(--text-main)';
         tabRegister.style.boxShadow = 'var(--shadow-sm)';
@@ -459,7 +465,7 @@
       togglePwSectionBtn.addEventListener('click', () => {
         const isHidden = pwChangeSection.style.display === 'none';
         pwChangeSection.style.display = isHidden ? 'block' : 'none';
-        togglePwSectionText.textContent = isHidden ? 'Close' : 'Edit';
+        togglePwSectionText.textContent = isHidden ? 'Close' : 'Change Password';
         if (isHidden) {
           currentPwInput.focus();
         } else {
@@ -473,7 +479,7 @@
     if (cancelPwBtn) {
       cancelPwBtn.addEventListener('click', () => {
         pwChangeSection.style.display = 'none';
-        togglePwSectionText.textContent = 'Edit';
+        togglePwSectionText.textContent = 'Change Password';
         changePwForm.reset();
         pwStrengthMeter.style.display = 'none';
         pwMatchError.style.display = 'none';
@@ -549,7 +555,7 @@
             changePwForm.reset();
             pwStrengthMeter.style.display = 'none';
             pwChangeSection.style.display = 'none';
-            togglePwSectionText.textContent = 'Edit';
+            togglePwSectionText.textContent = 'Change Password';
           } else {
             showProfileAlert(data.error || 'Failed to update password.');
           }
@@ -947,5 +953,41 @@
         } catch (err) {
           showProfileAlert('Network error while removing photo.');
         }
+      });
+    }
+
+    const settingsAvatarEditBadge = document.getElementById('settings-avatar-edit-badge');
+    if (settingsAvatarEditBadge) {
+      settingsAvatarEditBadge.addEventListener('click', () => {
+        if (loginAvatarInput) loginAvatarInput.click();
+      });
+    }
+
+    const settingsBannerEditBtn = document.getElementById('settings-banner-edit-btn');
+    if (settingsBannerEditBtn) {
+      settingsBannerEditBtn.addEventListener('click', () => {
+        const target = document.getElementById('settings-banner-palette-section');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          target.style.transition = 'box-shadow 0.3s ease';
+          target.style.boxShadow = '0 0 0 3px var(--primary)';
+          setTimeout(() => { target.style.boxShadow = ''; }, 1500);
+        }
+      });
+    }
+
+    function openForgotPasswordModal() {
+      if (forgotPasswordModal) forgotPasswordModal.style.display = 'flex';
+    }
+    function closeForgotPasswordModal() {
+      if (forgotPasswordModal) forgotPasswordModal.style.display = 'none';
+    }
+
+    if (btnForgotPassword) btnForgotPassword.addEventListener('click', openForgotPasswordModal);
+    if (forgotPwClose) forgotPwClose.addEventListener('click', closeForgotPasswordModal);
+    if (forgotPwBtnCancel) forgotPwBtnCancel.addEventListener('click', closeForgotPasswordModal);
+    if (forgotPasswordModal) {
+      forgotPasswordModal.addEventListener('click', (e) => {
+        if (e.target === forgotPasswordModal) closeForgotPasswordModal();
       });
     }

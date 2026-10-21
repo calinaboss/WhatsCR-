@@ -1811,6 +1811,46 @@ button {
 .settings-header-banner[data-theme="carbon"] {
   background: linear-gradient(135deg, #141416 0%, #27272a 50%, #d97706 100%);
 }
+.profile-banner[data-theme="hyper"],
+.palette-preview-strip[data-theme="hyper"],
+.settings-header-banner[data-theme="hyper"] {
+  background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 50%, #818cf8 100%);
+}
+.profile-banner[data-theme="crimson"],
+.palette-preview-strip[data-theme="crimson"],
+.settings-header-banner[data-theme="crimson"] {
+  background: linear-gradient(135deg, #2b080c 0%, #881337 50%, #f43f5e 100%);
+}
+.profile-banner[data-theme="amber"],
+.palette-preview-strip[data-theme="amber"],
+.settings-header-banner[data-theme="amber"] {
+  background: linear-gradient(135deg, #261503 0%, #78350f 50%, #f59e0b 100%);
+}
+.profile-banner[data-theme="synthwave"],
+.palette-preview-strip[data-theme="synthwave"],
+.settings-header-banner[data-theme="synthwave"] {
+  background: linear-gradient(135deg, #18052e 0%, #6d28d9 50%, #ec4899 100%);
+}
+.profile-banner[data-theme="aquamarine"],
+.palette-preview-strip[data-theme="aquamarine"],
+.settings-header-banner[data-theme="aquamarine"] {
+  background: linear-gradient(135deg, #022623 0%, #0f766e 50%, #14b8a6 100%);
+}
+.profile-banner[data-theme="obsidian"],
+.palette-preview-strip[data-theme="obsidian"],
+.settings-header-banner[data-theme="obsidian"] {
+  background: linear-gradient(135deg, #09090b 0%, #18181b 50%, #27272a 100%);
+}
+.profile-banner[data-theme="stellar"],
+.palette-preview-strip[data-theme="stellar"],
+.settings-header-banner[data-theme="stellar"] {
+  background: linear-gradient(135deg, #031525 0%, #1e3a8a 50%, #3b82f6 100%);
+}
+.profile-banner[data-theme="magma"],
+.palette-preview-strip[data-theme="magma"],
+.settings-header-banner[data-theme="magma"] {
+  background: linear-gradient(135deg, #230800 0%, #7c2d12 50%, #ea580c 100%);
+}
 
 .profile-header-body {
   padding: 0 32px 26px;
@@ -2237,6 +2277,15 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.settings-security-zone {
+  margin-top: 28px;
+  background: #fffbfa;
+  border: 1.5px solid #fecaca;
+  border-radius: 16px;
+  padding: 22px 24px;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.06);
 }
 
 @media (max-width: 768px) {
