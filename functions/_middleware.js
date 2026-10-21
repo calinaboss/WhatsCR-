@@ -27,7 +27,6 @@ export async function onRequest(context) {
   newHeaders.set('X-Frame-Options', 'DENY');
   newHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   newHeaders.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  newHeaders.set('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
 
   if (origin && isAllowedOrigin) {
     newHeaders.set('Access-Control-Allow-Origin', origin);
