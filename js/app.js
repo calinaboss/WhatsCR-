@@ -5,6 +5,29 @@
     let fetchAbortController = null;
     let lastFetchKey = '';
     let fetchCooldownTime = 0;
+    let allLoadedTracks = [];
+    let currentPlayingTrack = null;
+    let currentPlayingWaveSurfer = null;
+
+    function showToast(msg, type = 'info', iconClass = 'fa-solid fa-circle-info') {
+      const container = document.getElementById('smart-toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      toast.className = `smart-toast toast-${type}`;
+      const icon = document.createElement('i');
+      icon.className = iconClass;
+      const text = document.createElement('span');
+      text.textContent = msg;
+      toast.appendChild(icon);
+      toast.appendChild(text);
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add('fade-out');
+        setTimeout(() => {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 220);
+      }, 3000);
+    }
 
     async function fetchTracks(searchTerm = '', genre = '') {
       if (!tracksContainer) return;
@@ -42,7 +65,8 @@
         const tracks = await res.json();
 
         lastFetchKey = fetchKey;
-        renderTracks(tracks);
+        allLoadedTracks = Array.isArray(tracks) ? tracks : [];
+        renderTracks(allLoadedTracks);
       } catch (err) {
         if (err.name === 'AbortError') return;
         renderFallback();
@@ -108,11 +132,14 @@
             <input type="range" class="track-vol-slider" min="0" max="1" step="0.05" value="0.8" data-track-id="${safeId}" aria-label="Volume slider">
           </div>
           <div class="track-actions">
+            <button type="button" class="btn-share-track" data-track-id="${safeId}" data-track-title="${safeTitle}" title="Share / Copy Link" aria-label="Share track">
+              <i class="fa-solid fa-share-nodes"></i>
+            </button>
             <button type="button" class="track-like-btn ${isLiked ? 'liked' : ''}" data-track-id="${safeId}" aria-label="Like track" title="${isLiked ? 'Unlike' : 'Like'}">
               <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
               <span class="like-count">${safeLikes}</span>
             </button>
-            <a href="${safeAudioUrl}" download class="btn-download" title="Download track">
+            <a href="${safeAudioUrl}" download class="btn-download" title="Download track" data-track-title="${safeTitle}">
               <i class="fa-solid fa-download"></i>
               <span>Download</span>
             </a>
@@ -125,18 +152,114 @@
         btn.addEventListener('click', () => handleLikeTrack(btn));
       });
 
+      tracksContainer.querySelectorAll('.btn-share-track').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const title = btn.getAttribute('data-track-title') || 'track';
+          const url = `${window.location.origin}/search.html?q=${encodeURIComponent(title)}`;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(() => {
+              showToast(`Copied link for "${title}"! 🎵`, 'success', 'fa-solid fa-link');
+            }).catch(() => {
+              showToast('Link ready to share!', 'info', 'fa-solid fa-link');
+            });
+          } else {
+            showToast('Link ready to share!', 'info', 'fa-solid fa-link');
+          }
+        });
+      });
+
+      tracksContainer.querySelectorAll('.btn-download').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const title = btn.getAttribute('data-track-title') || 'track';
+          showToast(`Downloading "${title}"... 🚀`, 'info', 'fa-solid fa-circle-down');
+        });
+      });
+
       initWaveSurfers(tracks);
     }
 
     function renderFallback() {
       const fallbackTracks = [
-        { id: 1, title: 'Test Track 01 - Cyber Drift', artist: 'Test Artist', genre: 'Synthwave', duration: '2:30', audio_url: 'audio/test-track-01.mp3', is_loop: true, license_type: 'CC0 Free' },
-        { id: 2, title: 'Test Track 02 - 8-Bit Quest', artist: 'Test Artist', genre: 'Chiptune', duration: '1:45', audio_url: 'audio/test-track-02.mp3', is_loop: true, license_type: 'CC0 Free' }
+        { id: 1, title: 'Test Track 01 - Cyber Drift', artist: 'Test Artist', genre: 'Synthwave', duration: '2:30', audio_url: 'audio/test-track-01.mp3', is_loop: true, license_type: 'CC0 Free', likes_count: 5 },
+        { id: 2, title: 'Test Track 02 - 8-Bit Quest', artist: 'Test Artist', genre: 'Chiptune', duration: '1:45', audio_url: 'audio/test-track-02.mp3', is_loop: true, license_type: 'CC0 Free', likes_count: 8 }
       ];
+      allLoadedTracks = fallbackTracks;
       renderTracks(fallbackTracks);
     }
 
     const waveSurferInstances = new Map();
+
+    const floatingMiniPlayer = document.getElementById('floating-mini-player');
+    const miniPlayerPlayBtn = document.getElementById('mini-player-play-btn');
+    const miniPlayerTitle = document.getElementById('mini-player-title');
+    const miniPlayerArtist = document.getElementById('mini-player-artist');
+    const miniPlayerBarBg = document.getElementById('mini-player-bar-bg');
+    const miniPlayerBarFill = document.getElementById('mini-player-bar-fill');
+    const miniPlayerTime = document.getElementById('mini-player-time');
+    const miniPlayerVolBtn = document.getElementById('mini-player-vol-btn');
+    const miniPlayerDownloadBtn = document.getElementById('mini-player-download-btn');
+    const miniPlayerCloseBtn = document.getElementById('mini-player-close-btn');
+
+    if (miniPlayerPlayBtn) {
+      miniPlayerPlayBtn.addEventListener('click', () => {
+        if (!currentPlayingWaveSurfer) return;
+        if (currentPlayingWaveSurfer.isPlaying()) {
+          currentPlayingWaveSurfer.pause();
+        } else {
+          currentPlayingWaveSurfer.play();
+        }
+      });
+    }
+
+    if (miniPlayerBarBg) {
+      miniPlayerBarBg.addEventListener('click', (e) => {
+        if (!currentPlayingWaveSurfer) return;
+        const rect = miniPlayerBarBg.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const pct = Math.max(0, Math.min(1, clickX / rect.width));
+        const duration = currentPlayingWaveSurfer.getDuration();
+        if (duration > 0) {
+          currentPlayingWaveSurfer.setTime(duration * pct);
+        }
+      });
+    }
+
+    if (miniPlayerVolBtn) {
+      miniPlayerVolBtn.addEventListener('click', () => {
+        if (!currentPlayingWaveSurfer) return;
+        const icon = miniPlayerVolBtn.querySelector('i');
+        if (currentPlayingWaveSurfer.getVolume() > 0) {
+          currentPlayingWaveSurfer.setVolume(0);
+          if (icon) icon.className = 'fa-solid fa-volume-xmark';
+          showToast('Muted 🔇', 'info', 'fa-solid fa-volume-xmark');
+        } else {
+          currentPlayingWaveSurfer.setVolume(0.8);
+          if (icon) icon.className = 'fa-solid fa-volume-high';
+          showToast('Unmuted 🔊', 'info', 'fa-solid fa-volume-high');
+        }
+      });
+    }
+
+    if (miniPlayerCloseBtn) {
+      miniPlayerCloseBtn.addEventListener('click', () => {
+        if (floatingMiniPlayer) floatingMiniPlayer.style.display = 'none';
+      });
+    }
+
+    function syncMiniPlayer(track, ws, isPlaying) {
+      if (!floatingMiniPlayer) return;
+      currentPlayingTrack = track;
+      currentPlayingWaveSurfer = ws;
+
+      if (miniPlayerTitle) miniPlayerTitle.textContent = track.title || 'Untitled';
+      if (miniPlayerArtist) miniPlayerArtist.textContent = track.artist || 'Unknown';
+      if (miniPlayerDownloadBtn) miniPlayerDownloadBtn.href = track.audio_url || '#';
+      if (miniPlayerPlayBtn) {
+        const icon = miniPlayerPlayBtn.querySelector('i');
+        if (icon) icon.className = isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+      }
+      floatingMiniPlayer.style.display = 'block';
+    }
 
     function initWaveSurfers(tracks) {
       waveSurferInstances.forEach(ws => ws.destroy());
@@ -207,11 +330,41 @@
           const mins = Math.floor(curSec / 60);
           const secs = (curSec % 60).toString().padStart(2, '0');
           if (timeEl) timeEl.textContent = `${mins}:${secs}`;
+
+          if (currentPlayingTrack && currentPlayingTrack.id === t.id) {
+            const totMins = Math.floor(totalSec / 60);
+            const totSecs = (totalSec % 60).toString().padStart(2, '0');
+            if (miniPlayerTime) miniPlayerTime.textContent = `${mins}:${secs} / ${totMins}:${totSecs}`;
+            if (miniPlayerBarFill && totalSec > 0) {
+              const pct = Math.min(100, Math.max(0, (currentTime / totalSec) * 100));
+              miniPlayerBarFill.style.width = `${pct}%`;
+            }
+          }
+        });
+
+        ws.on('play', () => {
+          syncMiniPlayer(t, ws, true);
+        });
+
+        ws.on('pause', () => {
+          if (currentPlayingTrack && currentPlayingTrack.id === t.id) {
+            if (miniPlayerPlayBtn) {
+              const mi = miniPlayerPlayBtn.querySelector('i');
+              if (mi) mi.className = 'fa-solid fa-play';
+            }
+          }
         });
 
         ws.on('finish', () => {
           icon.className = 'fa-solid fa-play';
           row.classList.remove('is-playing');
+          if (currentPlayingTrack && currentPlayingTrack.id === t.id) {
+            if (miniPlayerPlayBtn) {
+              const mi = miniPlayerPlayBtn.querySelector('i');
+              if (mi) mi.className = 'fa-solid fa-play';
+            }
+            if (miniPlayerBarFill) miniPlayerBarFill.style.width = '0%';
+          }
         });
 
         btn.addEventListener('click', () => {
@@ -264,10 +417,12 @@
             btn.classList.add('liked');
             btn.title = 'Unlike';
             if (icon) icon.className = 'fa-solid fa-heart';
+            showToast('Added to your favorites! ❤️', 'success', 'fa-solid fa-heart');
           } else {
             btn.classList.remove('liked');
             btn.title = 'Like';
             if (icon) icon.className = 'fa-regular fa-heart';
+            showToast('Removed from favorites', 'info', 'fa-regular fa-heart');
           }
           if (countSpan) {
             countSpan.textContent = data.likes_count;
@@ -318,6 +473,86 @@
           fetchTracks('');
         }
       });
+    });
+
+    const smartChips = document.querySelectorAll('.smart-chip');
+    smartChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        smartChips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        const filter = chip.getAttribute('data-filter');
+        const genre = chip.getAttribute('data-genre');
+
+        if (filter === 'all') {
+          renderTracks(allLoadedTracks);
+        } else if (filter === 'top-liked') {
+          const sorted = [...allLoadedTracks].sort((a, b) => (parseInt(b.likes_count, 10) || 0) - (parseInt(a.likes_count, 10) || 0));
+          renderTracks(sorted);
+          showToast('Sorted by Top Liked 🔥', 'info', 'fa-solid fa-fire');
+        } else if (filter === 'loops') {
+          const loops = allLoadedTracks.filter(t => Boolean(t.is_loop));
+          renderTracks(loops);
+          showToast(`Showing ${loops.length} Seamless Loops 🔁`, 'info', 'fa-solid fa-repeat');
+        } else if (filter === 'sfx') {
+          const sfx = allLoadedTracks.filter(t => {
+            const parts = (t.duration || '').split(':');
+            const totalSec = (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+            return (totalSec > 0 && totalSec <= 30) || (t.genre && t.genre.toLowerCase().includes('sound'));
+          });
+          renderTracks(sfx);
+          showToast(`Showing ${sfx.length} Short SFX ⚡`, 'info', 'fa-solid fa-bolt');
+        } else if (genre) {
+          fetchTracks('', genre);
+          showToast(`Browsing ${genre} 🎵`, 'info', 'fa-solid fa-music');
+        }
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '');
+      if (tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable)) {
+        return;
+      }
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (currentPlayingWaveSurfer) {
+          if (currentPlayingWaveSurfer.isPlaying()) {
+            currentPlayingWaveSurfer.pause();
+          } else {
+            currentPlayingWaveSurfer.play();
+          }
+        } else {
+          const firstPlayBtn = document.querySelector('.track-play-btn');
+          if (firstPlayBtn) firstPlayBtn.click();
+        }
+      } else if (e.key === 'm' || e.key === 'M') {
+        if (currentPlayingWaveSurfer) {
+          const curVol = currentPlayingWaveSurfer.getVolume();
+          const volIcon = miniPlayerVolBtn ? miniPlayerVolBtn.querySelector('i') : null;
+          if (curVol > 0) {
+            currentPlayingWaveSurfer.setVolume(0);
+            if (volIcon) volIcon.className = 'fa-solid fa-volume-xmark';
+            showToast('Muted 🔇', 'info', 'fa-solid fa-volume-xmark');
+          } else {
+            currentPlayingWaveSurfer.setVolume(0.8);
+            if (volIcon) volIcon.className = 'fa-solid fa-volume-high';
+            showToast('Unmuted 🔊', 'info', 'fa-solid fa-volume-high');
+          }
+        }
+      } else if (e.code === 'ArrowRight') {
+        if (currentPlayingWaveSurfer && currentPlayingWaveSurfer.isPlaying()) {
+          e.preventDefault();
+          const curTime = currentPlayingWaveSurfer.getCurrentTime();
+          const duration = currentPlayingWaveSurfer.getDuration();
+          currentPlayingWaveSurfer.setTime(Math.min(duration, curTime + 5));
+        }
+      } else if (e.code === 'ArrowLeft') {
+        if (currentPlayingWaveSurfer && currentPlayingWaveSurfer.isPlaying()) {
+          e.preventDefault();
+          const curTime = currentPlayingWaveSurfer.getCurrentTime();
+          currentPlayingWaveSurfer.setTime(Math.max(0, curTime - 5));
+        }
+      }
     });
 
     document.querySelectorAll('.cat-card').forEach(card => {

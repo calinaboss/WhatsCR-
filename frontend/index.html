@@ -79,6 +79,17 @@
           <div class="hero-slide" style="background-image: url('Immagini/sfondi/sfondoricerca2.webp');"></div>
           <div class="hero-slide" style="background-image: url('Immagini/sfondi/sfondoricerca3.webp');"></div>
         </div>
+
+        <div class="smart-chips-wrapper" id="smart-chips-container">
+          <button type="button" class="smart-chip active" data-filter="all"><i class="fa-solid fa-sparkles"></i> All</button>
+          <button type="button" class="smart-chip" data-filter="top-liked"><i class="fa-solid fa-fire"></i> Top Liked</button>
+          <button type="button" class="smart-chip" data-filter="loops"><i class="fa-solid fa-repeat"></i> Seamless Loops</button>
+          <button type="button" class="smart-chip" data-filter="sfx"><i class="fa-solid fa-bolt"></i> Short SFX (&lt; 30s)</button>
+          <button type="button" class="smart-chip" data-genre="Lo-Fi"><i class="fa-solid fa-mug-hot"></i> Chill Lo-Fi</button>
+          <button type="button" class="smart-chip" data-genre="Chiptune"><i class="fa-solid fa-gamepad"></i> 8-Bit</button>
+          <button type="button" class="smart-chip" data-genre="Synthwave"><i class="fa-solid fa-vr-cardboard"></i> Synthwave</button>
+          <button type="button" class="smart-chip" data-genre="Gaming"><i class="fa-solid fa-crosshairs"></i> Combat</button>
+        </div>
         <div class="hero-overlay"></div>
         <div class="hero-content">
           <h1 class="hero-title">just search things without copyright.</h1>
@@ -139,6 +150,11 @@
         <div class="section-header-flex">
           <div>
             <h2 class="section-title">Featured Tracks</h2>
+            <div class="smart-shortcuts-pill" title="Keyboard controls">
+              <span><kbd>Space</kbd> Play/Pause</span>
+              <span><kbd>M</kbd> Mute</span>
+              <span><kbd>&larr;</kbd> <kbd>&rarr;</kbd> Seek</span>
+            </div>
           </div>
           <div class="sort-tabs">
             <button class="sort-tab active">Popular</button>
@@ -219,6 +235,38 @@
       </div>
     </div>
   </div>
+
+  
+  <div id="floating-mini-player" class="floating-mini-player" style="display: none;">
+    <div class="mini-player-inner">
+      <button type="button" id="mini-player-play-btn" class="mini-player-btn" aria-label="Play or Pause">
+        <i class="fa-solid fa-play"></i>
+      </button>
+      <div class="mini-player-meta">
+        <span id="mini-player-title" class="mini-player-title">Track title</span>
+        <span id="mini-player-artist" class="mini-player-artist">Artist</span>
+      </div>
+      <div class="mini-player-progress-wrap">
+        <div id="mini-player-bar-bg" class="mini-player-bar-bg" title="Click to seek">
+          <div id="mini-player-bar-fill" class="mini-player-bar-fill"></div>
+        </div>
+        <span id="mini-player-time" class="mini-player-time">0:00 / 0:00</span>
+      </div>
+      <div class="mini-player-actions">
+        <button type="button" id="mini-player-vol-btn" class="mini-player-vol-btn" aria-label="Toggle mute" title="Mute">
+          <i class="fa-solid fa-volume-high"></i>
+        </button>
+        <a id="mini-player-download-btn" href="#" download class="mini-player-download" title="Download">
+          <i class="fa-solid fa-download"></i>
+        </a>
+        <button type="button" id="mini-player-close-btn" class="mini-player-close" title="Close mini player" aria-label="Close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="smart-toast-container" class="smart-toast-container" aria-live="polite"></div>
 
   <script src="js/app.js"></script>
 </body>
