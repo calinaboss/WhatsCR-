@@ -158,7 +158,7 @@
           const url = `${window.location.origin}/search.html?q=${encodeURIComponent(title)}`;
           if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(url).then(() => {
-              showToast(`Copied link for "${title}"! 🎵`, 'success', 'fa-solid fa-link');
+              showToast(`Copied link for "${title}"`, 'success', 'fa-solid fa-link');
             }).catch(() => {
               showToast('Link ready to share!', 'info', 'fa-solid fa-link');
             });
@@ -171,7 +171,7 @@
       tracksContainer.querySelectorAll('.btn-download').forEach(btn => {
         btn.addEventListener('click', () => {
           const title = btn.getAttribute('data-track-title') || 'track';
-          showToast(`Downloading "${title}"... 🚀`, 'info', 'fa-solid fa-circle-down');
+          showToast(`Downloading "${title}"...`, 'info', 'fa-solid fa-circle-down');
         });
       });
 
@@ -231,11 +231,11 @@
         if (currentPlayingWaveSurfer.getVolume() > 0) {
           currentPlayingWaveSurfer.setVolume(0);
           if (icon) icon.className = 'fa-solid fa-volume-xmark';
-          showToast('Muted 🔇', 'info', 'fa-solid fa-volume-xmark');
+          showToast('Audio muted', 'info', 'fa-solid fa-volume-xmark');
         } else {
           currentPlayingWaveSurfer.setVolume(0.8);
           if (icon) icon.className = 'fa-solid fa-volume-high';
-          showToast('Unmuted 🔊', 'info', 'fa-solid fa-volume-high');
+          showToast('Audio unmuted', 'info', 'fa-solid fa-volume-high');
         }
       });
     }
@@ -417,7 +417,7 @@
             btn.classList.add('liked');
             btn.title = 'Unlike';
             if (icon) icon.className = 'fa-solid fa-heart';
-            showToast('Added to your favorites! ❤️', 'success', 'fa-solid fa-heart');
+            showToast('Added to your favorites', 'success', 'fa-solid fa-heart');
           } else {
             btn.classList.remove('liked');
             btn.title = 'Like';
@@ -488,11 +488,11 @@
         } else if (filter === 'top-liked') {
           const sorted = [...allLoadedTracks].sort((a, b) => (parseInt(b.likes_count, 10) || 0) - (parseInt(a.likes_count, 10) || 0));
           renderTracks(sorted);
-          showToast('Sorted by Top Liked 🔥', 'info', 'fa-solid fa-fire');
+          showToast('Sorted by Top Liked', 'info', 'fa-solid fa-fire');
         } else if (filter === 'loops') {
           const loops = allLoadedTracks.filter(t => Boolean(t.is_loop));
           renderTracks(loops);
-          showToast(`Showing ${loops.length} Seamless Loops 🔁`, 'info', 'fa-solid fa-repeat');
+          showToast(`Showing ${loops.length} Seamless Loops`, 'info', 'fa-solid fa-repeat');
         } else if (filter === 'sfx') {
           const sfx = allLoadedTracks.filter(t => {
             const parts = (t.duration || '').split(':');
@@ -500,10 +500,10 @@
             return (totalSec > 0 && totalSec <= 30) || (t.genre && t.genre.toLowerCase().includes('sound'));
           });
           renderTracks(sfx);
-          showToast(`Showing ${sfx.length} Short SFX ⚡`, 'info', 'fa-solid fa-bolt');
+          showToast(`Showing ${sfx.length} Short SFX`, 'info', 'fa-solid fa-bolt');
         } else if (genre) {
           fetchTracks('', genre);
-          showToast(`Browsing ${genre} 🎵`, 'info', 'fa-solid fa-music');
+          showToast(`Browsing ${genre}`, 'info', 'fa-solid fa-music');
         }
       });
     });
@@ -532,11 +532,11 @@
           if (curVol > 0) {
             currentPlayingWaveSurfer.setVolume(0);
             if (volIcon) volIcon.className = 'fa-solid fa-volume-xmark';
-            showToast('Muted 🔇', 'info', 'fa-solid fa-volume-xmark');
+            showToast('Audio muted', 'info', 'fa-solid fa-volume-xmark');
           } else {
             currentPlayingWaveSurfer.setVolume(0.8);
             if (volIcon) volIcon.className = 'fa-solid fa-volume-high';
-            showToast('Unmuted 🔊', 'info', 'fa-solid fa-volume-high');
+            showToast('Audio unmuted', 'info', 'fa-solid fa-volume-high');
           }
         }
       } else if (e.code === 'ArrowRight') {
