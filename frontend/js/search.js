@@ -476,53 +476,7 @@
       });
     }
 
-    document.addEventListener('keydown', (e) => {
-      const tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '');
-      if (tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable)) {
-        return;
-      }
-      if (e.code === 'Space') {
-        e.preventDefault();
-        if (currentPlayingWaveSurfer) {
-          if (currentPlayingWaveSurfer.isPlaying()) {
-            currentPlayingWaveSurfer.pause();
-          } else {
-            currentPlayingWaveSurfer.play();
-          }
-        } else {
-          const firstPlayBtn = document.querySelector('.track-play-btn');
-          if (firstPlayBtn) firstPlayBtn.click();
-        }
-      } else if (e.key === 'm' || e.key === 'M') {
-        if (currentPlayingWaveSurfer) {
-          const curVol = currentPlayingWaveSurfer.getVolume();
-          const volIcon = miniPlayerVolBtn ? miniPlayerVolBtn.querySelector('i') : null;
-          if (curVol > 0) {
-            currentPlayingWaveSurfer.setVolume(0);
-            if (volIcon) volIcon.className = 'fa-solid fa-volume-xmark';
-            showToast('Audio muted', 'info', 'fa-solid fa-volume-xmark');
-          } else {
-            currentPlayingWaveSurfer.setVolume(0.8);
-            if (volIcon) volIcon.className = 'fa-solid fa-volume-high';
-            showToast('Audio unmuted', 'info', 'fa-solid fa-volume-high');
-          }
-        }
-      } else if (e.code === 'ArrowRight') {
-        if (currentPlayingWaveSurfer && currentPlayingWaveSurfer.isPlaying()) {
-          e.preventDefault();
-          const curTime = currentPlayingWaveSurfer.getCurrentTime();
-          const duration = currentPlayingWaveSurfer.getDuration();
-          currentPlayingWaveSurfer.setTime(Math.min(duration, curTime + 5));
-        }
-      } else if (e.code === 'ArrowLeft') {
-        if (currentPlayingWaveSurfer && currentPlayingWaveSurfer.isPlaying()) {
-          e.preventDefault();
-          const curTime = currentPlayingWaveSurfer.getCurrentTime();
-          currentPlayingWaveSurfer.setTime(Math.max(0, curTime - 5));
-        }
-      }
-    });
-
+    
     async function executeUserSearch(query = '') {
       const cleanQ = query.trim().replace(/^@/, '').slice(0, 50);
 
