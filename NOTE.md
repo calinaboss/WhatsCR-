@@ -37,3 +37,4 @@
 <!-- 36 : verifica compatibilita -->
 <!-- 37 : controllo parametri -->
 <!-- 38 : aggiornato changelog interno -->
+<!-- 39 : verifica sicurezza -->
