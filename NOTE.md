@@ -32,3 +32,4 @@
 <!-- 31 : aggiornato status -->
 <!-- 32 : controllo routing -->
 <!-- 33 : aggiornato log verifiche -->
+<!-- 34 : piccolo check note -->
