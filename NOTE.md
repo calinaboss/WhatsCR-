@@ -55,3 +55,4 @@
 <!-- 54 : aggiornato changelog interno -->
 <!-- 55 : verifica sicurezza -->
 <!-- 56 : check configurazione -->
+<!-- 57 : piccole modifiche interne -->
