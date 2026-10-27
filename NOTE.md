@@ -18,3 +18,4 @@
 <!-- 17 : aggiornato log verifiche -->
 <!-- 18 : piccolo check note -->
 <!-- 19 : aggiornamento documentazione -->
+<!-- 20 : verifica compatibilita -->
