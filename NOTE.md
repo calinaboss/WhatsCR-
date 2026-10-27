@@ -19,3 +19,4 @@
 <!-- 18 : piccolo check note -->
 <!-- 19 : aggiornamento documentazione -->
 <!-- 20 : verifica compatibilita -->
+<!-- 21 : controllo parametri -->
