@@ -40,3 +40,4 @@
 <!-- 39 : verifica sicurezza -->
 <!-- 40 : check configurazione -->
 <!-- 41 : piccole modifiche interne -->
+<!-- 42 : aggiornato test -->
