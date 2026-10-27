@@ -16,3 +16,4 @@
 <!-- 15 : aggiornato status -->
 <!-- 16 : controllo routing -->
 <!-- 17 : aggiornato log verifiche -->
+<!-- 18 : piccolo check note -->
