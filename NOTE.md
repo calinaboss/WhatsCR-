@@ -5,3 +5,4 @@
 <!-- 4 : verifica compatibilita -->
 <!-- 5 : controllo parametri -->
 <!-- 6 : aggiornato changelog interno -->
+<!-- 7 : verifica sicurezza -->
