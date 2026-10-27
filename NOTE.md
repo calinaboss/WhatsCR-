@@ -41,3 +41,4 @@
 <!-- 40 : check configurazione -->
 <!-- 41 : piccole modifiche interne -->
 <!-- 42 : aggiornato test -->
+<!-- 43 : controllo caricamento -->
