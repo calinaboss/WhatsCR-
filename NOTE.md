@@ -25,3 +25,4 @@
 <!-- 24 : check configurazione -->
 <!-- 25 : piccole modifiche interne -->
 <!-- 26 : aggiornato test -->
+<!-- 27 : controllo caricamento -->
