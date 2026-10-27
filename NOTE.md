@@ -64,3 +64,4 @@
 <!-- 2 : check parametri interni -->
 <!-- 3 : verifica finale note -->
 <!-- 4 : aggiornamento promemoria -->
+<!-- 5 : controllo completato -->
