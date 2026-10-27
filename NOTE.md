@@ -58,3 +58,4 @@
 <!-- 57 : piccole modifiche interne -->
 <!-- 58 : aggiornato test -->
 <!-- 59 : controllo caricamento -->
+<!-- 60 : revisione note -->
