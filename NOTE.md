@@ -38,3 +38,4 @@
 <!-- 37 : controllo parametri -->
 <!-- 38 : aggiornato changelog interno -->
 <!-- 39 : verifica sicurezza -->
+<!-- 40 : check configurazione -->
