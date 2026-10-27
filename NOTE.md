@@ -47,3 +47,4 @@
 <!-- 46 : verifica stili -->
 <!-- 47 : aggiornato status -->
 <!-- 48 : controllo routing -->
+<!-- 49 : aggiornato log verifiche -->
