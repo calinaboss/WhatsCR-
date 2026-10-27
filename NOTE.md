@@ -6,3 +6,4 @@
 <!-- 5 : controllo parametri -->
 <!-- 6 : aggiornato changelog interno -->
 <!-- 7 : verifica sicurezza -->
+<!-- 8 : check configurazione -->
