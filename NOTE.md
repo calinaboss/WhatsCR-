@@ -48,3 +48,4 @@
 <!-- 47 : aggiornato status -->
 <!-- 48 : controllo routing -->
 <!-- 49 : aggiornato log verifiche -->
+<!-- 50 : piccolo check note -->
