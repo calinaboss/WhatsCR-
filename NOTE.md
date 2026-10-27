@@ -27,3 +27,4 @@
 <!-- 26 : aggiornato test -->
 <!-- 27 : controllo caricamento -->
 <!-- 28 : revisione note -->
+<!-- 29 : controllo dipendenze -->
