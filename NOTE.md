@@ -59,3 +59,4 @@
 <!-- 58 : aggiornato test -->
 <!-- 59 : controllo caricamento -->
 <!-- 60 : revisione note -->
+<!-- 0 : aggiornato log controlli -->
