@@ -50,3 +50,4 @@
 <!-- 49 : aggiornato log verifiche -->
 <!-- 50 : piccolo check note -->
 <!-- 51 : aggiornamento documentazione -->
+<!-- 52 : verifica compatibilita -->
