@@ -36,3 +36,4 @@
 <!-- 35 : aggiornamento documentazione -->
 <!-- 36 : verifica compatibilita -->
 <!-- 37 : controllo parametri -->
+<!-- 38 : aggiornato changelog interno -->
