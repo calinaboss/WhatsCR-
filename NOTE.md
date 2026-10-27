@@ -31,3 +31,4 @@
 <!-- 30 : verifica stili -->
 <!-- 31 : aggiornato status -->
 <!-- 32 : controllo routing -->
+<!-- 33 : aggiornato log verifiche -->
