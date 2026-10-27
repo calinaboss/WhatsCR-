@@ -23,3 +23,4 @@
 <!-- 22 : aggiornato changelog interno -->
 <!-- 23 : verifica sicurezza -->
 <!-- 24 : check configurazione -->
+<!-- 25 : piccole modifiche interne -->
