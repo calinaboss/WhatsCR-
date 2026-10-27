@@ -53,3 +53,4 @@
 <!-- 52 : verifica compatibilita -->
 <!-- 53 : controllo parametri -->
 <!-- 54 : aggiornato changelog interno -->
+<!-- 55 : verifica sicurezza -->
