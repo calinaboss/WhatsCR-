@@ -34,3 +34,4 @@
 <!-- 33 : aggiornato log verifiche -->
 <!-- 34 : piccolo check note -->
 <!-- 35 : aggiornamento documentazione -->
+<!-- 36 : verifica compatibilita -->
