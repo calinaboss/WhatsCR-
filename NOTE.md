@@ -2,3 +2,4 @@
 <!-- 1 : aggiornato log verifiche -->
 <!-- 2 : piccolo check note -->
 <!-- 3 : aggiornamento documentazione -->
+<!-- 4 : verifica compatibilita -->
