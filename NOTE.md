@@ -7,3 +7,4 @@
 <!-- 6 : aggiornato changelog interno -->
 <!-- 7 : verifica sicurezza -->
 <!-- 8 : check configurazione -->
+<!-- 9 : piccole modifiche interne -->
