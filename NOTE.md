@@ -13,3 +13,4 @@
 <!-- 12 : revisione note -->
 <!-- 13 : controllo dipendenze -->
 <!-- 14 : verifica stili -->
+<!-- 15 : aggiornato status -->
