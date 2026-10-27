@@ -21,3 +21,4 @@
 <!-- 20 : verifica compatibilita -->
 <!-- 21 : controllo parametri -->
 <!-- 22 : aggiornato changelog interno -->
+<!-- 23 : verifica sicurezza -->
