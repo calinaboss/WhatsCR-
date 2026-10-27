@@ -54,3 +54,4 @@
 <!-- 53 : controllo parametri -->
 <!-- 54 : aggiornato changelog interno -->
 <!-- 55 : verifica sicurezza -->
+<!-- 56 : check configurazione -->
