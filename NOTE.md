@@ -4,3 +4,4 @@
 <!-- 3 : aggiornamento documentazione -->
 <!-- 4 : verifica compatibilita -->
 <!-- 5 : controllo parametri -->
+<!-- 6 : aggiornato changelog interno -->
