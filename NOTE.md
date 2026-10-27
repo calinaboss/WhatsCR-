@@ -15,3 +15,4 @@
 <!-- 14 : verifica stili -->
 <!-- 15 : aggiornato status -->
 <!-- 16 : controllo routing -->
+<!-- 17 : aggiornato log verifiche -->
