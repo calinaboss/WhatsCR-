@@ -26,3 +26,4 @@
 <!-- 25 : piccole modifiche interne -->
 <!-- 26 : aggiornato test -->
 <!-- 27 : controllo caricamento -->
+<!-- 28 : revisione note -->
