@@ -61,3 +61,4 @@
 <!-- 60 : revisione note -->
 <!-- 0 : aggiornato log controlli -->
 <!-- 1 : piccola revisione note -->
+<!-- 2 : check parametri interni -->
