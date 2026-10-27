@@ -9,3 +9,4 @@
 <!-- 8 : check configurazione -->
 <!-- 9 : piccole modifiche interne -->
 <!-- 10 : aggiornato test -->
+<!-- 11 : controllo caricamento -->
