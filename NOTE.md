@@ -51,3 +51,4 @@
 <!-- 50 : piccolo check note -->
 <!-- 51 : aggiornamento documentazione -->
 <!-- 52 : verifica compatibilita -->
+<!-- 53 : controllo parametri -->
