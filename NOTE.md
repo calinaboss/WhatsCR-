@@ -35,3 +35,4 @@
 <!-- 34 : piccolo check note -->
 <!-- 35 : aggiornamento documentazione -->
 <!-- 36 : verifica compatibilita -->
+<!-- 37 : controllo parametri -->
