@@ -10,3 +10,4 @@
 <!-- 9 : piccole modifiche interne -->
 <!-- 10 : aggiornato test -->
 <!-- 11 : controllo caricamento -->
+<!-- 12 : revisione note -->
