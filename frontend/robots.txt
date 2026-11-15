@@ -24,6 +24,9 @@ User-agent: Google-Extended
 Allow: /
 Disallow: /api/
 
+User-agent: Google-Favicons
+Allow: /
+
 User-agent: Applebot-Extended
 Allow: /
 Disallow: /api/
