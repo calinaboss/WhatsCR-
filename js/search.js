@@ -30,6 +30,82 @@
       });
     }
 
+    function updateSearchSEO(q, g) {
+      const cleanQ = (q || '').trim();
+      const cleanG = (g || '').trim();
+      let dynamicTitle = 'Search Free Audio & Music Tracks - WhatsCR?';
+      let dynamicDesc = 'Search copyright-free background music, sound effects, gaming audio, and loops on WhatsCR. 100% free for commercial use.';
+
+      const isSFX = /sound\s*effects?|sfx|effett[io]|suon[io]/i.test(cleanQ) || /sound\s*effects?/i.test(cleanG);
+
+      if (cleanQ && cleanG) {
+        dynamicTitle = `Download Free "${cleanQ}" in ${cleanG} MP3 Audio - WhatsCR`;
+        dynamicDesc = `Download free copyright-free "${cleanQ}" ${cleanG} MP3 audio tracks and sound effects. Safe for YouTube, Twitch, games, and videos.`;
+      } else if (cleanG) {
+        const lowerG = cleanG.toLowerCase();
+        if (lowerG === 'sound effects') {
+          dynamicTitle = 'Free Sound Effects (SFX) MP3 & Audio Downloads - WhatsCR';
+          dynamicDesc = 'Download free copyright-free sound effects (SFX) in high quality MP3 format. Free audio loops and FX for games, videos, and apps.';
+        } else if (lowerG === 'gaming') {
+          dynamicTitle = 'Free Gaming Music & Combat Background Audio MP3 - WhatsCR';
+          dynamicDesc = 'Download 100% copyright-free gaming music, battle themes, and video game background audio MP3 tracks on WhatsCR.';
+        } else if (lowerG === 'chiptune') {
+          dynamicTitle = 'Free 8-Bit Chiptune Music & Retro Game Loops MP3 - WhatsCR';
+          dynamicDesc = 'Download free 8-bit chiptune audio, arcade sounds, and retro synth music loops without copyright on WhatsCR.';
+        } else if (lowerG === 'lo-fi') {
+          dynamicTitle = 'Free Lo-Fi Chillhop Beats & Relaxing Audio MP3 - WhatsCR';
+          dynamicDesc = 'Discover and download free relaxing Lo-Fi beats, chillhop background tracks, and aesthetic audio MP3 without copyright.';
+        } else if (lowerG === 'cinematic') {
+          dynamicTitle = 'Free Cinematic & Epic Orchestral Audio MP3 - WhatsCR';
+          dynamicDesc = 'Free cinematic background audio, epic orchestral music, and dramatic trailer soundtracks for filmmakers and video creators.';
+        } else if (lowerG === 'synthwave') {
+          dynamicTitle = 'Free Synthwave & Sci-Fi Background Audio MP3 - WhatsCR';
+          dynamicDesc = 'Download free synthwave, retrowave, and cyberpunk electronic music MP3 without copyright for your projects.';
+        } else {
+          dynamicTitle = `Free ${cleanG} Music & Audio MP3 Downloads - WhatsCR`;
+          dynamicDesc = `Browse and download 100% free copyright-free ${cleanG} music and audio tracks on WhatsCR. Ready for commercial use.`;
+        }
+      } else if (cleanQ) {
+        if (isSFX) {
+          dynamicTitle = `Download Free "${cleanQ}" Sound Effects & Audio MP3 - WhatsCR`;
+          dynamicDesc = `Download free "${cleanQ}" sound effects and audio clips in MP3 format. 100% copyright-free for videos, games, and podcasts.`;
+        } else {
+          dynamicTitle = `Download Free "${cleanQ}" MP3 Music & Audio Tracks - WhatsCR`;
+          dynamicDesc = `Download free copyright-free "${cleanQ}" MP3 tracks and background audio on WhatsCR. Free for commercial projects and streams.`;
+        }
+      }
+
+      document.title = dynamicTitle;
+
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) metaDesc.setAttribute('content', dynamicDesc);
+
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      if (ogTitle) ogTitle.setAttribute('content', dynamicTitle);
+
+      const ogDesc = document.querySelector('meta[property="og:description"]');
+      if (ogDesc) ogDesc.setAttribute('content', dynamicDesc);
+
+      const twTitle = document.querySelector('meta[name="twitter:title"]');
+      if (twTitle) twTitle.setAttribute('content', dynamicTitle);
+
+      const twDesc = document.querySelector('meta[name="twitter:description"]');
+      if (twDesc) twDesc.setAttribute('content', dynamicDesc);
+
+      const ogUrl = document.querySelector('meta[property="og:url"]');
+      const canonical = document.querySelector('link[rel="canonical"]');
+      const params = new URLSearchParams();
+      if (cleanQ) params.set('q', cleanQ);
+      if (cleanG) params.set('genre', cleanG);
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+      const currentFullUrl = `https://whatscr.eu/search.html${queryString}`;
+
+      if (ogUrl) ogUrl.setAttribute('content', currentFullUrl);
+      if (canonical) canonical.setAttribute('href', currentFullUrl);
+    }
+
+    updateSearchSEO(initialQuery, currentGenre);
+
     let searchAbortController = null;
     let lastSearchKey = '';
     let searchCooldownTime = 0;
@@ -63,6 +139,7 @@
     async function executeSearch(query = '', genre = '') {
       const cleanQ = query.trim().slice(0, 100);
       const cleanG = genre.trim().slice(0, 50);
+      updateSearchSEO(cleanQ, cleanG);
       const searchKey = `${cleanQ}:::${cleanG}`;
 
       if (lastSearchKey === searchKey && tracksContainer.children.length > 0) {

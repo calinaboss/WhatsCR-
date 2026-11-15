@@ -1,12 +1,12 @@
 export async function onRequest(context) {
   const origin = context.request.headers.get('Origin') || '';
-  const isAllowedOrigin = !origin || origin === 'https://whatscr.pages.dev' || origin.endsWith('.whatscr.pages.dev') || origin.startsWith('http://localhost:');
+  const isAllowedOrigin = !origin || origin === 'https://whatscr.eu' || origin === 'https://www.whatscr.eu' || origin === 'https://whatscr.pages.dev' || origin.endsWith('.whatscr.pages.dev') || origin.startsWith('http://localhost:');
 
   if (context.request.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
       headers: {
-        'Access-Control-Allow-Origin': isAllowedOrigin && origin ? origin : 'https://whatscr.pages.dev',
+        'Access-Control-Allow-Origin': isAllowedOrigin && origin ? origin : 'https://whatscr.eu',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Access-Control-Max-Age': '86400',
@@ -26,7 +26,7 @@ export async function onRequest(context) {
   newHeaders.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   newHeaders.set('X-Frame-Options', 'DENY');
   newHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  newHeaders.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  newHeaders.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), bluetooth=(), battery=()');
 
   if (origin && isAllowedOrigin) {
     newHeaders.set('Access-Control-Allow-Origin', origin);
@@ -34,7 +34,7 @@ export async function onRequest(context) {
     newHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     newHeaders.set('Vary', 'Origin');
   } else if (!origin) {
-    newHeaders.set('Access-Control-Allow-Origin', 'https://whatscr.pages.dev');
+    newHeaders.set('Access-Control-Allow-Origin', 'https://whatscr.eu');
     newHeaders.set('Vary', 'Origin');
   }
 

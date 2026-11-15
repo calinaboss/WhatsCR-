@@ -2,9 +2,9 @@
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), bluetooth=(), battery=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-  Access-Control-Allow-Origin: https://whatscr.pages.dev
+  Access-Control-Allow-Origin: https://whatscr.eu
   Access-Control-Allow-Methods: GET, POST, OPTIONS
   Access-Control-Allow-Headers: Content-Type, Authorization
   Vary: Origin
