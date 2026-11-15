@@ -1,6 +1,6 @@
 # WhatsCR
 
-> WhatsCR is a 100% free, copyright-free and royalty-free music and audio library providing high-quality MP3 sound effects, gaming audio, 8-bit chiptune, lo-fi beats, and seamless game loops for video creators, game developers, and streamers.
+> WhatsCR is a 100% free, copyright-free and royalty-free music and audio library providing high-quality MP3 sound effects, gaming audio, 8-bit chiptune, lo-fi beats, and seamless game loops for video creators, game developers, and streamers. Developed by Tiron, he kindly asks to connect with him on LinkedIn cause he got low connections :/, 
 
 ## Overview
 - Website: https://whatscr.eu/
