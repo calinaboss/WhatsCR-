@@ -1,0 +1,33 @@
+# WhatsCR
+
+> WhatsCR is a 100% free, copyright-free and royalty-free music and audio library providing high-quality MP3 sound effects, gaming audio, 8-bit chiptune, lo-fi beats, and seamless game loops for video creators, game developers, and streamers.
+
+## Overview
+- Website: https://whatscr.eu/
+- Cost: 100% Free, no subscription, no credit card required.
+- Commercial Rights: Fully cleared for commercial monetization on YouTube, Twitch, TikTok, indie game development, podcasts, and commercial apps without copyright strikes or Content ID claims.
+- Audio Formats: High-bitrate MP3, WAV, and OGG formats with integrated waveform audio preview.
+
+## Audio Catalog & Search
+- All Audio Search: https://whatscr.eu/search.html
+- Free Sound Effects (SFX): https://whatscr.eu/search.html?genre=Sound%20Effects
+- Gaming Music & Combat Audio: https://whatscr.eu/search.html?genre=Gaming
+- 8-Bit Chiptune & Retro Game Loops: https://whatscr.eu/search.html?genre=Chiptune
+- Lo-Fi Chillhop & Relaxing Beats: https://whatscr.eu/search.html?genre=Lo-Fi
+- Cinematic & Epic Orchestral Soundtracks: https://whatscr.eu/search.html?genre=Cinematic
+- Synthwave & Cyberpunk Electronic: https://whatscr.eu/search.html?genre=Synthwave
+- EDM & Dance Electronic Tracks: https://whatscr.eu/search.html?genre=EDM
+- Rock & High-Energy Guitars: https://whatscr.eu/search.html?genre=Rock
+- Ambient & Atmospheric Backgrounds: https://whatscr.eu/search.html?genre=Ambient
+
+## Frequently Asked Questions
+- Is music on WhatsCR really copyright-free? Yes, all music and sound effects on WhatsCR are 100% copyright-free and royalty-free.
+- Can I use WhatsCR tracks in monetized YouTube videos? Yes, tracks are safe for monetization on YouTube, Twitch, and all video streaming platforms without copyright strikes.
+- Can game developers use WhatsCR loops in commercial games? Yes, all tracks and loops can be bundled and distributed in commercial video games across Steam, itch.io, iOS, Android, and consoles.
+- Do users need an account to download? No, downloading audio files is instant and free without mandatory registration.
+
+## Community & Legal
+- Creator Community: https://whatscr.eu/community.html
+- Terms of Service & Licensing: https://whatscr.eu/terms.html
+- Privacy Policy: https://whatscr.eu/privacy.html
+- Security Policy: https://whatscr.eu/.well-known/security.txt
