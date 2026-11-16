@@ -34,31 +34,46 @@
   <main class="legal-main">
     <div class="legal-container">
       <h1 class="legal-title">Cookie Policy</h1>
-      <p class="legal-subtitle">Complete disclosure on the use of cookies and local storage technologies.</p>
+      <p class="legal-subtitle">Complete disclosure on the use of cookies, local storage technologies, and analytics.</p>
 
       <section class="legal-section">
-        <h2>1. Zero Profiling & No Advertising Cookies</h2>
-        <p>WhatsCR respects user privacy and complies with the European ePrivacy Directive (Directive 2002/58/EC) and GDPR guidelines. <strong>We do not use any profiling, marketing, or behavioral tracking cookies</strong>, nor do we partner with third-party advertising networks that track you across websites.</p>
+        <h2>1. Overview & Compliance</h2>
+        <p>WhatsCR respects user privacy and complies with the European ePrivacy Directive (Directive 2002/58/EC), GDPR guidelines, and Google Consent Mode v2 standards. We provide transparent controls so you can decide which non-essential cookies to allow.</p>
+        <button type="button" id="btn-open-cookie-pref" class="cookie-btn cookie-btn-primary" style="margin-top: 10px;">
+          <i class="fa-solid fa-sliders"></i> Gestisci preferenze cookie
+        </button>
       </section>
 
       <section class="legal-section">
-        <h2>2. Strictly Necessary Technical Cookies & Local Storage</h2>
-        <p>WhatsCR only utilizes technical elements that are strictly required for the platform to function securely and efficiently:</p>
+        <h2>2. Strictly Necessary Technical Cookies</h2>
+        <p>Technical cookies and local storage tokens are essential for the operation and security of the WhatsCR platform:</p>
         <ul>
-          <li><strong>Network Security:</strong> Essential security tokens provided by edge CDN services (Cloudflare) to defend against DDoS attacks, bot scraping, and request forgery.</li>
-          <li><strong>Audio Player Preferences:</strong> Local storage settings in your browser to remember audio volume levels and mute states during your playback session.</li>
+          <li><strong>Edge Security & Defense:</strong> Security tokens from Cloudflare edge services to mitigate automated abuse, DDoS attacks, and cross-site forgery.</li>
+          <li><strong>Audio Player State:</strong> Browser local storage entries saving volume settings and playback states.</li>
+          <li><strong>Consent State:</strong> A local storage record saving your cookie choices so you are not prompted repeatedly.</li>
         </ul>
-        <p>Because these technologies are strictly technical and do not track personal identities or profiles, prior consent banners are not required by law.</p>
+        <p>Under applicable law, strictly necessary technical cookies do not require prior consent.</p>
       </section>
 
       <section class="legal-section">
-        <h2>3. Managing Cookie Settings</h2>
-        <p>You can configure or block cookies at any time through your browser settings. Note that disabling strictly necessary security cookies may affect site connectivity or security features.</p>
+        <h2>3. Analytics Cookies (Google Analytics 4)</h2>
+        <p>With your explicit consent, WhatsCR utilizes Google Analytics (Measurement ID: <code>G-NQY8JZWCJP</code>) to collect aggregated, anonymous information regarding traffic, page views, and download counts. These insights help us understand which music genres and audio loops creators find most useful.</p>
+        <p>If you decline analytics cookies, Google Analytics operates in consent-denied mode without reading or storing identifiers on your device.</p>
       </section>
 
       <section class="legal-section">
-        <h2>4. Contact Information</h2>
-        <p>If you have any questions regarding our cookie practices, please contact us at: <a href="#" class="safe-mail" data-u="whatscrorg" data-d="gmail.com" style="color: var(--primary); font-weight: 600;"></a>.</p>
+        <h2>4. Advertising Cookies (Google AdSense)</h2>
+        <p>With your consent, Google AdSense uses cookies to serve relevant advertisements that help support the server and bandwidth costs of offering free copyright-free audio. You can accept or deny advertising cookies at any time.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>5. Updating Your Preferences</h2>
+        <p>You can update your cookie preferences at any time by clicking the floating cookie icon at the bottom-left corner of any page, or using the management button above.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>6. Contact Information</h2>
+        <p>If you have questions regarding our cookie practices, please contact us at: <a href="#" class="safe-mail" data-u="whatscrorg" data-d="gmail.com" style="color: var(--primary); font-weight: 600;"></a>.</p>
       </section>
     </div>
   </main>
@@ -68,5 +83,15 @@
   </footer>
 
   <script src="js/legal.js"></script>
+  <script src="js/cookies-consent.js?v=2.0.3"></script>
+  <script>
+    const prefBtn = document.getElementById('btn-open-cookie-pref');
+    if (prefBtn) {
+      prefBtn.addEventListener('click', () => {
+        const floatBtn = document.getElementById('cookie-floating-btn');
+        if (floatBtn) floatBtn.click();
+      });
+    }
+  </script>
 </body>
 </html>
