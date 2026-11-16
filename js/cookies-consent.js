@@ -431,8 +431,8 @@
     btn.id = 'cookie-floating-btn';
     btn.className = 'cookie-floating-btn';
     btn.type = 'button';
-    btn.setAttribute('aria-label', 'Preferenze Cookie');
-    btn.setAttribute('title', 'Gestisci preferenze cookie');
+    btn.setAttribute('aria-label', 'Cookie Preferences');
+    btn.setAttribute('title', 'Manage cookie preferences');
     btn.innerHTML = '<i class="fa-solid fa-cookie-bite" aria-hidden="true"></i>';
 
     btn.addEventListener('click', (e) => {
@@ -462,24 +462,24 @@
       <div class="cookie-banner-header">
         <div class="cookie-banner-header-left">
           <i class="fa-solid fa-cookie-bite cookie-banner-icon" aria-hidden="true"></i>
-          <h3 id="cookie-banner-title" class="cookie-banner-title">Preferenze Cookie & Privacy</h3>
+          <h3 id="cookie-banner-title" class="cookie-banner-title">Cookie &amp; Privacy Preferences</h3>
         </div>
-        <button type="button" id="cookie-banner-close" class="cookie-modal-close" aria-label="Chiudi banner">
+        <button type="button" id="cookie-banner-close" class="cookie-modal-close" aria-label="Close banner">
           <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
       </div>
       <p id="cookie-banner-desc" class="cookie-banner-body">
-        Utilizziamo cookie tecnici essenziali e, con il tuo consenso, strumenti statistici e pubblicitari per migliorare l'esperienza audio e supportare la piattaforma WhatsCR. Puoi accettare tutti i cookie, proseguire con i soli necessari o personalizzare le tue scelte. Consulta la nostra <a href="cookies.html">Cookie Policy</a>.
+        We use essential technical cookies and, with your consent, analytics and advertising tools to enhance your audio experience and support the WhatsCR platform. You can accept all, reject non-essential cookies, or customize your choices. Read our <a href="cookies.html">Cookie Policy</a>.
       </p>
       <div class="cookie-banner-actions">
         <button type="button" id="cookie-btn-accept-all" class="cookie-btn cookie-btn-primary">
-          <i class="fa-solid fa-check" aria-hidden="true"></i> Accetta tutti
+          <i class="fa-solid fa-check" aria-hidden="true"></i> Accept All
         </button>
         <button type="button" id="cookie-btn-reject-all" class="cookie-btn cookie-btn-secondary">
-          <i class="fa-solid fa-xmark" aria-hidden="true"></i> Rifiuta non necessari
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i> Reject Non-Essential
         </button>
         <button type="button" id="cookie-btn-customize" class="cookie-btn cookie-btn-outline">
-          <i class="fa-solid fa-sliders" aria-hidden="true"></i> Personalizza
+          <i class="fa-solid fa-sliders" aria-hidden="true"></i> Customize
         </button>
       </div>
     `;
@@ -554,27 +554,27 @@
         <div class="cookie-modal-header">
           <div class="cookie-modal-title-row">
             <i class="fa-solid fa-cookie-bite" aria-hidden="true"></i>
-            <h3 id="cookie-modal-title" class="cookie-modal-title">Gestione Consenso Cookie</h3>
+            <h3 id="cookie-modal-title" class="cookie-modal-title">Cookie Consent Management</h3>
           </div>
-          <button type="button" id="cookie-modal-close" class="cookie-modal-close" aria-label="Chiudi finestra">
+          <button type="button" id="cookie-modal-close" class="cookie-modal-close" aria-label="Close window">
             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
           </button>
         </div>
         <div class="cookie-modal-body">
           <p class="cookie-modal-desc">
-            Personalizza le tue scelte sui cookie utilizzati su WhatsCR. I cookie tecnici essenziali non possono essere disattivati poich\u00e9 garantiscono la sicurezza dell'infrastruttura e le funzionalit\u00e0 base.
+            Customize your cookie choices for WhatsCR. Strictly necessary technical cookies cannot be disabled because they ensure infrastructure security and core platform features.
           </p>
 
           <div class="cookie-cat-card">
             <div class="cookie-cat-header">
               <div class="cookie-cat-title-wrap">
                 <i class="fa-solid fa-shield-halved cookie-cat-icon" aria-hidden="true"></i>
-                <span class="cookie-cat-title">Cookie Tecnici & Sicurezza</span>
+                <span class="cookie-cat-title">Strictly Necessary &amp; Security Cookies</span>
               </div>
-              <span class="cookie-cat-badge badge-required">Sempre Attivi</span>
+              <span class="cookie-cat-badge badge-required">Always Active</span>
             </div>
             <p class="cookie-cat-desc">
-              Necessari per la difesa DDoS (Cloudflare), la memorizzazione delle preferenze audio del player e la sicurezza delle richieste.
+              Required for DDoS defense (Cloudflare), audio player volume &amp; playback state persistence, and secure request verification.
             </p>
           </div>
 
@@ -582,7 +582,7 @@
             <div class="cookie-cat-header">
               <div class="cookie-cat-title-wrap">
                 <i class="fa-solid fa-chart-line cookie-cat-icon" aria-hidden="true"></i>
-                <label for="cookie-opt-analytics" class="cookie-cat-title">Cookie Statistici (Google Analytics)</label>
+                <label for="cookie-opt-analytics" class="cookie-cat-title">Analytics Cookies (Google Analytics)</label>
               </div>
               <label class="cookie-toggle">
                 <input type="checkbox" id="cookie-opt-analytics" ${current.analytics ? 'checked' : ''}>
@@ -590,7 +590,7 @@
               </label>
             </div>
             <p class="cookie-cat-desc">
-              Raccolgono informazioni anonime e aggregate sul traffico (Google Tag Manager / GA4 ID G-NQY8JZWCJP) per aiutarci a capire quali generi audio e sonorit\u00e0 piacciono di pi\u00f9.
+              Collect anonymous, aggregated traffic statistics (Google Tag Manager / GA4 ID G-NQY8JZWCJP) to help us understand which music genres and audio sounds are most popular.
             </p>
           </div>
 
@@ -598,7 +598,7 @@
             <div class="cookie-cat-header">
               <div class="cookie-cat-title-wrap">
                 <i class="fa-solid fa-rectangle-ad cookie-cat-icon" aria-hidden="true"></i>
-                <label for="cookie-opt-marketing" class="cookie-cat-title">Cookie Pubblicitari (Google AdSense)</label>
+                <label for="cookie-opt-marketing" class="cookie-cat-title">Advertising Cookies (Google AdSense)</label>
               </div>
               <label class="cookie-toggle">
                 <input type="checkbox" id="cookie-opt-marketing" ${current.marketing ? 'checked' : ''}>
@@ -606,19 +606,19 @@
               </label>
             </div>
             <p class="cookie-cat-desc">
-              Utilizzati dai partner pubblicitari (Google) per erogare annunci pertinenti e coprire i costi dei server e della banda audio gratuita.
+              Used by advertising partners (Google) to deliver relevant ads and support server hosting and free audio streaming bandwidth.
             </p>
           </div>
         </div>
         <div class="cookie-modal-footer">
           <button type="button" id="cookie-modal-btn-reject" class="cookie-btn cookie-btn-outline">
-            <i class="fa-solid fa-xmark" aria-hidden="true"></i> Rifiuta non necessari
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i> Reject Non-Essential
           </button>
           <button type="button" id="cookie-modal-btn-save" class="cookie-btn cookie-btn-secondary">
-            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Salva preferenze
+            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save Preferences
           </button>
           <button type="button" id="cookie-modal-btn-accept" class="cookie-btn cookie-btn-primary">
-            <i class="fa-solid fa-check" aria-hidden="true"></i> Accetta tutti
+            <i class="fa-solid fa-check" aria-hidden="true"></i> Accept All
           </button>
         </div>
       </div>
