@@ -819,7 +819,15 @@ button {
     display: inline-block;
   }
   .btn-upload span {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
   .btn-upload {
     width: 34px;
@@ -1241,7 +1249,15 @@ button {
     height: 20px;
   }
   .btn-upload span {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
   .btn-upload {
     padding: 8px 10px;
@@ -1251,7 +1267,15 @@ button {
     grid-template-columns: 1fr;
   }
   .btn-download span {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
   .btn-download {
     padding: 8px 10px;

@@ -1,33 +1,33 @@
 # WhatsCR
 
-> WhatsCR is a 100% free, copyright-free and royalty-free music and audio library providing high-quality MP3 sound effects, gaming audio, 8-bit chiptune, lo-fi beats, and seamless game loops for video creators, game developers, and streamers. Developed by Tiron, he kindly asks to connect with him on LinkedIn cause he got low connections :/, 
+> WhatsCR is a 100% free, copyright-free and royalty-free music and audio library providing high-quality MP3 sound effects, gaming audio, 8-bit chiptune, lo-fi beats, and seamless game loops for video creators, game developers, and streamers.
 
-## Overview
-- Website: https://whatscr.eu/
-- Cost: 100% Free, no subscription, no credit card required.
-- Commercial Rights: Fully cleared for commercial monetization on YouTube, Twitch, TikTok, indie game development, podcasts, and commercial apps without copyright strikes or Content ID claims.
-- Audio Formats: High-bitrate MP3, WAV, and OGG formats with integrated waveform audio preview.
+## Main Pages
 
-## Audio Catalog & Search
-- All Audio Search: https://whatscr.eu/search.html
-- Free Sound Effects (SFX): https://whatscr.eu/search.html?genre=Sound%20Effects
-- Gaming Music & Combat Audio: https://whatscr.eu/search.html?genre=Gaming
-- 8-Bit Chiptune & Retro Game Loops: https://whatscr.eu/search.html?genre=Chiptune
-- Lo-Fi Chillhop & Relaxing Beats: https://whatscr.eu/search.html?genre=Lo-Fi
-- Cinematic & Epic Orchestral Soundtracks: https://whatscr.eu/search.html?genre=Cinematic
-- Synthwave & Cyberpunk Electronic: https://whatscr.eu/search.html?genre=Synthwave
-- EDM & Dance Electronic Tracks: https://whatscr.eu/search.html?genre=EDM
-- Rock & High-Energy Guitars: https://whatscr.eu/search.html?genre=Rock
-- Ambient & Atmospheric Backgrounds: https://whatscr.eu/search.html?genre=Ambient
+- [Homepage](https://whatscr.eu/): 100% free copyright-free music and audio downloads
+- [Audio Search & Catalog](https://whatscr.eu/search.html): Search and filter free sound effects, loops, and music tracks
+- [About WhatsCR](https://whatscr.eu/about.html): Platform mission and audio library details
+- [Audio License](https://whatscr.eu/license.html): Commercial usage rights and copyright clearance information
+- [Creator Community](https://whatscr.eu/community.html): Creator discussions, audio requests, and feedback
+- [API Documentation](https://whatscr.eu/api.html): Public REST API endpoints for tracks and audio metadata
+- [Frequently Asked Questions](https://whatscr.eu/faq.html): Common questions regarding copyright and platform usage
 
-## Frequently Asked Questions
-- Is music on WhatsCR really copyright-free? Yes, all music and sound effects on WhatsCR are 100% copyright-free and royalty-free.
-- Can I use WhatsCR tracks in monetized YouTube videos? Yes, tracks are safe for monetization on YouTube, Twitch, and all video streaming platforms without copyright strikes.
-- Can game developers use WhatsCR loops in commercial games? Yes, all tracks and loops can be bundled and distributed in commercial video games across Steam, itch.io, iOS, Android, and consoles.
-- Do users need an account to download? No, downloading audio files is instant and free without mandatory registration.
+## Audio Categories
 
-## Community & Legal
-- Creator Community: https://whatscr.eu/community.html
-- Terms of Service & Licensing: https://whatscr.eu/terms.html
-- Privacy Policy: https://whatscr.eu/privacy.html
-- Security Policy: https://whatscr.eu/.well-known/security.txt
+- [Sound Effects](https://whatscr.eu/search.html?genre=Sound%20Effects): Royalty-free sound effects for video editing and games
+- [Gaming Audio](https://whatscr.eu/search.html?genre=Gaming): Combat music, boss themes, and game background soundtracks
+- [Chiptune & 8-Bit](https://whatscr.eu/search.html?genre=Chiptune): Retro 8-bit chiptune loops and sound effects
+- [Lo-Fi Beats](https://whatscr.eu/search.html?genre=Lo-Fi): Chill study beats and relaxing background music
+- [Cinematic Scores](https://whatscr.eu/search.html?genre=Cinematic): Orchestral soundscapes and dramatic audio
+- [Synthwave](https://whatscr.eu/search.html?genre=Synthwave): Retro-futuristic electronic synthwave tracks
+- [EDM](https://whatscr.eu/search.html?genre=EDM): High-energy electronic dance music
+- [Rock](https://whatscr.eu/search.html?genre=Rock): Guitar riffs and driving rock tracks
+- [Ambient](https://whatscr.eu/search.html?genre=Ambient): Atmospheric soundscapes and meditative tones
+
+## Legal & Compliance
+
+- [Terms of Service](https://whatscr.eu/terms.html): Terms and conditions governing platform usage
+- [Privacy Policy](https://whatscr.eu/privacy.html): Personal data protection and privacy rules
+- [Cookie Policy](https://whatscr.eu/cookies.html): Cookies and GDPR compliance
+- [Digital Services Act Notice](https://whatscr.eu/dsa.html): EU DSA compliance and content policies
+- [Security Policy](https://whatscr.eu/.well-known/security.txt): Security vulnerability disclosure guidelines
