@@ -21,10 +21,10 @@
   Cache-Control: public, max-age=2592000
 
 /style.css
-  Cache-Control: public, max-age=86400, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate
 
 /js/*
-  Cache-Control: public, max-age=86400, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate
 
 /llms.txt
   Cache-Control: public, max-age=86400, must-revalidate
