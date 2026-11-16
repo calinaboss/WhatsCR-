@@ -2,10 +2,26 @@
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), bluetooth=(), battery=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
   Access-Control-Allow-Origin: https://whatscr.eu
   Access-Control-Allow-Methods: GET, POST, OPTIONS
   Access-Control-Allow-Headers: Content-Type, Authorization
   Vary: Origin
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://ep2.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://*.google.com https://*.doubleclick.net; media-src 'self' blob:; connect-src 'self' blob: https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; frame-src https://challenges.cloudflare.com https://googleads.g.doubleclick.net https://pagead2.googlesyndication.com https://tpc.googlesyndication.com; child-src 'self' https://challenges.cloudflare.com https://googleads.g.doubleclick.net https://pagead2.googlesyndication.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://*.google.com https://*.doubleclick.net; media-src 'self' blob:; connect-src 'self' blob: https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://fundingchoicesmessages.google.com; frame-src https://challenges.cloudflare.com https://googleads.g.doubleclick.net https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://fundingchoicesmessages.google.com; child-src 'self' https://challenges.cloudflare.com https://googleads.g.doubleclick.net https://pagead2.googlesyndication.com https://fundingchoicesmessages.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;
+
+/Immagini/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/audio/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/favicon.ico
+  Cache-Control: public, max-age=2592000
+
+/style.css
+  Cache-Control: public, max-age=86400, must-revalidate
+
+/js/*
+  Cache-Control: public, max-age=86400, must-revalidate

@@ -228,7 +228,7 @@
             <i class="fa-solid fa-play"></i>
           </button>
           <div class="track-meta">
-            <h4 class="track-name">${safeTitle}</h4>
+            <h3 class="track-name">${safeTitle}</h3>
             <span class="track-artist"><a href="profile.html?u=${encodeURIComponent(t.artist || 'Unknown')}" class="artist-link">${safeArtist}</a> &bull; ${safeGenre}</span>
           </div>
           <div class="track-waveform" id="waveform-${safeId}"></div>
@@ -251,7 +251,7 @@
               <i class="${t.is_liked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
               <span class="like-count">${safeLikes}</span>
             </button>
-            <a href="${safeAudioUrl}" download class="btn-download" title="Download track" data-track-title="${safeTitle}">
+            <a href="${safeAudioUrl}" download class="btn-download" title="Download track" aria-label="Download ${safeTitle}" data-track-title="${safeTitle}">
               <i class="fa-solid fa-download"></i>
               <span>Download</span>
             </a>
@@ -420,6 +420,31 @@
       floatingMiniPlayer.style.display = 'block';
     }
 
+    function generatePeaks(seedStr) {
+      let hash = 0;
+      for (let i = 0; i < seedStr.length; i++) {
+        hash = (hash << 5) - hash + seedStr.charCodeAt(i);
+        hash |= 0;
+      }
+      const peaks = [];
+      let prev = 0.5;
+      for (let i = 0; i < 60; i++) {
+        hash = (hash * 9301 + 49297) % 233280;
+        const rnd = hash / 233280;
+        prev = Math.max(0.15, Math.min(0.95, prev * 0.4 + rnd * 0.6));
+        peaks.push(Math.round(prev * 100) / 100);
+      }
+      return peaks;
+    }
+
+    function parseDurationSec(d) {
+      if (!d) return 60;
+      const parts = String(d).split(':').map(Number);
+      if (parts.length === 2) return (parts[0] || 0) * 60 + (parts[1] || 0) || 60;
+      if (parts.length === 3) return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0) || 60;
+      return 60;
+    }
+
     function initWaveSurfers(tracks) {
       waveSurferInstances.forEach(ws => ws.destroy());
       waveSurferInstances.clear();
@@ -427,6 +452,9 @@
       tracks.forEach(t => {
         const container = document.getElementById(`waveform-${t.id}`);
         if (!container) return;
+
+        const durSec = parseDurationSec(t.duration);
+        const synthPeaks = generatePeaks(String(t.id) + (t.title || ''));
 
         const ws = WaveSurfer.create({
           container: container,
@@ -437,7 +465,8 @@
           barGap: 3,
           barRadius: 2,
           height: 34,
-          url: t.audio_url
+          peaks: [synthPeaks],
+          duration: durSec
         });
 
         ws.setVolume(0.8);
@@ -449,6 +478,44 @@
         const volBtn = row.querySelector('.track-vol-btn');
         const volSlider = row.querySelector('.track-vol-slider');
         const volIcon = volBtn.querySelector('i');
+
+        let isLoaded = false;
+        let isLoading = false;
+
+        function loadAndPlay() {
+          if (isLoaded) {
+            ws.play();
+            icon.className = 'fa-solid fa-pause';
+            row.classList.add('is-playing');
+            return;
+          }
+          if (isLoading) return;
+          isLoading = true;
+          icon.className = 'fa-solid fa-spinner fa-spin';
+          ws.load(t.audio_url);
+          ws.once('ready', () => {
+            isLoaded = true;
+            isLoading = false;
+            ws.play();
+            icon.className = 'fa-solid fa-pause';
+            row.classList.add('is-playing');
+          });
+        }
+
+        ws.on('interaction', () => {
+          if (!isLoaded && !isLoading) {
+            isLoading = true;
+            icon.className = 'fa-solid fa-spinner fa-spin';
+            ws.load(t.audio_url);
+            ws.once('ready', () => {
+              isLoaded = true;
+              isLoading = false;
+              ws.play();
+              icon.className = 'fa-solid fa-pause';
+              row.classList.add('is-playing');
+            });
+          }
+        });
 
         volSlider.addEventListener('input', (e) => {
           const val = parseFloat(e.target.value);
@@ -543,11 +610,13 @@
             icon.className = 'fa-solid fa-play';
             row.classList.remove('is-playing');
           } else {
-            ws.play();
-            icon.className = 'fa-solid fa-pause';
-            row.classList.add('is-playing');
+            loadAndPlay();
           }
         });
+
+        waveSurferInstances.set(t.id, ws);
+      });
+    }
 
         waveSurferInstances.set(t.id, ws);
       });

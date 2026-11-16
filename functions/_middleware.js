@@ -14,6 +14,7 @@ export async function onRequest(context) {
         'X-Content-Type-Options': 'nosniff',
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
         'X-Frame-Options': 'DENY',
+        'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
         'Referrer-Policy': 'strict-origin-when-cross-origin'
       }
     });
@@ -25,6 +26,7 @@ export async function onRequest(context) {
   newHeaders.set('X-Content-Type-Options', 'nosniff');
   newHeaders.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   newHeaders.set('X-Frame-Options', 'DENY');
+  newHeaders.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   newHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   newHeaders.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), bluetooth=(), battery=()');
 
