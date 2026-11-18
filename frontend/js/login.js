@@ -315,7 +315,7 @@
         }
 
         try {
-          const res = await fetch('/api/auth?action=update-profile', {
+          const res = await fetch('/api/auth?action=update_profile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: clean })
@@ -394,6 +394,46 @@
         showAlert('Network error during Google sign-in. Please try again.');
       }
     };
+
+    function renderGoogleSignInButton() {
+      const wrapper = document.getElementById('google-btn-wrapper');
+      if (!wrapper) return;
+      const target = wrapper.querySelector('.g_id_signin');
+      if (!target) return;
+      const availableWidth = Math.floor(wrapper.clientWidth || wrapper.parentElement.clientWidth || 300);
+      const buttonWidth = Math.max(200, Math.min(384, availableWidth));
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        try {
+          target.innerHTML = '';
+          window.google.accounts.id.renderButton(target, {
+            type: 'standard',
+            shape: 'rectangular',
+            theme: 'outline',
+            text: 'continue_with',
+            size: 'large',
+            logo_alignment: 'left',
+            width: buttonWidth
+          });
+        } catch (e) {}
+      }
+    }
+
+    let googleInitRetries = 0;
+    function tryInitGoogleButton() {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        renderGoogleSignInButton();
+      } else if (googleInitRetries < 25) {
+        googleInitRetries++;
+        setTimeout(tryInitGoogleButton, 200);
+      }
+    }
+    tryInitGoogleButton();
+    window.addEventListener('load', tryInitGoogleButton);
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(renderGoogleSignInButton, 150);
+    });
 
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();

@@ -3517,3 +3517,69 @@ button {
     width: 100%;
   }
 }
+
+.google-signin-wrapper {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+
+.google-signin-wrapper .g_id_signin {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.google-signin-wrapper .g_id_signin iframe {
+  max-width: 100% !important;
+  border-radius: 4px !important;
+}
+
+#username-modal-btn-skip:hover {
+  background: var(--border) !important;
+  color: var(--text-main) !important;
+}
+
+#username-modal-btn-submit:hover {
+  opacity: 0.95;
+  box-shadow: 0 6px 16px rgba(0, 151, 178, 0.35) !important;
+}
+
+#username-modal-btn-skip:active,
+#username-modal-btn-submit:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 480px) {
+  #auth-box {
+    padding: 22px 16px !important;
+    border-radius: 16px !important;
+  }
+  .google-signin-wrapper {
+    width: 100% !important;
+  }
+  .username-modal-actions {
+    flex-direction: column-reverse !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+  .username-modal-actions button {
+    width: 100% !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.92rem !important;
+  }
+  #username-modal .wiki-modal-content {
+    margin: 16px !important;
+    width: calc(100% - 32px) !important;
+  }
+  #username-modal .wiki-modal-body {
+    padding: 18px 16px !important;
+  }
+}

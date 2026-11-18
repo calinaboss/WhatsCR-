@@ -640,7 +640,7 @@ export async function onRequest(context) {
     });
   }
 
-  if (request.method === 'POST' && action === 'update_profile') {
+  if (request.method === 'POST' && (action === 'update_profile' || action === 'update-profile')) {
     const cookies = parseCookies(request.headers.get('Cookie'));
     const token = cookies.whatscr_session;
     if (!token) {

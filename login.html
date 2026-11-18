@@ -66,7 +66,7 @@
         <div id="auth-alert" style="display: none; padding: 12px 14px; border-radius: 10px; font-size: 0.86rem; margin-bottom: 18px; line-height: 1.4;"></div>
 
         <div id="google-auth-section" style="margin-bottom: 22px;">
-          <div id="google-btn-wrapper" style="display: flex; justify-content: center; width: 100%; min-height: 44px;">
+          <div id="google-btn-wrapper" class="google-signin-wrapper" style="display: flex; justify-content: center; width: 100%; min-height: 44px; overflow: hidden;">
             <div id="g_id_onload"
               data-client_id="57829510554-28957a3llnffct6q5fu017p85snuhre8.apps.googleusercontent.com"
               data-context="signin"
@@ -80,8 +80,7 @@
               data-theme="outline"
               data-text="continue_with"
               data-size="large"
-              data-logo_alignment="left"
-              data-width="384">
+              data-logo_alignment="left">
             </div>
           </div>
           <div style="display: flex; align-items: center; margin: 20px 0; text-align: center;">
@@ -462,7 +461,7 @@
             <input type="text" id="username-modal-input" required maxlength="30" placeholder="your_name" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.95rem; font-family: inherit; color: var(--text-main);">
           </div>
           <span style="font-size: 0.76rem; color: var(--text-muted); display: block; margin-bottom: 20px;">Letters, numbers and underscores only (3-30 chars).</span>
-          <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <div class="username-modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
             <button type="button" id="username-modal-btn-skip" style="background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-muted); padding: 10px 18px; border-radius: var(--radius-full); font-size: 0.86rem; font-weight: 600; cursor: pointer;">Keep Current</button>
             <button type="submit" id="username-modal-btn-submit" style="background: var(--primary); color: #ffffff; border: none; padding: 10px 20px; border-radius: var(--radius-full); font-size: 0.86rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 151, 178, 0.25);">Save Handle</button>
           </div>
