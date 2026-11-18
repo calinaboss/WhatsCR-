@@ -1515,6 +1515,7 @@ export async function onRequest(context) {
       );
 
       let user = null;
+      let isNewUser = false;
       if (existingUsers && existingUsers.length > 0) {
         user = existingUsers[0];
         const needGoogleId = !user.google_id;
@@ -1528,6 +1529,7 @@ export async function onRequest(context) {
           );
         }
       } else {
+        isNewUser = true;
         let baseUsername = (googleData.name || googleEmail.split('@')[0])
           .toLowerCase()
           .replace(/[^a-z0-9_]/g, '_')
@@ -1575,6 +1577,7 @@ export async function onRequest(context) {
 
       return new Response(JSON.stringify({
         success: true,
+        is_new_user: isNewUser,
         user: {
           id: user.id,
           email: user.email,

@@ -440,6 +440,37 @@
     </div>
   </div>
 
+  <div id="username-modal" class="wiki-modal-backdrop" style="display: none;">
+    <div class="wiki-modal-content" style="max-width: 440px;">
+      <div class="wiki-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 38px; height: 38px; border-radius: 12px; background: #e0f2fe; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+            <i class="fa-solid fa-at"></i>
+          </div>
+          <div>
+            <h3 style="font-size: 1.12rem; font-weight: 800; color: var(--text-main); margin: 0;">Choose Your Username</h3>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Pick a handle for your WhatsCR creator profile</span>
+          </div>
+        </div>
+      </div>
+      <div class="wiki-modal-body" style="padding: 22px 24px;">
+        <div id="username-modal-alert" style="display: none; padding: 10px 14px; border-radius: 10px; font-size: 0.84rem; margin-bottom: 16px; line-height: 1.4;"></div>
+        <form id="username-modal-form">
+          <label for="username-modal-input" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Creator Handle</label>
+          <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; background: #fafcfe; margin-bottom: 6px;">
+            <span style="color: var(--text-light); font-weight: 700; margin-right: 6px; font-size: 1rem;">@</span>
+            <input type="text" id="username-modal-input" required maxlength="30" placeholder="your_name" style="border: none; outline: none; background: transparent; width: 100%; font-size: 0.95rem; font-family: inherit; color: var(--text-main);">
+          </div>
+          <span style="font-size: 0.76rem; color: var(--text-muted); display: block; margin-bottom: 20px;">Letters, numbers and underscores only (3-30 chars).</span>
+          <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" id="username-modal-btn-skip" style="background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-muted); padding: 10px 18px; border-radius: var(--radius-full); font-size: 0.86rem; font-weight: 600; cursor: pointer;">Keep Current</button>
+            <button type="submit" id="username-modal-btn-submit" style="background: var(--primary); color: #ffffff; border: none; padding: 10px 20px; border-radius: var(--radius-full); font-size: 0.86rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 151, 178, 0.25);">Save Handle</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <div id="forgot-password-modal" class="wiki-modal-backdrop" style="display: none;">
     <div class="wiki-modal-content" style="max-width: 480px;">
       <div class="wiki-modal-header">

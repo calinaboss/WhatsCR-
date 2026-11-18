@@ -253,6 +253,108 @@
 
     checkCurrentSession();
 
+    const usernameModal = document.getElementById('username-modal');
+    const usernameModalInput = document.getElementById('username-modal-input');
+    const usernameModalAlert = document.getElementById('username-modal-alert');
+    const usernameModalForm = document.getElementById('username-modal-form');
+    const usernameModalBtnSkip = document.getElementById('username-modal-btn-skip');
+    const usernameModalBtnSubmit = document.getElementById('username-modal-btn-submit');
+
+    function showUsernameModalAlert(msg, isSuccess = false) {
+      if (!usernameModalAlert) return;
+      usernameModalAlert.textContent = msg;
+      usernameModalAlert.style.display = 'block';
+      if (isSuccess) {
+        usernameModalAlert.style.background = '#ecfdf5';
+        usernameModalAlert.style.color = '#065f46';
+        usernameModalAlert.style.border = '1px solid #a7f3d0';
+      } else {
+        usernameModalAlert.style.background = '#fef2f2';
+        usernameModalAlert.style.color = '#991b1b';
+        usernameModalAlert.style.border = '1px solid #fecaca';
+      }
+    }
+
+    function promptUsernameSelection(user) {
+      if (!usernameModal || !usernameModalInput) return;
+      const currentHandle = user.username || user.email.split('@')[0];
+      usernameModalInput.value = currentHandle;
+      if (usernameModalAlert) usernameModalAlert.style.display = 'none';
+      usernameModal.style.display = 'flex';
+      setTimeout(() => {
+        usernameModalInput.focus();
+        usernameModalInput.select();
+      }, 100);
+    }
+
+    if (usernameModalBtnSkip) {
+      usernameModalBtnSkip.addEventListener('click', () => {
+        if (usernameModal) usernameModal.style.display = 'none';
+        if (currentUser) {
+          displayProfile(currentUser);
+          authBox.style.display = 'none';
+          profileBox.style.display = 'block';
+        }
+      });
+    }
+
+    if (usernameModalForm) {
+      usernameModalForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const raw = usernameModalInput.value.trim().toLowerCase();
+        const clean = raw.replace(/[^a-z0-9_]/g, '');
+        if (!clean || clean.length < 3 || clean.length > 30) {
+          showUsernameModalAlert('Username must be 3-30 letters, numbers, or underscores.');
+          return;
+        }
+
+        if (usernameModalBtnSubmit) {
+          usernameModalBtnSubmit.disabled = true;
+          usernameModalBtnSubmit.style.opacity = '0.7';
+          usernameModalBtnSubmit.textContent = 'Saving...';
+        }
+
+        try {
+          const res = await fetch('/api/auth?action=update-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: clean })
+          });
+
+          const data = await res.json();
+          if (!res.ok || data.error) {
+            showUsernameModalAlert(data.error || 'Failed to update username.');
+            if (usernameModalBtnSubmit) {
+              usernameModalBtnSubmit.disabled = false;
+              usernameModalBtnSubmit.style.opacity = '1';
+              usernameModalBtnSubmit.textContent = 'Save Handle';
+            }
+            return;
+          }
+
+          if (usernameModal) usernameModal.style.display = 'none';
+          if (data.user) {
+            currentUser = data.user;
+            displayProfile(data.user);
+          } else if (currentUser) {
+            currentUser.username = clean;
+            displayProfile(currentUser);
+          }
+          authBox.style.display = 'none';
+          profileBox.style.display = 'block';
+          showAlert('Username updated successfully!', true);
+        } catch (err) {
+          showUsernameModalAlert('Network error. Please try again.');
+        } finally {
+          if (usernameModalBtnSubmit) {
+            usernameModalBtnSubmit.disabled = false;
+            usernameModalBtnSubmit.style.opacity = '1';
+            usernameModalBtnSubmit.textContent = 'Save Handle';
+          }
+        }
+      });
+    }
+
     window.handleGoogleLoginCallback = async function (response) {
       if (!response || !response.credential) {
         showAlert('Google sign-in could not be completed.');
@@ -276,7 +378,14 @@
         showAlert('Signed in successfully! Loading account...', true);
         if (data.user) {
           currentUser = data.user;
-          displayProfile(data.user);
+          if (data.is_new_user || !data.user.username_changed_at) {
+            authBox.style.display = 'none';
+            profileBox.style.display = 'block';
+            displayProfile(data.user);
+            promptUsernameSelection(data.user);
+          } else {
+            displayProfile(data.user);
+          }
         } else {
           setTimeout(() => {
             window.location.reload();
