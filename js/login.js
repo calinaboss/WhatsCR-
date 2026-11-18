@@ -79,6 +79,8 @@
       if (mainContainer) mainContainer.style.maxWidth = '440px';
       alertBox.style.display = 'none';
       if (verifyBox) verifyBox.style.display = 'none';
+      const googleAuthSec = document.getElementById('google-auth-section');
+      if (googleAuthSec) googleAuthSec.style.display = 'block';
       if (authForm) authForm.style.display = 'block';
       if (tabLogin && tabLogin.parentElement) tabLogin.parentElement.style.display = 'flex';
       if (authLegalNote) authLegalNote.style.display = 'block';
@@ -251,6 +253,40 @@
 
     checkCurrentSession();
 
+    window.handleGoogleLoginCallback = async function (response) {
+      if (!response || !response.credential) {
+        showAlert('Google sign-in could not be completed.');
+        return;
+      }
+
+      showAlert('Verifying Google account...', true);
+      try {
+        const res = await fetch('/api/auth?action=google-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential: response.credential })
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          showAlert(data.error || 'Google authentication failed.');
+          return;
+        }
+
+        showAlert('Signed in successfully! Loading account...', true);
+        if (data.user) {
+          currentUser = data.user;
+          displayProfile(data.user);
+        } else {
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        }
+      } catch (err) {
+        showAlert('Network error during Google sign-in. Please try again.');
+      }
+    };
+
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       alertBox.style.display = 'none';
@@ -316,6 +352,8 @@
           authForm.style.display = 'none';
           tabLogin.parentElement.style.display = 'none';
           if (authLegalNote) authLegalNote.style.display = 'none';
+          const googleAuthSec = document.getElementById('google-auth-section');
+          if (googleAuthSec) googleAuthSec.style.display = 'none';
           alertBox.style.display = 'none';
           verifyEmailDisplay.textContent = pendingVerifyEmail;
           verifyBox.style.display = 'block';

@@ -285,7 +285,9 @@ async function ensureTables(databaseUrl) {
     "CREATE TABLE IF NOT EXISTS email_verifications (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id) ON DELETE CASCADE, email VARCHAR(255) NOT NULL, code_hash VARCHAR(255) NOT NULL, expires_at TIMESTAMP WITH TIME ZONE NOT NULL, attempts INT DEFAULT 0, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)",
     "CREATE INDEX IF NOT EXISTS idx_email_verif_email ON email_verifications(email)",
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS social_links TEXT DEFAULT '{}'",
-    "ALTER TABLE users ADD COLUMN IF NOT EXISTS banner_color VARCHAR(50) DEFAULT 'ocean'"
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS banner_color VARCHAR(50) DEFAULT 'ocean'",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255)",
+    "CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)"
   ];
   for (const stmt of statements) {
     try {
@@ -1402,6 +1404,198 @@ export async function onRequest(context) {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
+  }
+
+  if (request.method === 'POST' && action === 'google-login') {
+    const rateKey = `auth_google_${ip}`;
+    const allowed = await checkPersistentRateLimit(env.DATABASE_URL, rateKey, 15, 60000);
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: 'Too many attempts. Please wait a minute.' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    let body = {};
+    try {
+      body = await request.json();
+    } catch (e) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON request' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const credential = typeof body.credential === 'string' ? body.credential.trim() : '';
+    if (!credential || credential.length < 20 || credential.length > 8192) {
+      return new Response(JSON.stringify({ error: 'Invalid Google credential token.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(credential)) {
+      return new Response(JSON.stringify({ error: 'Malformed Google credential token.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    let googleData = null;
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (!googleRes.ok) {
+        return new Response(JSON.stringify({ error: 'Google authentication verification failed.' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      googleData = await googleRes.json();
+    } catch (err) {
+      console.error('GOOGLE_VERIFY_ERROR:', err && err.message ? err.message : String(err));
+      return new Response(JSON.stringify({ error: 'Unable to verify Google login at this time.' }), {
+        status: 502,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!googleData || !googleData.sub || !googleData.email) {
+      return new Response(JSON.stringify({ error: 'Incomplete Google account profile.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const expectedClientId = env.GOOGLE_CLIENT_ID || '57829510554-28957a3llnffct6q5fu017p85snuhre8.apps.googleusercontent.com';
+    if (googleData.aud !== expectedClientId) {
+      return new Response(JSON.stringify({ error: 'Google client ID mismatch.' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (googleData.iss !== 'accounts.google.com' && googleData.iss !== 'https://accounts.google.com') {
+      return new Response(JSON.stringify({ error: 'Invalid Google token issuer.' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const expSeconds = parseInt(googleData.exp, 10);
+    if (!expSeconds || expSeconds < Math.floor(Date.now() / 1000)) {
+      return new Response(JSON.stringify({ error: 'Google token has expired.' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const isEmailVerified = googleData.email_verified === 'true' || googleData.email_verified === true;
+    if (!isEmailVerified) {
+      return new Response(JSON.stringify({ error: 'Your Google email is not verified.' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const googleEmail = googleData.email.toLowerCase().trim();
+    const googleSub = String(googleData.sub).trim();
+    const googlePicture = typeof googleData.picture === 'string' && googleData.picture.startsWith('https://') && googleData.picture.length <= 255 ? googleData.picture : null;
+
+    try {
+      const existingUsers = await runNeonSql(
+        env.DATABASE_URL,
+        'SELECT id, email, username, role, username_changed_at, google_id, avatar_url FROM users WHERE google_id = $1 OR LOWER(email) = $2 LIMIT 1',
+        [googleSub, googleEmail]
+      );
+
+      let user = null;
+      if (existingUsers && existingUsers.length > 0) {
+        user = existingUsers[0];
+        const needGoogleId = !user.google_id;
+        const needAvatar = !user.avatar_url && googlePicture;
+
+        if (needGoogleId || needAvatar) {
+          await runNeonSql(
+            env.DATABASE_URL,
+            'UPDATE users SET google_id = COALESCE(google_id, $1), email_verified = TRUE, avatar_url = COALESCE(avatar_url, $2) WHERE id = $3',
+            [googleSub, googlePicture, user.id]
+          );
+        }
+      } else {
+        let baseUsername = (googleData.name || googleEmail.split('@')[0])
+          .toLowerCase()
+          .replace(/[^a-z0-9_]/g, '_')
+          .replace(/^_+|_+$/g, '')
+          .slice(0, 20);
+
+        if (baseUsername.length < 3) {
+          baseUsername = 'user_' + generateRandomToken().slice(0, 6);
+        }
+
+        const usernameCheck = await runNeonSql(
+          env.DATABASE_URL,
+          'SELECT id FROM users WHERE LOWER(username) = $1 LIMIT 1',
+          [baseUsername]
+        );
+
+        if (usernameCheck && usernameCheck.length > 0) {
+          baseUsername = `${baseUsername.slice(0, 16)}_${Math.floor(1000 + Math.random() * 9000)}`;
+        }
+
+        const dummyPw = generateRandomToken() + generateRandomToken();
+        const dummyHash = await hashPassword(dummyPw);
+
+        const created = await runNeonSql(
+          env.DATABASE_URL,
+          'INSERT INTO users (email, password_hash, username, role, email_verified, google_id, avatar_url) VALUES ($1, $2, $3, $4, TRUE, $5, $6) RETURNING id, email, username, role, username_changed_at',
+          [googleEmail, dummyHash, baseUsername, 'user', googleSub, googlePicture]
+        );
+
+        if (!created || created.length === 0) {
+          throw new Error('Failed to create new user from Google profile');
+        }
+        user = created[0];
+      }
+
+      const token = generateRandomToken();
+      const tokenHash = await sha256Hex(token);
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      await runNeonSql(
+        env.DATABASE_URL,
+        'INSERT INTO sessions (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+        [user.id, tokenHash, expiresAt]
+      );
+
+      return new Response(JSON.stringify({
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          username_changed_at: user.username_changed_at
+        }
+      }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Set-Cookie': `whatscr_session=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=604800`
+        }
+      });
+    } catch (dbErr) {
+      console.error('GOOGLE_AUTH_DB_ERROR:', dbErr && dbErr.message ? dbErr.message : String(dbErr));
+      return new Response(JSON.stringify({ error: 'Database error during Google sign-in.' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
   }
 
   if (request.method === 'POST' && (action === 'register' || action === 'login')) {
