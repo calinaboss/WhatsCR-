@@ -1112,13 +1112,23 @@
 
     if (avatarCropBtnClose) avatarCropBtnClose.addEventListener('click', closeCropModal);
     if (avatarCropBtnCancel) avatarCropBtnCancel.addEventListener('click', closeCropModal);
+    if (avatarCropModal) {
+      avatarCropModal.addEventListener('click', (e) => {
+        if (e.target === avatarCropModal) closeCropModal();
+      });
+    }
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && avatarCropModal && avatarCropModal.style.display === 'flex') {
+        closeCropModal();
+      }
+    });
 
     function getCropCircleDimensions() {
       const circle = avatarCropModal ? avatarCropModal.querySelector('.avatar-crop-circle') : null;
-      const vw = avatarCropViewport ? avatarCropViewport.clientWidth : 260;
-      const vh = avatarCropViewport ? avatarCropViewport.clientHeight : 260;
-      const cw = circle ? circle.clientWidth : 220;
-      const ch = circle ? circle.clientHeight : 220;
+      const vw = avatarCropViewport ? avatarCropViewport.clientWidth : 380;
+      const vh = avatarCropViewport ? avatarCropViewport.clientHeight : 380;
+      const cw = circle ? circle.clientWidth : 310;
+      const ch = circle ? circle.clientHeight : 310;
       const cropX = (vw - cw) / 2;
       const cropY = (vh - ch) / 2;
       return { vw, vh, cw, ch, cropX, cropY, cx: vw / 2, cy: vh / 2 };

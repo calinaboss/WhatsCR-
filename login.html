@@ -471,7 +471,7 @@
   </div>
 
   <div id="avatar-crop-modal" class="wiki-modal-backdrop" style="display: none;">
-    <div class="wiki-modal-content" style="max-width: 420px; width: 100%;">
+    <div class="wiki-modal-content" style="max-width: 560px; width: 100%;">
       <div class="wiki-modal-header">
         <div style="display: flex; align-items: center; gap: 10px;">
           <div style="width: 38px; height: 38px; border-radius: 12px; background: #e0f2fe; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
@@ -482,7 +482,7 @@
             <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Drag to reposition &bull; Slider to zoom</span>
           </div>
         </div>
-        <button type="button" id="avatar-crop-btn-close" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 8px;" aria-label="Close modal">&times;</button>
+        <button type="button" id="avatar-crop-btn-close" style="background: var(--bg-muted); border: 1px solid var(--border); width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.15rem; color: var(--text-muted); cursor: pointer; border-radius: 50%; transition: all 0.2s ease;" aria-label="Cancel and close"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="wiki-modal-body" style="padding: 20px 24px; text-align: center;">
         <div id="avatar-crop-alert" style="display: none; padding: 10px 14px; border-radius: 10px; font-size: 0.84rem; margin-bottom: 14px; line-height: 1.4;"></div>
@@ -494,9 +494,9 @@
             </div>
           </div>
         </div>
-        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin: 16px 0 20px;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin: 18px auto 22px; width: 100%; max-width: 360px;">
           <i class="fa-solid fa-magnifying-glass-minus" style="color: var(--text-muted); font-size: 0.9rem;"></i>
-          <input type="range" id="avatar-crop-zoom" min="1" max="3" step="0.01" value="1" style="flex: 1; max-width: 220px; accent-color: var(--primary); cursor: pointer;">
+          <input type="range" id="avatar-crop-zoom" min="1" max="3" step="0.01" value="1" style="flex: 1; max-width: 260px; accent-color: var(--primary); cursor: pointer;">
           <i class="fa-solid fa-magnifying-glass-plus" style="color: var(--text-muted); font-size: 0.9rem;"></i>
         </div>
         <div class="username-modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
