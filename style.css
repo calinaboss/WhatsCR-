@@ -3582,4 +3582,69 @@ button {
   #username-modal .wiki-modal-body {
     padding: 18px 16px !important;
   }
+  .avatar-crop-viewport {
+    width: 240px !important;
+    height: 240px !important;
+  }
+  .avatar-crop-circle {
+    width: 200px !important;
+    height: 200px !important;
+  }
+  #avatar-crop-modal .wiki-modal-content {
+    margin: 16px !important;
+    width: calc(100% - 32px) !important;
+  }
+  #avatar-crop-modal .wiki-modal-body {
+    padding: 16px !important;
+  }
+}
+
+.avatar-crop-stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.avatar-crop-viewport {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  background: #0f172a;
+  border-radius: 16px;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+  cursor: grab;
+}
+
+.avatar-crop-viewport:active {
+  cursor: grabbing;
+}
+
+.avatar-crop-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+  will-change: transform;
+  max-width: none !important;
+}
+
+.avatar-crop-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-crop-circle {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.62);
 }

@@ -1065,8 +1065,258 @@
       });
     }
 
+    const avatarCropModal = document.getElementById('avatar-crop-modal');
+    const avatarCropViewport = document.getElementById('avatar-crop-viewport');
+    const avatarCropImg = document.getElementById('avatar-crop-img');
+    const avatarCropZoom = document.getElementById('avatar-crop-zoom');
+    const avatarCropBtnClose = document.getElementById('avatar-crop-btn-close');
+    const avatarCropBtnCancel = document.getElementById('avatar-crop-btn-cancel');
+    const avatarCropBtnSave = document.getElementById('avatar-crop-btn-save');
+    const avatarCropBtnSaveText = document.getElementById('avatar-crop-btn-save-text');
+    const avatarCropAlert = document.getElementById('avatar-crop-alert');
+
+    let currentCropImage = null;
+    let cropImgW = 0;
+    let cropImgH = 0;
+    let cropBaseScale = 1;
+    let cropScale = 1;
+    let cropPosX = 0;
+    let cropPosY = 0;
+    let cropIsDragging = false;
+    let cropStartX = 0;
+    let cropStartY = 0;
+    let cropInitPosX = 0;
+    let cropInitPosY = 0;
+
+    function showCropAlert(msg, isSuccess = false) {
+      if (!avatarCropAlert) return;
+      avatarCropAlert.textContent = msg;
+      avatarCropAlert.style.display = 'block';
+      if (isSuccess) {
+        avatarCropAlert.style.background = '#ecfdf5';
+        avatarCropAlert.style.color = '#065f46';
+        avatarCropAlert.style.border = '1px solid #a7f3d0';
+      } else {
+        avatarCropAlert.style.background = '#fef2f2';
+        avatarCropAlert.style.color = '#991b1b';
+        avatarCropAlert.style.border = '1px solid #fecaca';
+      }
+    }
+
+    function closeCropModal() {
+      if (avatarCropModal) avatarCropModal.style.display = 'none';
+      if (loginAvatarInput) loginAvatarInput.value = '';
+      currentCropImage = null;
+      if (avatarCropImg) avatarCropImg.src = '';
+    }
+
+    if (avatarCropBtnClose) avatarCropBtnClose.addEventListener('click', closeCropModal);
+    if (avatarCropBtnCancel) avatarCropBtnCancel.addEventListener('click', closeCropModal);
+
+    function getCropCircleDimensions() {
+      const circle = avatarCropModal ? avatarCropModal.querySelector('.avatar-crop-circle') : null;
+      const vw = avatarCropViewport ? avatarCropViewport.clientWidth : 260;
+      const vh = avatarCropViewport ? avatarCropViewport.clientHeight : 260;
+      const cw = circle ? circle.clientWidth : 220;
+      const ch = circle ? circle.clientHeight : 220;
+      const cropX = (vw - cw) / 2;
+      const cropY = (vh - ch) / 2;
+      return { vw, vh, cw, ch, cropX, cropY, cx: vw / 2, cy: vh / 2 };
+    }
+
+    function updateCropTransform() {
+      if (!avatarCropImg) return;
+      avatarCropImg.style.transform = `translate3d(${cropPosX}px, ${cropPosY}px, 0) scale(${cropScale})`;
+    }
+
+    function clampCropPositions() {
+      const { cw, ch, cropX, cropY } = getCropCircleDimensions();
+      const currentW = cropImgW * cropScale;
+      const currentH = cropImgH * cropScale;
+      const minX = cropX + cw - currentW;
+      const maxX = cropX;
+      const minY = cropY + ch - currentH;
+      const maxY = cropY;
+      cropPosX = Math.min(maxX, Math.max(minX, cropPosX));
+      cropPosY = Math.min(maxY, Math.max(minY, cropPosY));
+    }
+
+    function openCropModal(file) {
+      if (avatarCropAlert) avatarCropAlert.style.display = 'none';
+      if (avatarCropBtnSave) {
+        avatarCropBtnSave.disabled = false;
+        avatarCropBtnSave.style.opacity = '1';
+      }
+      if (avatarCropBtnSaveText) avatarCropBtnSaveText.textContent = 'Save Photo';
+      if (avatarCropZoom) avatarCropZoom.value = '1';
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          currentCropImage = img;
+          cropImgW = img.naturalWidth || img.width;
+          cropImgH = img.naturalHeight || img.height;
+          if (avatarCropImg) avatarCropImg.src = img.src;
+          if (avatarCropModal) avatarCropModal.style.display = 'flex';
+
+          setTimeout(() => {
+            const { cw, ch, cx, cy } = getCropCircleDimensions();
+            cropBaseScale = Math.max(cw / cropImgW, ch / cropImgH);
+            cropScale = cropBaseScale;
+            cropPosX = cx - (cropImgW * cropScale) / 2;
+            cropPosY = cy - (cropImgH * cropScale) / 2;
+            clampCropPositions();
+            updateCropTransform();
+          }, 50);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    if (avatarCropZoom) {
+      avatarCropZoom.addEventListener('input', () => {
+        if (!currentCropImage) return;
+        const { cx, cy } = getCropCircleDimensions();
+        const oldScale = cropScale;
+        const zoomVal = parseFloat(avatarCropZoom.value) || 1;
+        cropScale = cropBaseScale * zoomVal;
+
+        const relX = (cx - cropPosX) / oldScale;
+        const relY = (cy - cropPosY) / oldScale;
+        cropPosX = cx - relX * cropScale;
+        cropPosY = cy - relY * cropScale;
+
+        clampCropPositions();
+        updateCropTransform();
+      });
+    }
+
+    if (avatarCropViewport) {
+      avatarCropViewport.addEventListener('wheel', (e) => {
+        if (!currentCropImage || !avatarCropZoom) return;
+        e.preventDefault();
+        const delta = e.deltaY * -0.0015;
+        let nextZoom = Math.min(3, Math.max(1, parseFloat(avatarCropZoom.value) + delta));
+        avatarCropZoom.value = nextZoom;
+        avatarCropZoom.dispatchEvent(new Event('input'));
+      }, { passive: false });
+
+      const onPointerDown = (clientX, clientY) => {
+        if (!currentCropImage) return;
+        cropIsDragging = true;
+        cropStartX = clientX;
+        cropStartY = clientY;
+        cropInitPosX = cropPosX;
+        cropInitPosY = cropPosY;
+      };
+
+      const onPointerMove = (clientX, clientY) => {
+        if (!cropIsDragging) return;
+        const dx = clientX - cropStartX;
+        const dy = clientY - cropStartY;
+        cropPosX = cropInitPosX + dx;
+        cropPosY = cropInitPosY + dy;
+        clampCropPositions();
+        updateCropTransform();
+      };
+
+      const onPointerUp = () => {
+        cropIsDragging = false;
+      };
+
+      avatarCropViewport.addEventListener('mousedown', (e) => onPointerDown(e.clientX, e.clientY));
+      window.addEventListener('mousemove', (e) => onPointerMove(e.clientX, e.clientY));
+      window.addEventListener('mouseup', onPointerUp);
+
+      avatarCropViewport.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches.length === 1) {
+          onPointerDown(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches && e.touches.length === 1) {
+          onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchend', onPointerUp);
+    }
+
+    if (avatarCropBtnSave) {
+      avatarCropBtnSave.addEventListener('click', async () => {
+        if (!currentCropImage) return;
+        avatarCropBtnSave.disabled = true;
+        avatarCropBtnSave.style.opacity = '0.7';
+        if (avatarCropBtnSaveText) avatarCropBtnSaveText.textContent = 'Saving...';
+        showCropAlert('Cropping and optimizing...', true);
+
+        const { cw, cropX, cropY } = getCropCircleDimensions();
+        const srcX = (cropX - cropPosX) / cropScale;
+        const srcY = (cropY - cropPosY) / cropScale;
+        const srcSize = cw / cropScale;
+        const targetDimension = 400;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetDimension;
+        canvas.height = targetDimension;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        ctx.drawImage(currentCropImage, srcX, srcY, srcSize, srcSize, 0, 0, targetDimension, targetDimension);
+
+        canvas.toBlob(async (blob) => {
+          if (!blob) {
+            showCropAlert('Failed to generate image crop.');
+            avatarCropBtnSave.disabled = false;
+            avatarCropBtnSave.style.opacity = '1';
+            if (avatarCropBtnSaveText) avatarCropBtnSaveText.textContent = 'Save Photo';
+            return;
+          }
+
+          const croppedFile = new File([blob], 'avatar.webp', { type: 'image/webp' });
+          const formData = new FormData();
+          formData.append('avatar', croppedFile);
+
+          showCropAlert('Uploading to profile...', true);
+
+          try {
+            const res = await fetch('/api/auth?action=upload_avatar', {
+              method: 'POST',
+              body: formData
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+              showCropAlert(data.error || 'Failed to upload photo.');
+              avatarCropBtnSave.disabled = false;
+              avatarCropBtnSave.style.opacity = '1';
+              if (avatarCropBtnSaveText) avatarCropBtnSaveText.textContent = 'Save Photo';
+              return;
+            }
+
+            if (currentUser) currentUser.avatar_url = data.avatar_url;
+            const avatarDisplay = document.getElementById('profile-avatar-display');
+            if (avatarDisplay) {
+              avatarDisplay.innerHTML = `<img src="${data.avatar_url}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+            }
+            if (loginBtnRemoveAvatar) loginBtnRemoveAvatar.style.display = 'inline-flex';
+            closeCropModal();
+            showProfileAlert('Photo updated successfully!', true);
+          } catch (err) {
+            showCropAlert('Network error while uploading photo.');
+            avatarCropBtnSave.disabled = false;
+            avatarCropBtnSave.style.opacity = '1';
+            if (avatarCropBtnSaveText) avatarCropBtnSaveText.textContent = 'Save Photo';
+          }
+        }, 'image/webp', 0.85);
+      });
+    }
+
     if (loginAvatarInput) {
-      loginAvatarInput.addEventListener('change', async (e) => {
+      loginAvatarInput.addEventListener('change', (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
 
@@ -1083,37 +1333,7 @@
           return;
         }
 
-        showProfileAlert('Optimizing photo...', true);
-        const optimizedFile = await compressAvatar(file, 400, 0.82);
-
-        const formData = new FormData();
-        formData.append('avatar', optimizedFile);
-
-        showProfileAlert('Uploading photo...', true);
-
-        try {
-          const res = await fetch('/api/auth?action=upload_avatar', {
-            method: 'POST',
-            body: formData
-          });
-          const data = await res.json();
-          if (!res.ok || !data.success) {
-            showProfileAlert(data.error || 'Failed to upload photo.');
-            return;
-          }
-
-          if (currentUser) currentUser.avatar_url = data.avatar_url;
-          const avatarDisplay = document.getElementById('profile-avatar-display');
-          if (avatarDisplay) {
-            avatarDisplay.innerHTML = `<img src="${data.avatar_url}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
-          }
-          if (loginBtnRemoveAvatar) loginBtnRemoveAvatar.style.display = 'inline-flex';
-          showProfileAlert('Photo updated successfully!', true);
-        } catch (err) {
-          showProfileAlert('Network error while uploading photo.');
-        } finally {
-          loginAvatarInput.value = '';
-        }
+        openCropModal(file);
       });
     }
 
