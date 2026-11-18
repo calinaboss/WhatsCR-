@@ -3625,6 +3625,7 @@ button {
   .avatar-crop-viewport {
     width: min(84vw, 320px) !important;
     height: min(84vw, 320px) !important;
+    touch-action: none !important;
   }
   .avatar-crop-circle {
     width: min(72vw, 270px) !important;
@@ -3652,11 +3653,11 @@ button {
   position: relative;
   width: 380px;
   height: 380px;
-  background: #0f172a;
+  background: #090d16;
   border-radius: 16px;
   overflow: hidden;
   user-select: none;
-  touch-action: none;
+  touch-action: none !important;
   cursor: grab;
 }
 

@@ -1123,15 +1123,30 @@
       }
     });
 
+    let cropIsPinching = false;
+    let pinchStartDist = 0;
+    let pinchStartScale = 1;
+
+    function getTouchDist(touches) {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.hypot(dx, dy);
+    }
+
     function getCropCircleDimensions() {
       const circle = avatarCropModal ? avatarCropModal.querySelector('.avatar-crop-circle') : null;
-      const vw = avatarCropViewport ? avatarCropViewport.clientWidth : 380;
-      const vh = avatarCropViewport ? avatarCropViewport.clientHeight : 380;
-      const cw = circle ? circle.clientWidth : 310;
-      const ch = circle ? circle.clientHeight : 310;
-      const cropX = (vw - cw) / 2;
-      const cropY = (vh - ch) / 2;
-      return { vw, vh, cw, ch, cropX, cropY, cx: vw / 2, cy: vh / 2 };
+      if (!avatarCropViewport || !circle) {
+        return { vw: 380, vh: 380, cw: 310, ch: 310, cropX: 35, cropY: 35, cx: 190, cy: 190 };
+      }
+      const viewRect = avatarCropViewport.getBoundingClientRect();
+      const circleRect = circle.getBoundingClientRect();
+      const vw = viewRect.width || 380;
+      const vh = viewRect.height || 380;
+      const cw = circleRect.width || Math.min(vw * 0.85, 310);
+      const ch = circleRect.height || Math.min(vh * 0.85, 310);
+      const cropX = circleRect.left ? (circleRect.left - viewRect.left) : ((vw - cw) / 2);
+      const cropY = circleRect.top ? (circleRect.top - viewRect.top) : ((vh - ch) / 2);
+      return { vw, vh, cw, ch, cropX, cropY, cx: cropX + cw / 2, cy: cropY + ch / 2 };
     }
 
     function updateCropTransform() {
@@ -1147,8 +1162,18 @@
       const maxX = cropX;
       const minY = cropY + ch - currentH;
       const maxY = cropY;
-      cropPosX = Math.min(maxX, Math.max(minX, cropPosX));
-      cropPosY = Math.min(maxY, Math.max(minY, cropPosY));
+
+      if (currentW >= cw) {
+        cropPosX = Math.min(maxX, Math.max(minX, cropPosX));
+      } else {
+        cropPosX = cropX + (cw - currentW) / 2;
+      }
+
+      if (currentH >= ch) {
+        cropPosY = Math.min(maxY, Math.max(minY, cropPosY));
+      } else {
+        cropPosY = cropY + (ch - currentH) / 2;
+      }
     }
 
     function openCropModal(file) {
@@ -1170,7 +1195,7 @@
           if (avatarCropImg) avatarCropImg.src = img.src;
           if (avatarCropModal) avatarCropModal.style.display = 'flex';
 
-          setTimeout(() => {
+          const setupInitialCrop = () => {
             const { cw, ch, cx, cy } = getCropCircleDimensions();
             cropBaseScale = Math.max(cw / cropImgW, ch / cropImgH);
             cropScale = cropBaseScale;
@@ -1178,12 +1203,29 @@
             cropPosY = cy - (cropImgH * cropScale) / 2;
             clampCropPositions();
             updateCropTransform();
-          }, 50);
+          };
+
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              setupInitialCrop();
+            });
+          });
         };
         img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     }
+
+    window.addEventListener('resize', () => {
+      if (avatarCropModal && avatarCropModal.style.display === 'flex' && currentCropImage) {
+        const { cw, ch, cx, cy } = getCropCircleDimensions();
+        cropBaseScale = Math.max(cw / cropImgW, ch / cropImgH);
+        const zoomVal = avatarCropZoom ? parseFloat(avatarCropZoom.value) || 1 : 1;
+        cropScale = cropBaseScale * zoomVal;
+        clampCropPositions();
+        updateCropTransform();
+      }
+    });
 
     if (avatarCropZoom) {
       avatarCropZoom.addEventListener('input', () => {
@@ -1234,6 +1276,7 @@
 
       const onPointerUp = () => {
         cropIsDragging = false;
+        cropIsPinching = false;
       };
 
       avatarCropViewport.addEventListener('mousedown', (e) => onPointerDown(e.clientX, e.clientY));
@@ -1241,18 +1284,73 @@
       window.addEventListener('mouseup', onPointerUp);
 
       avatarCropViewport.addEventListener('touchstart', (e) => {
-        if (e.touches && e.touches.length === 1) {
-          onPointerDown(e.touches[0].clientX, e.touches[0].clientY);
+        if (!currentCropImage) return;
+        if (e.touches.length === 1) {
+          cropIsPinching = false;
+          cropIsDragging = true;
+          cropStartX = e.touches[0].clientX;
+          cropStartY = e.touches[0].clientY;
+          cropInitPosX = cropPosX;
+          cropInitPosY = cropPosY;
+        } else if (e.touches.length === 2) {
+          cropIsDragging = false;
+          cropIsPinching = true;
+          pinchStartDist = getTouchDist(e.touches);
+          pinchStartScale = cropScale;
         }
-      }, { passive: true });
+      }, { passive: false });
 
       window.addEventListener('touchmove', (e) => {
-        if (e.touches && e.touches.length === 1) {
-          onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
-        }
-      }, { passive: true });
+        if (!currentCropImage) return;
+        if (cropIsPinching && e.touches.length === 2) {
+          if (e.cancelable) e.preventDefault();
+          const currentDist = getTouchDist(e.touches);
+          if (pinchStartDist > 0) {
+            const ratio = currentDist / pinchStartDist;
+            const targetScale = Math.min(cropBaseScale * 3.5, Math.max(cropBaseScale, pinchStartScale * ratio));
+            const oldScale = cropScale;
+            cropScale = targetScale;
 
-      window.addEventListener('touchend', onPointerUp);
+            const { cx, cy } = getCropCircleDimensions();
+            const relX = (cx - cropPosX) / oldScale;
+            const relY = (cy - cropPosY) / oldScale;
+            cropPosX = cx - relX * cropScale;
+            cropPosY = cy - relY * cropScale;
+
+            if (avatarCropZoom) {
+              avatarCropZoom.value = Math.min(3, Math.max(1, cropScale / cropBaseScale));
+            }
+            clampCropPositions();
+            updateCropTransform();
+          }
+        } else if (cropIsDragging && e.touches.length === 1) {
+          if (e.cancelable) e.preventDefault();
+          const dx = e.touches[0].clientX - cropStartX;
+          const dy = e.touches[0].clientY - cropStartY;
+          cropPosX = cropInitPosX + dx;
+          cropPosY = cropInitPosY + dy;
+          clampCropPositions();
+          updateCropTransform();
+        }
+      }, { passive: false });
+
+      window.addEventListener('touchend', (e) => {
+        if (e.touches.length === 1) {
+          cropIsPinching = false;
+          cropIsDragging = true;
+          cropStartX = e.touches[0].clientX;
+          cropStartY = e.touches[0].clientY;
+          cropInitPosX = cropPosX;
+          cropInitPosY = cropPosY;
+        } else if (e.touches.length === 0) {
+          cropIsDragging = false;
+          cropIsPinching = false;
+        }
+      });
+      window.addEventListener('touchcancel', () => {
+        cropIsDragging = false;
+        cropIsPinching = false;
+      });
     }
 
     if (avatarCropBtnSave) {
@@ -1263,11 +1361,15 @@
         if (avatarCropBtnSaveText) avatarCropBtnSaveText.textContent = 'Saving...';
         showCropAlert('Cropping and optimizing...', true);
 
-        const { cw, cropX, cropY } = getCropCircleDimensions();
+        const { cw, ch, cropX, cropY } = getCropCircleDimensions();
         const srcX = (cropX - cropPosX) / cropScale;
         const srcY = (cropY - cropPosY) / cropScale;
         const srcSize = cw / cropScale;
         const targetDimension = 400;
+
+        const clampedSrcX = Math.max(0, Math.min(cropImgW - srcSize, srcX));
+        const clampedSrcY = Math.max(0, Math.min(cropImgH - srcSize, srcY));
+        const clampedSrcSize = Math.max(1, Math.min(srcSize, cropImgW - clampedSrcX, cropImgH - clampedSrcY));
 
         const canvas = document.createElement('canvas');
         canvas.width = targetDimension;
@@ -1276,7 +1378,7 @@
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
-        ctx.drawImage(currentCropImage, srcX, srcY, srcSize, srcSize, 0, 0, targetDimension, targetDimension);
+        ctx.drawImage(currentCropImage, clampedSrcX, clampedSrcY, clampedSrcSize, clampedSrcSize, 0, 0, targetDimension, targetDimension);
 
         canvas.toBlob(async (blob) => {
           if (!blob) {
