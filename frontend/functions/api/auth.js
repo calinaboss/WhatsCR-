@@ -287,7 +287,8 @@ async function ensureTables(databaseUrl) {
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS social_links TEXT DEFAULT '{}'",
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS banner_color VARCHAR(50) DEFAULT 'ocean'",
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255)",
-    "CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)"
+    "CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)",
+    "UPDATE users SET role = 'admin' WHERE LOWER(email) IN ('tworksita@gmail.com', 'whatscrorg@gmail.com')"
   ];
   for (const stmt of statements) {
     try {
@@ -618,6 +619,10 @@ export async function onRequest(context) {
       );
       if (rows && rows.length > 0) {
         const meUser = rows[0];
+        const adminEmails = ['tworksita@gmail.com', 'whatscrorg@gmail.com'];
+        if (meUser.email && adminEmails.includes(meUser.email.toLowerCase())) {
+          meUser.role = 'admin';
+        }
         let parsedSocial = {};
         try {
           parsedSocial = meUser.social_links ? (typeof meUser.social_links === 'string' ? JSON.parse(meUser.social_links) : meUser.social_links) : {};
@@ -1565,6 +1570,16 @@ export async function onRequest(context) {
         user = created[0];
       }
 
+      const adminEmails = ['tworksita@gmail.com', 'whatscrorg@gmail.com'];
+      if (user.email && adminEmails.includes(user.email.toLowerCase())) {
+        user.role = 'admin';
+        await runNeonSql(
+          env.DATABASE_URL,
+          "UPDATE users SET role = 'admin' WHERE id = $1",
+          [user.id]
+        );
+      }
+
       const token = generateRandomToken();
       const tokenHash = await sha256Hex(token);
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -1793,6 +1808,16 @@ export async function onRequest(context) {
             status: 401,
             headers: { 'Content-Type': 'application/json' }
           });
+        }
+
+        const adminEmails = ['tworksita@gmail.com', 'whatscrorg@gmail.com'];
+        if (user.email && adminEmails.includes(user.email.toLowerCase())) {
+          user.role = 'admin';
+          await runNeonSql(
+            env.DATABASE_URL,
+            "UPDATE users SET role = 'admin' WHERE id = $1",
+            [user.id]
+          );
         }
 
         const token = generateRandomToken();
